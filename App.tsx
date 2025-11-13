@@ -7,10 +7,11 @@ import CafeScreen from './screens/CafeScreen';
 import BarScreen from './screens/BarScreen';
 import SearchScreen from './screens/SearchScreen';
 import ProfileScreen from './screens/ProfileScreen';
-import testScreen from './screens/testScreen';
+import CommentScreen from './test_screen/CommentScreen';
 import './global.css';
 
 const Tab = createBottomTabNavigator();
+
 
 export default function App() {
   return (
@@ -66,10 +67,10 @@ export default function App() {
           />
           <Tab.Screen
             name="test"
-            component={testScreen}
+            component={CommentScreen}
             options={{
               title: 'test',
-              tabBarLabel: 'test'
+              tabBarLabel: 'test',
             }}/>
         </Tab.Navigator>
       </NavigationContainer>
