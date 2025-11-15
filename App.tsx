@@ -7,7 +7,7 @@ import CafeScreen from './screens/CafeScreen';
 import BarScreen from './screens/BarScreen';
 import SearchScreen from './screens/SearchScreen';
 import ProfileScreen from './screens/ProfileScreen';
-import CommentScreen from './test_screen/CommentScreen';
+import CommentScreen from './screens/CommentScreen';
 import './global.css';
 
 const Tab = createBottomTabNavigator();
