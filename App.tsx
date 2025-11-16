@@ -9,10 +9,10 @@ import ProfileScreen from './screens/ProfileScreen';
 import CommentScreen from './screens/CommentScreen';
 
 import { Image } from 'react-native';
-import myIcon from './assets/icon/tabicon/my.png';
-import cafeIcon from './assets/icon/tabicon/cafe.png';
-import bobIcon from './assets/icon/tabicon/bob.png';
-import schoolIcon from './assets/icon/tabicon/school.png';
+import myIcon from './assets/icon/tabicon/my.svg';
+import cafeIcon from './assets/icon/tabicon/cafe.svg';
+import bobIcon from './assets/icon/tabicon/bab.svg';
+import schoolIcon from './assets/icon/tabicon/school.svg';
 
 import './global.css';
 
