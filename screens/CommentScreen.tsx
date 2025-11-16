@@ -1,23 +1,27 @@
 import { View, Text } from 'react-native';
 import Comments from '../components/ui/Comments';
-import TextBox from '../components/ui/TextBox';
-import CafeteriaInfo from '../components/cafeteria/cafeteriaInfo';
-import cafeIcon from '../assets/icon/cafe.png';
+import TextIconBox from '../components/ui/TextIconBox';
+import CafeteriaInfo from '../components/cafeteria/CafeteriaInfo';
+import starIcon from '../assets/icon/star.png';
 
 export default function CommentScreen() {
   return (
     <View className="flex-1 items-center justify-center bg-white">
       <Comments />
-      <TextBox 
+      <TextIconBox 
         preset="gray"
-        imagefile={cafeIcon}
+        imagefile={starIcon}
         text="위치"
       />
-      <TextBox 
+      <TextIconBox 
         preset="red"
         text="위치"
       />
-      <CafeteriaInfo/>
+      <CafeteriaInfo
+        name="천원의 아침밥"
+        menu={["스팸마요 덮밥", "꼬치 어묵국", "고로케&케찹", "치커리유자청무침", "배추김치야채샐러드&드레싱"]}
+        location="창의인재원"
+      />
       
     </View>
   );

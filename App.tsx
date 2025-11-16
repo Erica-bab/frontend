@@ -4,10 +4,16 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import SchoolRestaurantScreen from './screens/SchoolRestaurant';
 import RestuarantScreen from './screens/Restaurant';
 import CafeScreen from './screens/CafeScreen';
-import BarScreen from './screens/BarScreen';
 import SearchScreen from './screens/SearchScreen';
 import ProfileScreen from './screens/ProfileScreen';
 import CommentScreen from './screens/CommentScreen';
+
+import { Image } from 'react-native';
+import myIcon from './assets/icon/tabicon/my.png';
+import cafeIcon from './assets/icon/tabicon/cafe.png';
+import bobIcon from './assets/icon/tabicon/bob.png';
+import schoolIcon from './assets/icon/tabicon/school.png';
+
 import './global.css';
 
 const Tab = createBottomTabNavigator();
@@ -20,25 +26,37 @@ export default function App() {
         
         <Tab.Navigator
           screenOptions={{
-            tabBarActiveTintColor: '#3b82f6',
-            tabBarInactiveTintColor: '#9ca3af',
+            tabBarActiveTintColor: '#2563EB',
+            tabBarInactiveTintColor: '#000000ff',
             headerShown: true,
           }}
         >
-          <Tab.Screen
-            name="SchoolRestaruant"
-            component={SchoolRestaurantScreen}
-            options={{
-              title: '학식',
-              tabBarLabel: '학식'
-            }}
-          />
           <Tab.Screen
             name="Restaurant"
             component={RestuarantScreen}
             options={{
               title: '식당',
-              tabBarLabel: '식당'
+              tabBarLabel: '식당',
+              tabBarIcon: ({ color, size }) => (
+                <Image
+                source={bobIcon}
+                style={{ width: size, height: size, tintColor: color }}
+                />
+              ),
+            }}
+          />
+          <Tab.Screen
+            name="SchoolRestaruant"
+            component={SchoolRestaurantScreen}
+            options={{
+              title: '학식',
+              tabBarLabel: '학식',
+              tabBarIcon: ({ color, size }) => (
+                <Image
+                  source={schoolIcon}
+                  style={{ width: size, height: size, tintColor: color }}
+                />
+              ),
             }}
           />
           <Tab.Screen
@@ -46,15 +64,13 @@ export default function App() {
             component={CafeScreen}
             options={{
               title: '카페',
-              tabBarLabel: '카페'
-            }}
-          />
-          <Tab.Screen
-            name="Bar"
-            component={BarScreen}
-            options={{
-              title: '술집',
-              tabBarLabel: '술집'
+              tabBarLabel: '카페',
+              tabBarIcon: ({ color, size }) => (
+                <Image
+                  source={cafeIcon}
+                  style={{ width: size, height: size, tintColor: color }}
+                />
+              ),
             }}
           />
           <Tab.Screen
@@ -62,7 +78,13 @@ export default function App() {
             component={ProfileScreen}
             options={{
               title: '마이',
-              tabBarLabel: '마이'
+              tabBarLabel: '마이',
+              tabBarIcon: ({ color, size }) => (
+                <Image
+                  source={myIcon}
+                  style={{ width: size, height: size, tintColor: color }}
+                />
+              ),
             }}
           />
           <Tab.Screen
@@ -71,7 +93,8 @@ export default function App() {
             options={{
               title: 'test',
               tabBarLabel: 'test',
-            }}/>
+            }}
+          />
         </Tab.Navigator>
       </NavigationContainer>
     </SafeAreaView>

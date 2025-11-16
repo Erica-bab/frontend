@@ -1,12 +1,12 @@
 import { View, Text, Image } from "react-native";
 
 interface TextBoxProps {
-  preset?: keyof typeof stylePreset;
-  boxClass?: string;
-  imagefile?: any;
-  imageClass?: string;
-  text?: string;
-  textClass?: string;
+  preset?: keyof typeof stylePreset,
+  boxClass?: string,
+  imagefile?: any,
+  imageClass?: string,
+  text?: string,
+  textClass?: string,
 }
 
 const stylePreset = {
@@ -30,11 +30,16 @@ const stylePreset = {
     text: "text-[#6C6C6C] font-bold text-base",
     image: "#6C6C6C",
   },
+  white: {
+    box: "",
+    text: "",
+    image: "#FFFFFF",
+  },
   none: { box: "", text: "", image: undefined },
 } as const;
 
 
-export default function TextBox({ preset = "none", boxClass = "", imagefile, imageClass = "", text = "", textClass = "", }: TextBoxProps) {
+export default function TextIconBox({ preset = "none", boxClass = "", imagefile, imageClass = "", text = "", textClass = "", }: TextBoxProps) {
 
   const presetStyle = stylePreset[preset];
 
