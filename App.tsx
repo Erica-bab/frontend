@@ -1,13 +1,10 @@
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import SchoolRestaurantScreen from './screens/SchoolRestaurant';
+import CafeteriaScreen from './screens/CafeteriaScreen';
 import RestuarantScreen from './screens/Restaurant';
 import CafeScreen from './screens/CafeScreen';
-import BarScreen from './screens/BarScreen';
-import SearchScreen from './screens/SearchScreen';
 import ProfileScreen from './screens/ProfileScreen';
-import CommentScreen from './screens/CommentScreen';
 import './global.css';
 
 const Tab = createBottomTabNavigator();
@@ -15,22 +12,21 @@ const Tab = createBottomTabNavigator();
 
 export default function App() {
   return (
-    <SafeAreaView className="flex-1">
+    <SafeAreaView className="flex-1 bg-white">
       <NavigationContainer>
-        
         <Tab.Navigator
           screenOptions={{
             tabBarActiveTintColor: '#3b82f6',
             tabBarInactiveTintColor: '#9ca3af',
-            headerShown: true,
+            headerShown: false,
           }}
         >
           <Tab.Screen
             name="SchoolRestaruant"
-            component={SchoolRestaurantScreen}
+            component={CafeteriaScreen}
             options={{
               title: '학식',
-              tabBarLabel: '학식'
+              tabBarLabel: '학식',
             }}
           />
           <Tab.Screen
@@ -38,7 +34,7 @@ export default function App() {
             component={RestuarantScreen}
             options={{
               title: '식당',
-              tabBarLabel: '식당'
+              tabBarLabel: '식당',
             }}
           />
           <Tab.Screen
@@ -50,14 +46,6 @@ export default function App() {
             }}
           />
           <Tab.Screen
-            name="Bar"
-            component={BarScreen}
-            options={{
-              title: '술집',
-              tabBarLabel: '술집'
-            }}
-          />
-          <Tab.Screen
             name="Profile"
             component={ProfileScreen}
             options={{
@@ -65,13 +53,6 @@ export default function App() {
               tabBarLabel: '마이'
             }}
           />
-          <Tab.Screen
-            name="test"
-            component={CommentScreen}
-            options={{
-              title: 'test',
-              tabBarLabel: 'test',
-            }}/>
         </Tab.Navigator>
       </NavigationContainer>
     </SafeAreaView>

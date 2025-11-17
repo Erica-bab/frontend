@@ -1,16 +1,15 @@
 import { View, Text } from 'react-native';
 import Comments from '../components/ui/Comments';
 import TextBox from '../components/ui/TextBox';
-import CafeteriaInfo from '../components/cafeteria/cafeteriaInfo';
-import cafeIcon from '../assets/icon/cafe.png';
+import CafeteriaInfo from '../components/cafeteria/CafeteriaInfo';
 
 export default function CommentScreen() {
   return (
     <View className="flex-1 items-center justify-center bg-white">
       <Comments />
-      <TextBox 
+      <TextBox
         preset="gray"
-        imagefile={cafeIcon}
+        imagefile={require('../assets/icon/cafe.png')}
         text="위치"
       />
       <TextBox 
