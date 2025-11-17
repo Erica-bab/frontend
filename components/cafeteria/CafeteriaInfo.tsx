@@ -11,7 +11,7 @@ interface cafeteriaProps {
 
 export default function CafeteriaInfo({ name = "천원의 아침밥", price = "1000", menu = ["스팸마요 덮밥", "꼬치 어묵국", "고로케&케찹", "치커리유자청무침", "배추김치야채샐러드&드레싱"], location = "창의인재" }: cafeteriaProps) {
   return (
-    <View className="flex flex-col border border-[#E5E5EC] rounded-xl w-full min-w-[40vh] px-[35px] py-[20px]">
+    <View className="flex flex-col border border-[#E5E5EC] rounded-xl w-full min-w-[40vh] px-[35px] py-[20px] bg-white">
       <View className="flex flex-row items-center mt-2">
         <Text className="text-[#3B82F6] font-semibold text-xl mr-[5px]">{name}</Text>
         <Text className="text-[#6B6B6B] text-base mt-1">{price}원</Text>
