@@ -1,6 +1,7 @@
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import CafeteriaScreen from './screens/CafeteriaScreen';
 import RestuarantScreen from './screens/Restaurant';
 import CafeScreen from './screens/CafeScreen';
@@ -8,12 +9,13 @@ import ProfileScreen from './screens/ProfileScreen';
 import './global.css';
 
 const Tab = createBottomTabNavigator();
-
+const queryClient = new QueryClient();
 
 export default function App() {
   return (
-    <SafeAreaView className="flex-1 bg-white">
-      <NavigationContainer>
+    <QueryClientProvider client={queryClient}>
+      <SafeAreaView className="flex-1 bg-white">
+        <NavigationContainer>
         <Tab.Navigator
           screenOptions={{
             tabBarActiveTintColor: '#3b82f6',
@@ -56,5 +58,6 @@ export default function App() {
         </Tab.Navigator>
       </NavigationContainer>
     </SafeAreaView>
+    </QueryClientProvider>
   );
 }

@@ -16,7 +16,7 @@ const variantStyles = {
 
 export default function Card({children, variant = 'default', style}:CardProps){
     return(
-        <View className={`rounded-2xl gap-2 p-4 mx-2 my-2 self-stretch ${variantStyles[variant]}`} style={style}>
+        <View className={`rounded-2xl p-4 mx-2 my-2 self-stretch ${variantStyles[variant]}`} style={{ gap: 8, ...style }}>
             {children}
         </View>
     )
