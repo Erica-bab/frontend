@@ -1,4 +1,4 @@
-import { View, Text, ScrollView } from 'react-native';
+import { View, Text } from 'react-native';
 import SearchBar from '../components/SearchBar';
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
@@ -11,8 +11,7 @@ export default function RestuarantScreen() {
 
     return (
         <SafeAreaView edges={['top']} className="flex-1 bg-[#F8FAFC]">
-            <SearchBar />
-            <ScrollView className="flex-1 bg-white">
+            <SearchBar>
                 <Card variant="banner">
                     <View>
                         <Text className="text-white">{"일상 속 모든 순간, 한장으로\n더 똑똑한 소비의 시작 에리 체크카드"}</Text>
@@ -32,7 +31,7 @@ export default function RestuarantScreen() {
                         rating={restaurant.average_rating}
                     />
                 ))}
-            </ScrollView>
+            </SearchBar>
         </SafeAreaView>
     );
 }
