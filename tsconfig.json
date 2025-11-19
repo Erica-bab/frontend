@@ -20,7 +20,12 @@
   "exclude": [
     "node_modules",
     "babel.config.js",
-    "metro.config.js"
+    "metro.config.cjs"
+  ],
+  "include": [
+    "**/*.ts",
+    "**/*.tsx",
+    "nativewind-env.d.ts",
   ],
   "extends": "expo/tsconfig.base"
 }
