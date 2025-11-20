@@ -5,6 +5,7 @@ interface ButtonProps {
   children: React.ReactNode;
   variant?: 'primary' | 'secondary' | 'danger';
   disabled?: boolean;
+  className?: string;
 }
 
 const variantStyles = {
@@ -19,12 +20,12 @@ const variantTextStyles = {
   danger: 'text-white',
 };
 
-export default function Button({ onPress, children, variant = 'primary', disabled = false }: ButtonProps) {
+export default function Button({ onPress, children, variant = 'primary', disabled = false, className }: ButtonProps) {
   return (
     <Pressable
       onPress={onPress}
       disabled={disabled}
-      className={`px-6 py-3 rounded-lg ${variantStyles[variant]} ${disabled ? 'opacity-50' : ''}`}
+      className={`px-6 py-3 rounded-lg ${variantStyles[variant]} ${disabled ? 'opacity-50' : ''} ${className || ''}`}
     >
       <Text className={`text-center font-bold ${variantTextStyles[variant]}`}>
         {children}

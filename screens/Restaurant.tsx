@@ -1,10 +1,10 @@
-import { View, Text } from 'react-native';
-import SearchBar from '../components/SearchBar';
-import Card from '../components/ui/Card';
-import Button from '../components/ui/Button';
-import RestaurantCard from '../components/RestaurantCard';
+import { View, Text, ScrollView } from 'react-native';
+import SearchBar from '@/components/SearchBar';
+import Card from '@/components/ui/Card';
+import Button from '@/components/ui/Button';
+import RestaurantCard from '@/components/RestaurantCard';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRestaurantList } from '../api/restaurants/useRestaurant';
+import { useRestaurantList } from '@/api/restaurants/useRestaurant';
 
 export default function RestuarantScreen() {
     const { data, isLoading, error } = useRestaurantList();

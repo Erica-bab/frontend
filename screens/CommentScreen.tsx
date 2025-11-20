@@ -1,8 +1,8 @@
 import { View, Text } from 'react-native';
-import Comments from '../components/ui/Comments';
-import TextIconBox from '../components/ui/TextIconBox';
-import CafeteriaInfo from '../components/cafeteria/CafeteriaInfo';
-import LocationIcon from '../assets/icon/location.svg';
+import Comments from '@/components/ui/Comments';
+import TextIconBox from '@/components/ui/TextIconBox';
+import CafeteriaInfo from '@/components/cafeteria/CafeteriaInfo';
+import LocationIcon from '@/assets/icon/location.svg';
 
 export default function CommentScreen() {
   return (

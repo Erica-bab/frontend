@@ -1,5 +1,5 @@
 import { View } from 'react-native';
-import CafeteriaInfo from './CafeteriaInfo';
+import CafeteriaInfo from '@/components/cafeteria/CafeteriaInfo';
 
 export default function CafeteriaList() {
   return (

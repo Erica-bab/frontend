@@ -1,5 +1,5 @@
 import { View, Text, Image } from 'react-native';
-import GoodIcon from '../../assets/icon/good.svg';
+import GoodIcon from '@/assets/icon/good.svg';
 
 interface commentsProps {
     name?: string,

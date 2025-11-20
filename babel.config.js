@@ -7,11 +7,11 @@ module.exports = function (api) {
     ],
     plugins: [
       [
-        'module-resolver',
+        "module-resolver",
         {
-          root: ['./'],
+          root: ["./"],
           alias: {
-            '@': './',
+            "@": "./",
           },
         },
       ],

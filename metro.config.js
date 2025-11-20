@@ -14,6 +14,9 @@ config.resolver = {
   ...config.resolver,
   assetExts: config.resolver.assetExts.filter((ext) => ext !== "svg"),
   sourceExts: [...config.resolver.sourceExts, "svg"],
+  alias: {
+    "@": "./",
+  },
 };
 
 module.exports = withNativeWind(config, {

@@ -1,9 +1,6 @@
-import { View, Text,Pressable } from 'react-native';
+import { View, Text } from 'react-native';
 import Card from '@/components/ui/Card';
 import RestaurantStatusTag from '@/components/ui/RestaurantStatusTag';
-import Icon from '@/components/Icon';
-import { useNavigation } from '@react-navigation/native';
-import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 interface RestaurantCardProps {
   name: string;
@@ -19,7 +16,7 @@ export default function RestaurantCard({ name, category, status, rating, comment
   const displayComment = comment || "치즈돈가스가 등김카츠보다 시간이 더 걸린다는 건 알았지만 이건 너무 대기 시간이 길어서 짜증났어요 진짜 최악이었습니다";
 
   return (
-    <Card className='bg-white border border-gray-100'>
+    <Card>
       <View className="flex-row items-center">
         <Text className="text-lg text-blue-500">{name}</Text>
         <Text className="ml-1">{category}</Text>

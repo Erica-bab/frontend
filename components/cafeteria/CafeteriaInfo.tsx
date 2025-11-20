@@ -1,6 +1,6 @@
 import { View, Text } from 'react-native';
-import locationIcon from '../../assets/icon/location.svg';
-import TextIconBox from '../ui/TextIconBox';
+import locationIcon from '@/assets/icon/location.svg';
+import TextIconBox from '@/components/ui/TextIconBox';
 
 interface cafeteriaProps {
   name?: string,

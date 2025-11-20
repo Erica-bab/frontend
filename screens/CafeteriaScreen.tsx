@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { View,ScrollView, Text, TouchableOpacity } from 'react-native';
-import TextIconButton from '../components/ui/TextIconButton';
-import ClockIcon from '../assets/icon/clock.svg';
-import CafeteriaList from '../components/cafeteria/CafeteriaList';
-import RightanlgeICon from '../assets/icon/right_angle.svg';
+import TextIconButton from '@/components/ui/TextIconButton';
+import ClockIcon from '@/assets/icon/clock.svg';
+import CafeteriaList from '@/components/cafeteria/CafeteriaList';
+import RightanlgeICon from '@/assets/icon/right_angle.svg';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 type CafeteriaType = 'student' | 'staff' | 'startup' | 'dorm';
