@@ -40,20 +40,20 @@ export default function SearchScreen({ children }: SearchScreenProps) {
           }),
         }}
       >
-        <View className='w-full flex-row justify-between items-center'>
-          <View className="flex-row items-center gap-2">
+        <View className='w-full flex-row justify-between items-center h-full'>
+          <View className="flex-row items-center justify-center h-full gap-2">
             <Text className="text-md font-semibold text-neutral-900">
               경기 안산시 상록구 한양
             </Text>
             <DropdownIcon width={10} height={13} />
           </View>
-          <Pressable className="mt-2" onPress={() => navigation.navigate('Filter')}>
+          <Pressable onPress={() => navigation.navigate('Filter')}>
             <FilterIcon/>
           </Pressable>
         </View>
       </Animated.View>
 
-      <View className='w-full px-5 py-4 bg-white border-b border-b-gray-100'>
+      <View className='w-full px-5 py-2 bg-white border-b border-b-gray-100'>
         <View className='w-full rounded-full flex-row justify-between items-center px-4 py-2 bg-gray-100'>
           <TextInput
             placeholder="찾아라! 에리카의 맛집"

@@ -16,7 +16,6 @@ export default function Comments({ name = "익명", good = 0, comment = "야호"
             <View className="flex-row item-center justify-between">
                 <Text>{name}</Text>
                 <View className="flex-row gap-2">
-                    
                     <Text>{good}</Text>
                 </View>
             </View>                                                                            
