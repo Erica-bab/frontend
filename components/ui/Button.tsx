@@ -1,34 +1,65 @@
-import { Pressable, Text } from 'react-native';
+import { Pressable, Text, StyleSheet } from 'react-native';
 
 interface ButtonProps {
   onPress?: () => void;
   children: React.ReactNode;
-  variant?: 'primary' | 'secondary' | 'danger';
+  variant?: 'primary' | 'secondary';
   disabled?: boolean;
+  className?: string;
 }
 
-const variantStyles = {
-  primary: 'bg-blue-500',
-  secondary: 'bg-gray-500',
-  danger: 'bg-red-500',
-};
+export default function Button({
+  onPress,
+  children,
+  variant = 'primary',
+  disabled = false,
+  className = '',
+}: ButtonProps) {
+  const isPrimary = variant === 'primary';
 
-const variantTextStyles = {
-  primary: 'text-white',
-  secondary: 'text-white',
-  danger: 'text-white',
-};
-
-export default function Button({ onPress, children, variant = 'primary', disabled = false }: ButtonProps) {
   return (
     <Pressable
       onPress={onPress}
       disabled={disabled}
-      className={`px-6 py-3 rounded-lg ${variantStyles[variant]} ${disabled ? 'opacity-50' : ''}`}
+      style={[
+        styles.base,
+        isPrimary ? styles.primary : styles.secondary,
+        disabled && styles.disabled,
+      ]}
+      className={className}
     >
-      <Text className={`text-center font-bold ${variantTextStyles[variant]}`}>
+      <Text style={[styles.text, isPrimary ? styles.primaryText : styles.secondaryText]}>
         {children}
       </Text>
     </Pressable>
   );
 }
+
+const styles = StyleSheet.create({
+  base: {
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 8,
+  },
+  primary: {
+    backgroundColor: '#3B82F6',
+  },
+  secondary: {
+    backgroundColor: 'rgba(248, 250, 252, 1)',
+    borderWidth: 1,
+    borderColor: 'rgba(226, 232, 240, 1)',
+  },
+  disabled: {
+    opacity: 0.5,
+  },
+  text: {
+    textAlign: 'center',
+    fontWeight: 'bold',
+  },
+  primaryText: {
+    color: '#FFFFFF',
+  },
+  secondaryText: {
+    color: '#000000',
+  },
+});
