@@ -1,11 +1,15 @@
 import React, { useState } from 'react';
 import { View, Text, ScrollView, Pressable, ActivityIndicator } from 'react-native';
+import MapView, { Marker } from 'react-native-maps';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useRestaurantDetail } from '@/api/restaurants/useRestaurant';
 import RestaurantStatusTag from '@/components/ui/RestaurantStatusTag';
 import TextIconButton from '@/components/ui/TextIconButton';
+import RestaurantHomeTab from '@/components/restaurant/RestaurantHomeTab';
+import RestaurantMenuTab from '@/components/restaurant/RestaurantMenuTab';
+import RestaurantCommentsTab from '@/components/restaurant/RestaurantCommentsTab';
 
 type RestaurantTabType = 'home' | 'menu' | 'comments';
 
@@ -38,11 +42,25 @@ export default function RestaurantDetailScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-white">
-      <View className='bg-gray-300 h-64 justify-center items-center'>
-        <Text className="text-gray-600">📍 지도 위치 정보</Text>
-        <Text className="text-gray-500 text-sm mt-2">
-          {restaurant.location.address || '주소 정보 없음'}
-        </Text>
+      <View className='h-64'>
+        <MapView
+          style={{ flex: 1 }}
+          initialRegion={{
+            latitude: restaurant.location.latitude ?? 37.5665,
+            longitude: restaurant.location.longitude ?? 126.9780,
+            latitudeDelta: 0.005,
+            longitudeDelta: 0.005,
+          }}
+        >
+          <Marker
+            coordinate={{
+              latitude: restaurant.location.latitude ?? 37.5665,
+              longitude: restaurant.location.longitude ?? 126.9780,
+            }}
+            title={restaurant.name}
+            description={restaurant.location.address || ''}
+          />
+        </MapView>
       </View>
       <ScrollView className="flex-1">
         <View className='p-4'>
@@ -89,19 +107,10 @@ export default function RestaurantDetailScreen() {
           </View>
         </View>
 
-        {restaurant.menu_summary.popular_menus.length > 0 && (
-          <View className="border-t border-gray-200 pt-4 mb-4">
-            <Text className="text-lg font-semibold mb-2">인기 메뉴</Text>
-            {restaurant.menu_summary.popular_menus.map((menu) => (
-              <View key={menu.id} className="flex-row justify-between mb-2">
-                <Text className="text-gray-700">{menu.name}</Text>
-                {menu.price && (
-                  <Text className="text-gray-600">₩{menu.price.toLocaleString()}</Text>
-                )}
-              </View>
-            ))}
-          </View>
-        )}
+        {/* 탭 콘텐츠 조건부 렌더링 */}
+        {selectedTab === 'home' && <RestaurantHomeTab restaurant={restaurant} />}
+        {selectedTab === 'menu' && <RestaurantMenuTab restaurant={restaurant} />}
+        {selectedTab === 'comments' && <RestaurantCommentsTab restaurant={restaurant} />}
       </ScrollView>
     </SafeAreaView>
   );
