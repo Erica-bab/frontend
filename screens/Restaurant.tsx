@@ -1,17 +1,31 @@
+import { useState } from 'react';
 import { View, Text } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import SearchBar from '../components/SearchBar';
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
 import RestaurantCard from '../components/RestaurantCard';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRestaurantList } from '../api/restaurants/useRestaurant';
+import { RestaurantListParams } from '../api/restaurants/types';
 
 export default function RestuarantScreen() {
-    const { data, isLoading, error } = useRestaurantList();
+    const navigation = useNavigation<NativeStackNavigationProp<any>>();
+    const [filterParams, setFilterParams] = useState<RestaurantListParams>({});
+    const { data, isLoading, error } = useRestaurantList(filterParams);
+
+    const handleFilterPress = () => {
+        navigation.navigate('Filter', {
+            onApply: (params: RestaurantListParams) => {
+                setFilterParams(params);
+            },
+        });
+    };
 
     return (
         <SafeAreaView edges={['top']} className="flex-1 bg-white">
-            <SearchBar>
+            <SearchBar onFilterPress={handleFilterPress}>
                 <Card variant="banner">
                     <View>
                         <Text className="text-white">{"일상 속 모든 순간, 한장으로\n더 똑똑한 소비의 시작 에리 체크카드"}</Text>

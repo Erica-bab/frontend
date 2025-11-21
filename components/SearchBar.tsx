@@ -6,9 +6,10 @@ import Icon from '@/components/Icon';
 
 interface SearchScreenProps {
   children?: React.ReactNode;
+  onFilterPress?: () => void;
 }
 
-export default function SearchScreen({ children }: SearchScreenProps) {
+export default function SearchScreen({ children, onFilterPress }: SearchScreenProps) {
   const navigation = useNavigation<NativeStackNavigationProp<any>>();
   const [scrollY] = useState(new Animated.Value(0));
   const STICKY_THRESHOLD = 30;
@@ -49,7 +50,7 @@ export default function SearchScreen({ children }: SearchScreenProps) {
             <Icon name="dropdown" width={10} height={13} />
           </View>
           <Pressable
-            onPress={() => navigation.navigate('Filter')}
+            onPress={onFilterPress ?? (() => navigation.navigate('Filter'))}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           >
             <Icon name="filter" />

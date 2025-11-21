@@ -1,13 +1,15 @@
 import { useState } from 'react';
 import { View, Text, Pressable, Dimensions, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import { Dropdown } from '@/components/filter/Dropdown';
 import { OptionBtn } from '@/components/filter/OptionButton';
-import CancelIcon from '@/assets/icon/cancel.svg';
+import Button from '@/components/ui/Button';
+import Icon from '@/components/Icon';
+import { filterToParams } from '@/api/restaurants/useRestaurant';
+import { RestaurantListParams } from '@/api/restaurants/types';
 
 const SCREEN_HEIGHT = Dimensions.get('window').height;
-
 
 const DAYS = ['월요일', '화요일', '수요일', '목요일', '금요일', '토요일', '일요일'];
 const FOOD_TYPES = ['전체','한식','중식','일식','양식','아시안','분식','패스트푸드']
@@ -18,6 +20,9 @@ const RESTAURANT_TYPE = ['개인식당','프랜차이즈']
 
 export default function FilterScreen() {
   const navigation = useNavigation();
+  const route = useRoute();
+  const { onApply } = route.params as { onApply?: (params: RestaurantListParams) => void } || {};
+
   const [selectedDay, setSelectedDay] = useState<string>();
   const [selectedHour, setSelectedHour] = useState<string>();
   const [selectedMin, setSelectedMin] = useState<string>();
@@ -25,6 +30,28 @@ export default function FilterScreen() {
   const [selectedFoodTypes, setSelectedFoodTypes] = useState<string[]>([]);
   const [selectedAffiliates, setSelectedAffiliates] = useState<string[]>([]);
   const [selectedRestaurantTypes, setSelectedRestaurantTypes] = useState<string[]>([]);
+
+  const handleReset = () => {
+    setSelectedDay(undefined);
+    setSelectedHour(undefined);
+    setSelectedMin(undefined);
+    setSelectedFoodTypes([]);
+    setSelectedAffiliates([]);
+    setSelectedRestaurantTypes([]);
+  };
+
+  const handleApply = () => {
+    const params = filterToParams({
+      dayOfWeek: selectedDay,
+      hour: selectedHour,
+      minute: selectedMin,
+      categories: selectedFoodTypes,
+      affiliations: selectedAffiliates,
+      subCategory: selectedRestaurantTypes[0],
+    });
+    onApply?.(params);
+    navigation.goBack();
+  };
 
   return (
     <View className="flex-1">
@@ -38,10 +65,10 @@ export default function FilterScreen() {
       >
         <SafeAreaView edges={['bottom']} className="flex-1">
           {/* 헤더 */}
-          <View className="p-5 flex-row justify-between bg-white border border-b-1 border-b-gray-100">
+          <View className="p-5 flex-row justify-between bg-white">
             <Text className="text-3xl font-bold">필터</Text>
             <Pressable onPress={() => navigation.goBack()}>
-              <CancelIcon />
+              <Icon name="cancel" />
             </Pressable>
           </View>
 
@@ -144,6 +171,16 @@ export default function FilterScreen() {
               ))}
             </View>
           </ScrollView>
+
+          {/* 하단 버튼 */}
+          <View className="flex-row gap-2 p-4 bg-white">
+            <Button variant="secondary" onPress={handleReset} className="flex-1">
+              초기화
+            </Button>
+            <Button onPress={handleApply} className="flex-1">
+              적용
+            </Button>
+          </View>
         </SafeAreaView>
       </View>
     </View>
