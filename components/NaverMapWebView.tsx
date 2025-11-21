@@ -23,6 +23,8 @@ export default function NaverMapWebView({ latitude, longitude, name }: NaverMapW
         )}
         javaScriptEnabled={true}
         domStorageEnabled={true}
+        bounces={false}
+        scrollEnabled={false}
       />
     </View>
   );

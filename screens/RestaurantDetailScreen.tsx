@@ -49,13 +49,13 @@ export default function RestaurantDetailScreen() {
           name={restaurant.name}
         />
       </View>
-      <ScrollView className="flex-1">
-        <View className='p-4'>
-          <View className="flex-row items-center p-4">
-            <Text className="text-lg text-blue-500">{restaurant.name}</Text>
-            <Text className="ml-1">{restaurant.category}</Text>
+      <View className="flex-1">
+        <View>
+          <View className="flex-row items-center m-4">
+            <Text className="text-xl text-blue-500">{restaurant.name}</Text>
+            <Text className="text-lg ml-1">{restaurant.category}</Text>
           </View>
-          <View className='ml-4'>
+          <View className='ml-4 mb-4'>
             <RestaurantStatusTag
               status={restaurant.status as '영업중' | '영업종료' | '브레이크타임'}
               rating={restaurant.rating.average}
@@ -98,7 +98,7 @@ export default function RestaurantDetailScreen() {
         {selectedTab === 'home' && <RestaurantHomeTab restaurant={restaurant} />}
         {selectedTab === 'menu' && <RestaurantMenuTab restaurant={restaurant} />}
         {selectedTab === 'comments' && <RestaurantCommentsTab restaurant={restaurant} />}
-      </ScrollView>
+      </View>
     </SafeAreaView>
   );
 }

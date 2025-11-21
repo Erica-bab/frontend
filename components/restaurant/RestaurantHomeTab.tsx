@@ -1,38 +1,119 @@
-import { View, Text } from 'react-native';
-import { RestaurantDetailResponse } from '@/api/restaurants/types';
+import { View,ScrollView, Text } from 'react-native';
+import { RestaurantDetailResponse, BusinessHoursDay } from '@/api/restaurants/types';
+import Icon from '@/components/Icon';
 
 interface RestaurantHomeTabProps {
   restaurant: RestaurantDetailResponse;
 }
 
-export default function RestaurantHomeTab({ restaurant }: RestaurantHomeTabProps) {
-  return (
-    <View className="p-4">
-      <Text className="text-lg font-semibold mb-2">정보</Text>
-      <Text className="text-gray-600 mb-1">
-        📍 {restaurant.location.address || '주소 정보 없음'}
-      </Text>
-      {restaurant.phone && (
-        <Text className="text-gray-600 mb-1">📞 {restaurant.phone}</Text>
-      )}
-      <Text className="text-gray-600 mb-1">
-        ⭐ {restaurant.rating.average.toFixed(1)} ({restaurant.rating.count}개 리뷰)
-      </Text>
-      {restaurant.menu_summary.average_price && (
-        <Text className="text-gray-600 mb-1">
-          💰 평균 가격: ₩{restaurant.menu_summary.average_price.toLocaleString()}
-        </Text>
-      )}
-      <Text className="text-gray-600 mb-1">
-        📝 댓글 {restaurant.comment_summary.total_count}개
-      </Text>
+type DayKey = '일' | '월' | '화' | '수' | '목' | '금' | '토';
 
-      {restaurant.description && (
-        <View className="mt-4">
-          <Text className="text-lg font-semibold mb-2">소개</Text>
-          <Text className="text-gray-700">{restaurant.description}</Text>
+function getNextEvent(businessHours: BusinessHoursDay | null | undefined): string | null {
+  if (!businessHours) return null;
+  if (businessHours.is_closed) return '휴무일';
+
+  const now = new Date();
+  const currentTime = now.getHours() * 60 + now.getMinutes();
+
+  const timeToMinutes = (time: string): number => {
+    const [h, m] = time.split(':').map(Number);
+    return h * 60 + m;
+  };
+
+  const events: { label: string; time: number }[] = [];
+
+  if (businessHours.open_time) {
+    events.push({ label: '오픈', time: timeToMinutes(businessHours.open_time) });
+  }
+  if (businessHours.break_start) {
+    events.push({ label: '브레이크타임', time: timeToMinutes(businessHours.break_start) });
+  }
+  if (businessHours.break_end) {
+    events.push({ label: '브레이크타임 종료', time: timeToMinutes(businessHours.break_end) });
+  }
+  if (businessHours.last_order) {
+    events.push({ label: '라스트오더', time: timeToMinutes(businessHours.last_order) });
+  }
+  if (businessHours.close_time) {
+    events.push({ label: '마감', time: timeToMinutes(businessHours.close_time) });
+  }
+
+  const futureEvents = events.filter(e => e.time > currentTime);
+  if (futureEvents.length === 0) return null;
+
+  futureEvents.sort((a, b) => a.time - b.time);
+  const next = futureEvents[0];
+
+  const hours = Math.floor(next.time / 60).toString().padStart(2, '0');
+  const mins = (next.time % 60).toString().padStart(2, '0');
+
+  return `${hours}:${mins} ${next.label}`;
+}
+
+function formatDayHours(hours: BusinessHoursDay | null | undefined): string[] {
+  if (!hours) return [];
+  if (hours.is_closed) return ['휴무일'];
+
+  const lines: string[] = [];
+
+  if (hours.open_time && hours.close_time) {
+    lines.push(`${hours.open_time} - ${hours.close_time}`);
+  }
+  if (hours.break_start && hours.break_end) {
+    lines.push(`${hours.break_start} - ${hours.break_end} 브레이크타임`);
+  }
+  if (hours.last_order) {
+    lines.push(`${hours.last_order} 라스트오더`);
+  }
+
+  return lines;
+}
+
+export default function RestaurantHomeTab({ restaurant }: RestaurantHomeTabProps) {
+  const dayOrder: DayKey[] = ['월', '화', '수', '목', '금', '토', '일'];
+  const dayMap: DayKey[] = ['일', '월', '화', '수', '목', '금', '토'];
+  const today = dayMap[new Date().getDay()];
+  const todayHours = restaurant.business_hours[today];
+  const nextEvent = getNextEvent(todayHours);
+
+  return (
+    <ScrollView className="p-4 gap-2">
+      <View className='flex-row gap-4 mb-4 items-center'>
+        <Icon name='location'/>
+        <Text>{restaurant.description}</Text>
+      </View>
+      <View className='flex-row gap-4 mb-4'>
+        <Icon name='clock'/>
+        <View>
+          <View className='flex-row'>
+            <Text className='mb-2'>{restaurant.status}{nextEvent ? ` · ${nextEvent}` : ''}</Text>
+            <Icon name=''>
+          </View>
+          
+          {<View className='mt-2 gap-2'>
+          {dayOrder.map((day) => {
+            const hours = restaurant.business_hours[day];
+            const lines = formatDayHours(hours);
+            const isToday = day === today;
+
+            return (
+              <View key={day} className='gap-1'>
+                <Text className={isToday ? 'font-bold' : ''}>{day}</Text>
+                {lines.length > 0 ? (
+                  lines.map((line, idx) => (
+                    <Text key={idx} className={isToday?'text-gray-600 font-bold':'text-gray-600'}>{line}</Text>
+                  ))
+                ) : (
+                  <Text className='text-gray-400 ml-2'>정보 없음</Text>
+                )}
+              </View>
+              );
+            })}
+          </View>}
         </View>
-      )}
-    </View>
+        
+      </View>
+      
+    </ScrollView>
   );
 }
