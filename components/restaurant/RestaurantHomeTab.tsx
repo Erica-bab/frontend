@@ -79,10 +79,10 @@ export default function RestaurantHomeTab({ restaurant }: RestaurantHomeTabProps
   const nextEvent = getNextEvent(todayHours);
 
   return (
-    <ScrollView className="p-4 gap-2">
+    <View className="p-4 gap-2">
       <View className='flex-row gap-4 mb-4 items-center'>
         <Icon name='location' color="rgba(107, 114, 128, 1)"/>
-        <Text>{restaurant.description}</Text>
+        <Text>{restaurant.location.address}</Text>
       </View>
       <View className='flex-row gap-4 mb-4'>
         <Icon name='clock' color="rgba(107, 114, 128, 1)"/>
@@ -129,6 +129,6 @@ export default function RestaurantHomeTab({ restaurant }: RestaurantHomeTabProps
           <Text>제휴 · {restaurant.affiliations.map(a => a.college_name).join(' · ')}</Text>
         </View>
       )}
-    </ScrollView>
+    </View>
   );
 }

@@ -25,7 +25,7 @@ export default function RestaurantMenuTab({ restaurant }: RestaurantMenuTabProps
     : mockMenus.length;
 
   return (
-    <ScrollView>
+    <View>
       {menus.map((menu) => (
         <View key={menu.id} className="bg-white border-b border-gray-200 flex-row p-4">
           <View className="p-4 flex-1 justify-center">
@@ -43,6 +43,6 @@ export default function RestaurantMenuTab({ restaurant }: RestaurantMenuTabProps
         </View>
       ))}
       <Text className="text-gray-500 text-sm p-4">총 {totalCount}개의 메뉴</Text>
-    </ScrollView>
+    </View>
   );
 }

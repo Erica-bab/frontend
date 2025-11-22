@@ -8,9 +8,9 @@ import CafeteriaScreen from './screens/CafeteriaScreen';
 import RestuarantScreen from './screens/Restaurant';
 import CafeScreen from './screens/CafeScreen';
 import ProfileScreen from './screens/ProfileScreen';
-import CommentScreen from './screens/CommentScreen';
 import FilterScreen from './screens/FilterScreen';
 import RestaurantDetailScreen from './screens/RestaurantDetailScreen';
+import CommentDetailScreen from './screens/CommentsDetailScreen';
 
 import MyIcon from './assets/icon/tabicon/my.svg';
 import CafeIcon from './assets/icon/tabicon/cafe.svg';
@@ -74,17 +74,6 @@ function TabNavigator() {
           ),
         }}
       />
-
-      <Tab.Screen
-        name="test"
-        component={CommentScreen}
-        options={{
-          title: 'test',
-          tabBarIcon: ({ color, size }) => (
-            <MyIcon width={size} height={size} color={color} />
-          ),
-        }}
-      />
     </Tab.Navigator>
   );
 }
@@ -108,6 +97,13 @@ export default function App() {
             <Stack.Screen
               name="RestaurantDetail"
               component={RestaurantDetailScreen}
+              options={{
+                headerShown: false,
+              }}
+            />
+            <Stack.Screen
+              name="CommentDetail"
+              component={CommentDetailScreen}
               options={{
                 headerShown: false,
               }}
