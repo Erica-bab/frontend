@@ -78,7 +78,7 @@ function CommentItem({ comment, restaurantId }: CommentItemProps) {
         <Text className="text-blue-500">
           {comment.replies.length > 0 ? `답글 ${comment.replies.length}개` : '답글쓰기'}
         </Text>
-        <Icon name="rightAngle" size={8} color="#3B82F6" />
+        <Icon name="rightAngle" size={8} color="black" />
       </Pressable>
     </View>
   );

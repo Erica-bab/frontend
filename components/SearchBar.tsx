@@ -155,21 +155,23 @@ export default function SearchScreen({ children, onFilterPress }: SearchScreenPr
         <View className='w-full rounded-full flex-row justify-between items-center px-4 py-2 bg-gray-100'>
           <TextInput
             placeholder="찾아라! 에리카의 맛집"
-            className="flex-1 text-base items-center justify-center p-1"
+            className="flex-1 text-base p-1"
             placeholderTextColor="#9CA3AF"
             value={searchText}
             onChangeText={setSearchText}
             onSubmitEditing={handleSearch}
             returnKeyType="search"
+            style={{ lineHeight: 16 }}
           />
           {searchText.length > 0 ? (
-            <Pressable onPress={handleClearSearch} className="mr-2">
-              <Icon name="cancel" size={20} color="#9CA3AF" />
+            <Pressable onPress={handleClearSearch}>
+              <Icon name="cancel" size={15} color="#9CA3AF" />
             </Pressable>
-          ) : null}
-          <Pressable onPress={handleSearch}>
-            <Icon name="search" width={35}/>
-          </Pressable>
+          ) : (
+            <Pressable onPress={handleSearch}>
+              <Icon name="search" width={35}/>
+            </Pressable>
+          )}
         </View>
       </View>
 

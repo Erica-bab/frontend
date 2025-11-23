@@ -1,7 +1,9 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { View, Text, Pressable, Dimensions, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
+import { Gesture, GestureDetector } from 'react-native-gesture-handler';
+import Animated, { useSharedValue, useAnimatedStyle, withTiming, runOnJS } from 'react-native-reanimated';
 import { Dropdown } from '@/components/filter/Dropdown';
 import { OptionBtn } from '@/components/filter/OptionButton';
 import Button from '@/components/ui/Button';
@@ -10,6 +12,8 @@ import { filterToParams } from '@/api/restaurants/useRestaurant';
 import { RestaurantListParams } from '@/api/restaurants/types';
 
 const SCREEN_HEIGHT = Dimensions.get('window').height;
+const MAX_TRANSLATE_Y = -SCREEN_HEIGHT * 0.15; // 위로 더 올릴 수 있음 (95%)
+const DISMISS_THRESHOLD = SCREEN_HEIGHT * 0.15; // 이만큼 내리면 닫힘
 
 const DAYS = ['월요일', '화요일', '수요일', '목요일', '금요일', '토요일', '일요일'];
 const FOOD_TYPES = ['전체','한식','중식','일식','양식','아시안','분식','패스트푸드']
@@ -30,6 +34,36 @@ export default function FilterScreen() {
   const [selectedFoodTypes, setSelectedFoodTypes] = useState<string[]>([]);
   const [selectedAffiliates, setSelectedAffiliates] = useState<string[]>([]);
   const [selectedRestaurantTypes, setSelectedRestaurantTypes] = useState<string[]>([]);
+
+  const translateY = useSharedValue(0);
+  const context = useSharedValue({ y: 0 });
+
+  const goBack = useCallback(() => {
+    navigation.goBack();
+  }, [navigation]);
+
+  const gesture = Gesture.Pan()
+    .onStart(() => {
+      context.value = { y: translateY.value };
+    })
+    .onUpdate((event) => {
+      // 손가락 따라 자유롭게 이동 (위로는 MAX_TRANSLATE_Y까지, 아래로는 무제한)
+      const newValue = event.translationY + context.value.y;
+      translateY.value = Math.max(newValue, MAX_TRANSLATE_Y);
+    })
+    .onEnd(() => {
+      // 아래로 일정 이상 내리면 닫기
+      if (translateY.value > DISMISS_THRESHOLD) {
+        runOnJS(goBack)();
+      } else {
+        // 기본 위치로 스냅 (바운스 없이)
+        translateY.value = withTiming(0, { duration: 200 });
+      }
+    });
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: translateY.value }],
+  }));
 
   const handleReset = () => {
     setSelectedDay(undefined);
@@ -59,14 +93,19 @@ export default function FilterScreen() {
       <Pressable className="flex-1" onPress={() => navigation.goBack()} />
 
       {/* 80% 올라오는 컨텐츠 */}
-      <View
-        className="bg-white rounded-t-3xl"
-        style={{ height: SCREEN_HEIGHT * 0.8 }}
-      >
+      <GestureDetector gesture={gesture}>
+        <Animated.View
+          className="bg-white rounded-t-3xl"
+          style={[{ height: SCREEN_HEIGHT * 0.8 }, animatedStyle]}
+        >
         <SafeAreaView edges={['bottom']} className="flex-1">
+          {/* 드래그 핸들 */}
+          <View className="items-center pt-3 pb-1">
+            <View className="w-10 h-1 bg-gray-300 rounded-full" />
+          </View>
           {/* 헤더 */}
-          <View className="p-5 flex-row justify-between bg-white">
-            <Text className="text-3xl font-bold">필터</Text>
+          <View className="px-5 pb-5 flex-row justify-between bg-white">
+            <Text className="text-2xl font-bold">필터</Text>
             <Pressable onPress={() => navigation.goBack()}>
               <Icon name="cancel" />
             </Pressable>
@@ -74,7 +113,7 @@ export default function FilterScreen() {
 
           {/* 스크롤 가능한 컨텐츠 */}
           <ScrollView className="flex-1 px-4" contentContainerStyle={{ paddingBottom: 20 }}>
-            <Text className="pt-4 text-2xl font-bold mb-4">운영시간</Text>
+            <Text className="pt-4 text-xl font-bold mb-4">운영시간</Text>
             <View className='flex-row gap-2 flex-wrap'>
               <Dropdown
                 label="요일"
@@ -106,7 +145,7 @@ export default function FilterScreen() {
             </View>
 
             <View className="h-px w-full bg-gray-100 my-4" />
-            <Text className="text-2xl font-bold mb-4">음식 종류</Text>
+            <Text className="text-xl font-bold mb-4">음식 종류</Text>
             <View className='flex-row gap-2 flex-wrap'>
               {FOOD_TYPES.map((name,idx)=>(
                 <OptionBtn
@@ -135,7 +174,7 @@ export default function FilterScreen() {
               ))}
             </View>
             <View className="h-px w-full bg-gray-100 my-4" />
-            <Text className="text-2xl font-bold mb-4">제휴</Text>
+            <Text className="text-xl font-bold mb-4">제휴</Text>
             <View className='flex-row gap-2 flex-wrap'>
               {AFFILIATE.map((name,idx)=>(
                 <OptionBtn
@@ -153,7 +192,7 @@ export default function FilterScreen() {
               ))}
             </View>
             <View className="h-px w-full bg-gray-100 my-4" />
-            <Text className="text-2xl font-bold mb-4">식당종류</Text>
+            <Text className="text-xl font-bold mb-4">식당종류</Text>
             <View className='flex-row gap-2 flex-wrap'>
               {RESTAURANT_TYPE.map((name,idx)=>(
                 <OptionBtn
@@ -182,7 +221,8 @@ export default function FilterScreen() {
             </Button>
           </View>
         </SafeAreaView>
-      </View>
+        </Animated.View>
+      </GestureDetector>
     </View>
   );
 }

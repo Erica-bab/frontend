@@ -1,4 +1,4 @@
-import { View, Text,Pressable } from 'react-native';
+import { View, Text, Pressable, Image } from 'react-native';
 import Card from '@/components/ui/Card';
 import RestaurantStatusTag from '@/components/ui/RestaurantStatusTag';
 import Icon from '@/components/Icon';
@@ -12,11 +12,13 @@ interface RestaurantCardProps {
   rating: number;
   comment?: string;
   restaurantId?: string;
+  thumbnailUrls?: string[];
 }
 
-export default function RestaurantCard({ name, category, status, rating, comment, restaurantId }: RestaurantCardProps) {
+export default function RestaurantCard({ name, category, status, rating, comment, restaurantId, thumbnailUrls }: RestaurantCardProps) {
   const navigation = useNavigation<NativeStackNavigationProp<any>>();
-  const displayComment = comment || "치즈돈가스가 등김카츠보다 시간이 더 걸린다는 건 알았지만 이건 너무 대기 시간이 길어서 짜증났어요 진짜 최악이었습니다";
+  const displayComment = comment || null;
+  const displayThumbnails = thumbnailUrls?.slice(0, 3) || [];
 
   return (
     <Card className='bg-white border border-gray-100'>
@@ -25,14 +27,26 @@ export default function RestaurantCard({ name, category, status, rating, comment
         <Text className="ml-1">{category}</Text>
       </View>
       <RestaurantStatusTag status={status} rating={rating} />
-      <View className='bg-gray-500 h-[100px]'>
-      </View>
-      <View className= 'bg-gray-100 flex-row rounded-lg p-4 w-full justify-between items-center gap-2'>
+      {displayThumbnails.length > 0 ? (
+        <View className="flex-row gap-2 h-[100px]">
+          {displayThumbnails.map((url, index) => (
+            <Image
+              key={index}
+              source={{ uri: url }}
+              className="flex-1 h-full rounded-lg"
+              resizeMode="cover"
+            />
+          ))}
+        </View>
+      ) : (
+        <View className='bg-gray-200 h-[100px] rounded-lg' />
+      )}
+      {displayComment && <View className= 'bg-gray-100 flex-row rounded-lg p-4 w-full justify-between items-center gap-2'>
         <Text className='text-gray-500 flex-1' numberOfLines={2}>
           {displayComment}
         </Text>
         <Icon name='rightAngle' width={8}/>
-      </View>
+      </View>}
       <Pressable
         onPress={() => navigation.navigate('RestaurantDetail', { restaurantId })}
         className='w-full justify-center items-center bg-blue-500 p-1 rounded-lg'
