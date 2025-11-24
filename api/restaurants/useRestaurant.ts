@@ -8,6 +8,8 @@ import {
   CreateRatingRequest,
   CreateCommentRequest,
   CommentItem,
+  SearchParams,
+  SearchResponse,
 } from './types';
 
 // 카테고리 매핑
@@ -150,5 +152,17 @@ export const useCreateComment = (restaurantId: number) => {
       queryClient.invalidateQueries({ queryKey: ['restaurant', restaurantId, 'comments'] });
       queryClient.invalidateQueries({ queryKey: ['restaurant', restaurantId] });
     },
+  });
+};
+
+// 통합 검색
+export const useRestaurantSearch = (params: SearchParams) => {
+  return useQuery({
+    queryKey: ['restaurantSearch', params],
+    queryFn: async () => {
+      const { data } = await apiClient.get<SearchResponse>('/restaurants/search', { params });
+      return data;
+    },
+    enabled: !!params.q && params.q.length > 0,
   });
 };

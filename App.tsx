@@ -3,14 +3,15 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import CafeteriaScreen from './screens/CafeteriaScreen';
 import RestuarantScreen from './screens/Restaurant';
 import CafeScreen from './screens/CafeScreen';
 import ProfileScreen from './screens/ProfileScreen';
-import CommentScreen from './screens/CommentScreen';
 import FilterScreen from './screens/FilterScreen';
 import RestaurantDetailScreen from './screens/RestaurantDetailScreen';
+import CommentDetailScreen from './screens/CommentsDetailScreen';
 
 import MyIcon from './assets/icon/tabicon/my.svg';
 import CafeIcon from './assets/icon/tabicon/cafe.svg';
@@ -69,17 +70,11 @@ function TabNavigator() {
         component={ProfileScreen}
         options={{
           title: '마이',
-          tabBarIcon: ({ color, size }) => (
-            <MyIcon width={size} height={size} color={color} />
-          ),
-        }}
-      />
-
-      <Tab.Screen
-        name="test"
-        component={CommentScreen}
-        options={{
-          title: 'test',
+          headerShown: true,
+          headerTitle: '프로필',
+          headerStyle: { backgroundColor: '#3B82F6' },
+          headerTintColor: '#FFFFFF',
+          headerTitleStyle: { fontWeight: 'bold' },
           tabBarIcon: ({ color, size }) => (
             <MyIcon width={size} height={size} color={color} />
           ),
@@ -91,30 +86,39 @@ function TabNavigator() {
 
 export default function App() {
   return (
-    <SafeAreaProvider>
-      <QueryClientProvider client={queryClient}>
-        <NavigationContainer>
-          <Stack.Navigator screenOptions={{ headerShown: false }}>
-            <Stack.Screen name="MainTabs" component={TabNavigator} />
-            <Stack.Screen
-              name="Filter"
-              component={FilterScreen}
-              options={{
-                headerShown: false,
-                presentation: 'transparentModal',
-                animation: 'slide_from_bottom',
-              }}
-            />
-            <Stack.Screen
-              name="RestaurantDetail"
-              component={RestaurantDetailScreen}
-              options={{
-                headerShown: false,
-              }}
-            />
-          </Stack.Navigator>
-        </NavigationContainer>
-      </QueryClientProvider>
-    </SafeAreaProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <SafeAreaProvider>
+        <QueryClientProvider client={queryClient}>
+          <NavigationContainer>
+            <Stack.Navigator screenOptions={{ headerShown: false }}>
+              <Stack.Screen name="MainTabs" component={TabNavigator} />
+              <Stack.Screen
+                name="Filter"
+                component={FilterScreen}
+                options={{
+                  headerShown: false,
+                  presentation: 'transparentModal',
+                  animation: 'slide_from_bottom',
+                }}
+              />
+              <Stack.Screen
+                name="RestaurantDetail"
+                component={RestaurantDetailScreen}
+                options={{
+                  headerShown: false,
+                }}
+              />
+              <Stack.Screen
+                name="CommentDetail"
+                component={CommentDetailScreen}
+                options={{
+                  headerShown: false,
+                }}
+              />
+            </Stack.Navigator>
+          </NavigationContainer>
+        </QueryClientProvider>
+      </SafeAreaProvider>
+    </GestureHandlerRootView>
   );
 }
