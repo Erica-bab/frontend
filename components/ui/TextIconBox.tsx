@@ -38,7 +38,7 @@ const stylePreset = {
 interface TextIconBoxProps {
   preset?: keyof typeof stylePreset;
   boxClass?: string;
-  icon: IconName;
+  icon?: IconName;
   text?: string;
   textClass?: string;
   iconSize?: number;

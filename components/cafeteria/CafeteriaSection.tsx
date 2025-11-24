@@ -9,6 +9,9 @@ interface CafeteriaSectionProps {
   restaurant: Restaurant;
   mealType: MealType;
   menus: MealItem[];
+  latitude: number;
+  longitude: number;
+  viewName?: string;
 }
 
 // MealType(조/중/석) → open_times 키 매핑
@@ -30,6 +33,9 @@ export default function CafeteriaSection({
   restaurant,
   mealType,
   menus,
+  latitude,
+  longitude,
+  viewName,
 }: CafeteriaSectionProps) {
   const openKey = mealTypeToOpenKey[mealType];
   const openTime = restaurant.open_times[openKey];
@@ -79,6 +85,9 @@ export default function CafeteriaSection({
             menu={menu.korean_name}
             location={locationText}
             sortModeType={sortModeType}
+            latitude={latitude}
+            longitude={longitude}
+            viewName={viewName}
           />
         </View>
       ))}

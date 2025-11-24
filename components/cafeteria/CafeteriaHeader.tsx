@@ -2,7 +2,6 @@ import { View, Text } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { RestaurantCode, MealType } from '@/api/cafeteria/types';
 import TextIconButton from '@/components/ui/TextIconButton';
-import Icon from '@/components/Icon';
 
 type sortType = 'time' | 'location';
 

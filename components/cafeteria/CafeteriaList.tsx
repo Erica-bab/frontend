@@ -69,9 +69,7 @@ export default function CafeteriaList({
     );
   }
 
-  // --- 정렬 모드에 따라 슬라이싱 ---
-
-  // 1) 시간 기준 모드: 한 식당의 조/중/석 섹션들
+  // 시간 
   if (sortModeType === 'time') {
     const restaurant = data.restaurants.find(
       r => r.restaurant_code === selectedLocation,
@@ -98,6 +96,9 @@ export default function CafeteriaList({
               restaurant={restaurant}
               mealType={mealType}
               menus={menus}
+              latitude={Number(restaurant.latitude)}
+              longitude={Number(restaurant.longitude)}
+              viewName={restaurant.restaurant_name}
             />
           );
         })}
@@ -105,7 +106,7 @@ export default function CafeteriaList({
     );
   }
 
-  // 2) 장소 기준 모드: 한 시간대의 여러 식당 섹션들
+  // 장소 
   const targetMealType = selectedTime;
 
   return (
@@ -121,6 +122,9 @@ export default function CafeteriaList({
             restaurant={restaurant}
             mealType={targetMealType}
             menus={menus}
+            latitude={Number(restaurant.latitude)}
+            longitude={Number(restaurant.longitude)}
+            viewName={restaurant.restaurant_name}
           />
         );
       })}
