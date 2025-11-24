@@ -10,7 +10,7 @@ export const apiClient = axios.create({
         'Content-Type': 'application/json',
     },
 });
-
+    
 
 apiClient.interceptors.request.use(
     async (config: any) => {
@@ -19,6 +19,13 @@ apiClient.interceptors.request.use(
         if (accessToken) {
             config.headers.Authorization = `Bearer ${accessToken}`;
         }
+
+        // 디버깅: 요청 로그
+        console.log('API Request:', {
+            url: config.url,
+            method: config.method,
+            data: config.data,
+        });
 
         return config;
     },
@@ -30,9 +37,22 @@ apiClient.interceptors.request.use(
 
 apiClient.interceptors.response.use(
     (response: any) => {
+        // 디버깅: 응답 로그
+        console.log('API Response:', {
+            url: response.config.url,
+            status: response.status,
+            data: response.data,
+        });
         return response;
     },
     async (error: any) => {
+        // 디버깅: 에러 로그
+        console.error('API Error:', {
+            url: error.config?.url,
+            status: error.response?.status,
+            data: error.response?.data,
+            message: error.message,
+        });
         const originalRequest = error.config;
         if (error.response?.status === 401 && !originalRequest._retry) {
             originalRequest._retry = true;

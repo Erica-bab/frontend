@@ -1,7 +1,8 @@
 import * as Google from 'expo-auth-session/providers/google';
 import * as WebBrowser from 'expo-web-browser';
 import { makeRedirectUri } from 'expo-auth-session';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
+import { Platform } from 'react-native';
 import { useGoogleLogin } from '@/api/auth/useAuth';
 
 // 웹 브라우저 세션 완료 처리
@@ -14,38 +15,82 @@ const GOOGLE_ANDROID_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_I
 
 export const useGoogleSignIn = (onSuccess?: () => void) => {
   const { mutate: googleLogin, isPending, isError, error } = useGoogleLogin();
+  const isProcessing = useRef(false);
 
-  // iOS는 reversed client ID를 scheme으로 사용
+  // iOS는 iOS Client ID의 reversed scheme 사용
   const redirectUri = makeRedirectUri({
     scheme: 'com.googleusercontent.apps.1041029378289-puugfhcoucnpvmi8bk8k2a5uapiaak38',
   });
 
   console.log('Google OAuth redirectUri:', redirectUri);
+  console.log('Platform:', Platform.OS);
 
   const [request, response, promptAsync] = Google.useAuthRequest({
     clientId: GOOGLE_WEB_CLIENT_ID,
     iosClientId: GOOGLE_IOS_CLIENT_ID || GOOGLE_WEB_CLIENT_ID,
     androidClientId: GOOGLE_ANDROID_CLIENT_ID || GOOGLE_WEB_CLIENT_ID,
     redirectUri,
-    responseType: 'id_token',
     scopes: ['openid', 'profile', 'email'],
   });
 
   useEffect(() => {
-    if (response?.type === 'success') {
+    // 이미 처리 중이면 무시
+    if (isProcessing.current) {
+      console.log('Already processing, skipping...');
+      return;
+    }
+    if (!response) return;
+
+    console.log('OAuth response type:', response.type);
+
+    // 에러 처리
+    if (response.type === 'error') {
+      console.error('OAuth error:', response.error);
+      return;
+    }
+
+    // 사용자 취소
+    if (response.type === 'dismiss' || response.type === 'cancel') {
+      console.log('OAuth cancelled by user');
+      return;
+    }
+
+    // 성공 처리
+    if (response.type === 'success') {
+      console.log('OAuth success, params:', response.params);
+
+      // 처리 중 플래그 설정
+      isProcessing.current = true;
+
+      // iOS, Android, Web 모두 ID Token 사용
       const { id_token } = response.params;
       if (id_token) {
+        console.log('Sending id_token to backend (platform:', Platform.OS + ')');
         googleLogin(
           { id_token },
           {
             onSuccess: () => {
+              console.log('Backend login success');
               onSuccess?.();
+              isProcessing.current = false;
+            },
+            onError: (error: any) => {
+              console.error('Backend login failed:', error);
+              console.error('Error details:', {
+                message: error?.message,
+                response: error?.response?.data,
+                status: error?.response?.status,
+              });
+              isProcessing.current = false;
             },
           }
         );
+      } else {
+        console.error('No id_token in response:', response.params);
+        isProcessing.current = false;
       }
     }
-  }, [response, googleLogin, onSuccess]);
+  }, [response]);
 
   const signIn = async () => {
     if (!request) {

@@ -16,7 +16,7 @@ export default function LoginPopup({ visible, onClose, onLoginSuccess }: LoginPo
   const slideAnim = useRef(new Animated.Value(SCREEN_HEIGHT)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
-  const { signIn, isLoading, isReady } = useGoogleSignIn(() => {
+  const { signIn, isLoading, isReady, isError, error } = useGoogleSignIn(() => {
     onClose();
     onLoginSuccess?.();
   });
@@ -98,6 +98,19 @@ export default function LoginPopup({ visible, onClose, onLoginSuccess }: LoginPo
                 </Text>
               )}
             </Pressable>
+
+            {isError && (
+              <View className="mb-3 p-3 bg-red-50 rounded-lg">
+                <Text className="text-red-600 text-sm text-center">
+                  로그인에 실패했습니다. 다시 시도해주세요.
+                </Text>
+                {error && (
+                  <Text className="text-red-500 text-xs text-center mt-1">
+                    {String(error)}
+                  </Text>
+                )}
+              </View>
+            )}
 
             <Pressable
               className="py-4 bg-black rounded-xl"

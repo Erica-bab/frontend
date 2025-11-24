@@ -9,7 +9,6 @@ export interface User {
   email: string;
   student_year: string | null;
   college: College | null;
-  student_type: 'student' | 'professor' | 'staff';
   contribution_count: number;
   edit_count: number;
   last_login_at: string;
@@ -22,7 +21,9 @@ export interface AuthConfig {
 }
 
 export interface GoogleLoginRequest {
-  id_token: string;
+  id_token?: string;  // 웹/안드로이드용
+  authorization_code?: string;  // iOS용
+  redirect_uri?: string;  // iOS용 (Authorization Code 사용 시 필수)
 }
 
 export interface AuthResponse {
@@ -43,5 +44,4 @@ export interface TokenResponse {
 export interface UpdateUserRequest {
   student_year?: string;
   college_id?: number;
-  student_type?: string;
 }
