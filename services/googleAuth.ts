@@ -15,9 +15,9 @@ const GOOGLE_ANDROID_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_I
 export const useGoogleSignIn = (onSuccess?: () => void) => {
   const { mutate: googleLogin, isPending, isError, error } = useGoogleLogin();
 
+  // iOS는 reversed client ID를 scheme으로 사용
   const redirectUri = makeRedirectUri({
-    scheme: 'com.efoo.front',
-    path: 'redirect',
+    scheme: 'com.googleusercontent.apps.1041029378289-puugfhcoucnpvmi8bk8k2a5uapiaak38',
   });
 
   console.log('Google OAuth redirectUri:', redirectUri);

@@ -3,6 +3,7 @@ export default {
     name: "front",
     slug: "front",
     version: "1.0.0",
+    scheme: "com.googleusercontent.apps.1041029378289-puugfhcoucnpvmi8bk8k2a5uapiaak38",
     extra: {
       eas: {
         projectId: "3536b605-1fa3-4649-aae3-4ccc299ae2f4"
