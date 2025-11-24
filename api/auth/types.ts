@@ -9,6 +9,7 @@ export interface User {
   email: string;
   student_year: string | null;
   college: College | null;
+  student_type: 'student' | 'professor' | 'staff';
   contribution_count: number;
   edit_count: number;
   last_login_at: string;
@@ -42,4 +43,5 @@ export interface TokenResponse {
 export interface UpdateUserRequest {
   student_year?: string;
   college_id?: number;
+  student_type?: string;
 }

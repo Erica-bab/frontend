@@ -3,9 +3,9 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { apiClient } from '../client';
 import {
-  AuthConfig,
   GoogleLoginRequest,
   AuthResponse,
+  TokenResponse,
   User,
   UpdateUserRequest,
 } from './types';
@@ -35,18 +35,6 @@ export const useAuth = () => {
   }, [checkAuth]);
 
   return { isAuthenticated, isLoading, refreshAuthState };
-};
-
-// Auth Config 조회 (Google Client ID 등)
-export const useAuthConfig = () => {
-  return useQuery({
-    queryKey: ['authConfig'],
-    queryFn: async () => {
-      const { data } = await apiClient.get<AuthConfig>('/auth/config');
-      return data;
-    },
-    staleTime: Infinity, // 앱 실행 중 캐시 유지
-  });
 };
 
 // Google 로그인
@@ -116,6 +104,19 @@ export const useUpdateUser = () => {
     },
     onSuccess: (data) => {
       queryClient.setQueryData(['currentUser'], data);
+    },
+  });
+};
+
+// Access Token 갱신
+export const useRefreshToken = () => {
+  return useMutation({
+    mutationFn: async () => {
+      const { data } = await apiClient.post<TokenResponse>('/auth/refresh');
+      return data;
+    },
+    onSuccess: async (data) => {
+      await AsyncStorage.setItem('accessToken', data.access_token);
     },
   });
 };
