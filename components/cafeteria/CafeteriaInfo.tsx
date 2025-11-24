@@ -28,7 +28,7 @@ export default function CafeteriaInfo({ name = "천원의 아침밥", price = "1
         boxClass="justify-center bg-[#2563EB] rounded-2xl border-[#2563EB] border-2 mt-2"
         textClass="text-[#2563EB] font-bold text-base text-[#FFFFFF]"
         text={location}
-        icon={locationIcon}
+        icon="location"
         />
     </View>
   );

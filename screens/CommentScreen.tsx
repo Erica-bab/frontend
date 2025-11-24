@@ -1,32 +1,63 @@
-import { View, Text } from 'react-native';
-import Comments from '../components/ui/Comments';
-import TextIconBox from '../components/ui/TextIconBox';
-import CafeteriaInfo from '../components/cafeteria/CafeteriaInfo';
-import LocationIcon from '../assets/icon/location.svg';
+import { View, Text, ScrollView } from 'react-native';
+import { useState } from 'react';
+import { useCafeteria } from '@/api/cafeteria/useCafeteria';
+import { CafeteriaResponse, CafeteriaParams } from '@/api/cafeteria/types';
+
 
 export default function CommentScreen() {
+    const [cafeteriaParams, setCafeteriaParams] = useState<CafeteriaParams>({});
+    const { data, isLoading, error } = useCafeteria(cafeteriaParams);
+
+    if (isLoading) {
+      return (
+        <View className="flex-1 items-center justify-center bg-white">
+          <Text>불러오는 중...</Text>
+        </View>
+      );
+    }
+
+    if (error) {
+      return (
+        <View className="flex-1 items-center justify-center bg-white px-4">
+          <Text>에러 발생</Text>
+          <Text>{error}</Text>
+        </View>
+      );
+    }
+
+    return (
+      <ScrollView className="flex-1 bg-white px-4 py-6">
+        <Text className="text-xl font-bold mb-4">학식 API 테스트</Text>
+        <Text selectable className="text-xs font-mono">
+          {JSON.stringify(data, null, 2)}
+        </Text>
+      </ScrollView>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <View className="flex-1 items-center justify-center bg-white">
+        <Text>불러오는 중...</Text>
+      </View>
+    );
+  }
+
+  if (error) {
+    return (
+      <View className="flex-1 items-center justify-center bg-white px-4">
+        <Text>에러 발생</Text>
+        <Text>{error}</Text>
+      </View>
+    );
+  }
+
   return (
-    <View className="flex-1 items-center justify-center bg-white">
-      <Comments />
-      <TextIconBox 
-        preset="gray"
-        text="위치"
-      />
-      <TextIconBox 
-        preset="red"
-        text="위치"
-      />
-      <CafeteriaInfo
-        name="천원의 아침밥"
-        menu={["스팸마요 덮밥", "꼬치 어묵국", "고로케&케찹", "치커리유자청무침", "배추김치야채샐러드&드레싱"]}
-        location="창의인재원"
-      />
-      <TextIconBox 
-        preset="blue"
-        icon={LocationIcon}
-        text="위치 정보"
-      />
-      <LocationIcon width={50} height={50} color="#FF33FF"/>
-    </View>
+    <ScrollView className="flex-1 bg-white px-4 py-6">
+      <Text className="text-xl font-bold mb-4">학식 API 테스트</Text>
+      <Text selectable className="text-xs font-mono">
+        {JSON.stringify(data, null, 2)}
+      </Text>
+    </ScrollView>
   );
 }

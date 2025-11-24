@@ -1,10 +1,11 @@
 import React from "react";
-import { View, Text, TouchableOpacity } from "react-native";
+import { View, Text, TouchableOpacity, StyleProp, ViewStyle } from "react-native";
+import Icon, { IconName } from "@/components/Icon";
 
 interface TextIconButtonProps {
   isOn: boolean;
 
-  icon?: React.ComponentType<{ color?: string; width?: number; height?: number }>;
+  iconName?: IconName;
   text?: string;
   onPress?: () => void;
   disabled?: boolean;
@@ -18,17 +19,35 @@ interface TextIconButtonProps {
   offTextClass?: string;
   onIconColor?: string;
   offIconColor?: string;
+
+  iconSize?: number;
+  iconStyle?: StyleProp<ViewStyle>;
 }
 
-export default function TextIconButton({ isOn, icon: Icon, text = "", onPress, disabled = false, baseBoxClass = "", baseTextClass = "", onBoxClass = "", offBoxClass = "", onTextClass = "", offTextClass = "", onIconColor, offIconColor }: TextIconButtonProps) {
-
+export default function TextIconButton({
+  isOn,
+  iconName,
+  text = "",
+  onPress,
+  disabled = false,
+  baseBoxClass = "",
+  baseTextClass = "",
+  onBoxClass = "",
+  offBoxClass = "",
+  onTextClass = "",
+  offTextClass = "",
+  onIconColor,
+  offIconColor,
+  iconSize = 20,
+  iconStyle,
+}: TextIconButtonProps) {
   const boxClass = `${baseBoxClass} ${isOn ? onBoxClass : offBoxClass}`;
   const textClass = `${baseTextClass} ${isOn ? onTextClass : offTextClass}`;
   const iconColor = isOn ? onIconColor : offIconColor;
 
-  if (isOn) {
+  /* if (isOn) {
     console.log(`${text} ON`);
-  }
+  } */
 
   return (
     <TouchableOpacity
@@ -39,9 +58,14 @@ export default function TextIconButton({ isOn, icon: Icon, text = "", onPress, d
         disabled ? "opacity-40" : ""
       }`}
     >
-      {Icon && (
+      {iconName && (
         <View className="mr-[5px]">
-          <Icon width={20} height={20} color={iconColor} />
+          <Icon
+            name={iconName}
+            size={iconSize}
+            color={iconColor}
+            style={iconStyle}
+          />
         </View>
       )}
 
