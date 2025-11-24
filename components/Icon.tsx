@@ -59,7 +59,7 @@ interface IconProps extends SvgProps {
   size?: number;
 }
 
-export default function Icon({ name, size = 20, width, height, ...props }: IconProps) {
+export default function Icon({ name, size = 24, width, height, ...props }: IconProps) {
   const IconComponent = icons[name];
 
   return (

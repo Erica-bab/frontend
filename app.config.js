@@ -3,8 +3,13 @@ export default {
     name: "front",
     slug: "front",
     version: "1.0.0",
+    extra: {
+      eas: {
+        projectId: "3536b605-1fa3-4649-aae3-4ccc299ae2f4"
+      }
+    },
     orientation: "portrait",
-    icon: "./assets/images/Group 2.png",
+    icon: "./assets/images/logo.png",
     userInterfaceStyle: "light",
     newArchEnabled: true,
     splash: {
@@ -14,6 +19,10 @@ export default {
     },
     ios: {
       supportsTablet: true,
+      bundleIdentifier: "com.efoo.front",
+      infoPlist: {
+        NSLocationWhenInUseUsageDescription: "주변 맛집을 위치순으로 정렬하기 위해 위치 정보가 필요합니다."
+      },
       config: {
         googleMapsApiKey: process.env.GOOGLE_MAPS_API_KEY
       }
@@ -42,6 +51,12 @@ export default {
         "react-native-maps",
         {
           googleMapsApiKey: process.env.GOOGLE_MAPS_API_KEY
+        }
+      ],
+      [
+        "expo-location",
+        {
+          locationWhenInUsePermission: "주변 맛집을 위치순으로 정렬하기 위해 위치 정보가 필요합니다."
         }
       ]
     ]

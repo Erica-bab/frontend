@@ -1,9 +1,9 @@
 import { useState, useCallback } from 'react';
 import { View, Text, Pressable, Dimensions, ScrollView } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
-import Animated, { useSharedValue, useAnimatedStyle, withTiming, runOnJS } from 'react-native-reanimated';
+import Animated, { useSharedValue, useAnimatedStyle, withTiming } from 'react-native-reanimated';
 import { Dropdown } from '@/components/filter/Dropdown';
 import { OptionBtn } from '@/components/filter/OptionButton';
 import Button from '@/components/ui/Button';
@@ -25,6 +25,7 @@ const RESTAURANT_TYPE = ['개인식당','프랜차이즈']
 export default function FilterScreen() {
   const navigation = useNavigation();
   const route = useRoute();
+  const insets = useSafeAreaInsets();
   const { onApply } = route.params as { onApply?: (params: RestaurantListParams) => void } || {};
 
   const [selectedDay, setSelectedDay] = useState<string>();
@@ -54,10 +55,17 @@ export default function FilterScreen() {
     .onEnd(() => {
       // 아래로 일정 이상 내리면 닫기
       if (translateY.value > DISMISS_THRESHOLD) {
-        runOnJS(goBack)();
+        translateY.value = withTiming(SCREEN_HEIGHT, { duration: 200 }, () => {
+          'worklet';
+        });
       } else {
         // 기본 위치로 스냅 (바운스 없이)
         translateY.value = withTiming(0, { duration: 200 });
+      }
+    })
+    .onFinalize(() => {
+      if (translateY.value > DISMISS_THRESHOLD) {
+        goBack();
       }
     });
 
@@ -96,9 +104,8 @@ export default function FilterScreen() {
       <GestureDetector gesture={gesture}>
         <Animated.View
           className="bg-white rounded-t-3xl"
-          style={[{ height: SCREEN_HEIGHT * 0.8 }, animatedStyle]}
+          style={[{ height: SCREEN_HEIGHT * 0.8 + insets.bottom }, animatedStyle]}
         >
-        <SafeAreaView edges={['bottom']} className="flex-1">
           {/* 드래그 핸들 */}
           <View className="items-center pt-3 pb-1">
             <View className="w-10 h-1 bg-gray-300 rounded-full" />
@@ -212,7 +219,7 @@ export default function FilterScreen() {
           </ScrollView>
 
           {/* 하단 버튼 */}
-          <View className="flex-row gap-2 p-4 bg-white">
+          <View className="flex-row gap-2 p-4 bg-white" style={{ paddingBottom: insets.bottom + 16 }}>
             <Button variant="secondary" onPress={handleReset} className="flex-1">
               초기화
             </Button>
@@ -220,7 +227,6 @@ export default function FilterScreen() {
               적용
             </Button>
           </View>
-        </SafeAreaView>
         </Animated.View>
       </GestureDetector>
     </View>

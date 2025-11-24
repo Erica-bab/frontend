@@ -1,6 +1,6 @@
 import * as Google from 'expo-auth-session/providers/google';
 import * as WebBrowser from 'expo-web-browser';
-import Constants from 'expo-constants';
+import { makeRedirectUri } from 'expo-auth-session';
 import { useEffect } from 'react';
 import { useGoogleLogin } from '@/api/auth/useAuth';
 
@@ -8,20 +8,27 @@ import { useGoogleLogin } from '@/api/auth/useAuth';
 WebBrowser.maybeCompleteAuthSession();
 
 // 환경변수에서 클라이언트 ID 가져오기
-const GOOGLE_WEB_CLIENT_ID = Constants.expoConfig?.extra?.googleWebClientId
-  || process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID;
-const GOOGLE_IOS_CLIENT_ID = Constants.expoConfig?.extra?.googleIosClientId
-  || process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID;
-const GOOGLE_ANDROID_CLIENT_ID = Constants.expoConfig?.extra?.googleAndroidClientId
-  || process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID;
+const GOOGLE_WEB_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID;
+const GOOGLE_IOS_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID;
+const GOOGLE_ANDROID_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID;
 
 export const useGoogleSignIn = (onSuccess?: () => void) => {
   const { mutate: googleLogin, isPending, isError, error } = useGoogleLogin();
 
-  const [request, response, promptAsync] = Google.useIdTokenAuthRequest({
+  const redirectUri = makeRedirectUri({
+    scheme: 'com.efoo.front',
+    path: 'redirect',
+  });
+
+  console.log('Google OAuth redirectUri:', redirectUri);
+
+  const [request, response, promptAsync] = Google.useAuthRequest({
     clientId: GOOGLE_WEB_CLIENT_ID,
-    iosClientId: GOOGLE_IOS_CLIENT_ID,
-    androidClientId: GOOGLE_ANDROID_CLIENT_ID,
+    iosClientId: GOOGLE_IOS_CLIENT_ID || GOOGLE_WEB_CLIENT_ID,
+    androidClientId: GOOGLE_ANDROID_CLIENT_ID || GOOGLE_WEB_CLIENT_ID,
+    redirectUri,
+    responseType: 'id_token',
+    scopes: ['openid', 'profile', 'email'],
   });
 
   useEffect(() => {
