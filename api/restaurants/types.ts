@@ -207,3 +207,28 @@ export interface CreateCommentRequest {
   content: string;
   parent_id?: number;
 }
+
+// 검색 관련 타입
+export interface SearchParams {
+  q: string;
+  page?: number;
+  limit?: number;
+}
+
+export interface SearchResultItem {
+  type: 'restaurant' | 'menu';
+  score: number;
+  restaurant: RestaurantListItem | null;
+  menu: MenuItem | null;
+}
+
+export interface SearchResponse {
+  query: string;
+  total: number;
+  restaurants_count: number;
+  menus_count: number;
+  page: number;
+  limit: number;
+  has_next: boolean;
+  results: SearchResultItem[];
+}

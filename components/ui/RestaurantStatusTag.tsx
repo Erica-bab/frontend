@@ -12,20 +12,20 @@ interface RestaurantStatusTagProps {
 
 const statusStyles = {
     '영업중': {
-        bgColor: 'bg-blue-500',
-        borderColor: 'border-blue-500',
+        filled: 'bg-blue-500 border-blue-500',
+        outlined: 'bg-transparent border-blue-500',
         textColor: 'text-blue-500',
         tintColor: getColor('blue-500'),
     },
     '영업종료': {
-        bgColor: 'bg-red-500',
-        borderColor: 'border-red-500',
+        filled: 'bg-red-500 border-red-500',
+        outlined: 'bg-transparent border-red-500',
         textColor: 'text-red-500',
         tintColor: getColor('red-500'),
     },
     '브레이크타임': {
-        bgColor: 'bg-orange-400',
-        borderColor: 'border-orange-400',
+        filled: 'bg-orange-400 border-orange-400',
+        outlined: 'bg-transparent border-orange-400',
         textColor: 'text-orange-400',
         tintColor: getColor('orange-400'),
     },
@@ -37,14 +37,14 @@ export default function RestaurantStatusTag({ status, rating = 0 }: RestaurantSt
     return (
         <View className="flex-row items-center" style={{ gap: 8 }}>
             {/* 영업 상태 태그 */}
-            <Tag bgColor={styles.bgColor}>
+            <Tag className={styles.filled}>
                 <Text className="text-white text-sm font-medium">
                     {status}
                 </Text>
             </Tag>
 
             {/* 별점 태그 */}
-            <Tag variant="outlined" borderColor={styles.borderColor}>
+            <Tag className={styles.outlined}>
                 <View className="flex-row items-center" style={{ gap: 4 }}>
                     <StarIcon
                         width={16}

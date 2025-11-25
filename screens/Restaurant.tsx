@@ -1,19 +1,53 @@
-import { useState } from 'react';
-import { View, Text } from 'react-native';
+import { useState, useEffect } from 'react';
+import { View, Text, Pressable, Image, ScrollView, Alert } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import SearchBar from '../components/SearchBar';
-import Card from '../components/ui/Card';
-import Button from '../components/ui/Button';
-import RestaurantCard from '../components/RestaurantCard';
+import * as Location from 'expo-location';
+import SearchBar from '@/components/SearchBar';
+import Card from '@/components/ui/Card';
+import RestaurantCard from '@/components/restaurant/RestaurantCard';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRestaurantList } from '../api/restaurants/useRestaurant';
-import { RestaurantListParams } from '../api/restaurants/types';
+import { useRestaurantList } from '@/api/restaurants/useRestaurant';
+import { RestaurantListParams } from '@/api/restaurants/types';
+import ericard from '@/assets/images/ericard.png';
+import Icon from '@/components/Icon';
+
+const SORT_OPTIONS = ['위치순', '별점순'];
+const SORT_MAP: Record<string, 'distance' | 'rating'> = {
+    '위치순': 'distance',
+    '별점순': 'rating',
+};
 
 export default function RestuarantScreen() {
     const navigation = useNavigation<NativeStackNavigationProp<any>>();
     const [filterParams, setFilterParams] = useState<RestaurantListParams>({});
+    const [sortOption, setSortOption] = useState<string>('위치순');
+    const [isSortOpen, setIsSortOpen] = useState(false);
+    const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
     const { data, isLoading, error } = useRestaurantList(filterParams);
+
+    const requestLocationAndUpdate = async () => {
+        const { status } = await Location.requestForegroundPermissionsAsync();
+        if (status === 'granted') {
+            const location = await Location.getCurrentPositionAsync({});
+            const coords = {
+                lat: location.coords.latitude,
+                lng: location.coords.longitude,
+            };
+            setUserLocation(coords);
+            return coords;
+        }
+        return null;
+    };
+
+    useEffect(() => {
+        (async () => {
+            const coords = await requestLocationAndUpdate();
+            if (coords && sortOption === '위치순') {
+                setFilterParams(prev => ({ ...prev, lat: coords.lat, lng: coords.lng }));
+            }
+        })();
+    }, []);
 
     const handleFilterPress = () => {
         navigation.navigate('Filter', {
@@ -26,12 +60,73 @@ export default function RestuarantScreen() {
     return (
         <SafeAreaView edges={['top']} className="flex-1 bg-white">
             <SearchBar onFilterPress={handleFilterPress}>
-                <Card variant="banner">
-                    <View>
+                <Card variant="banner" className='flex-row justify-evenly'>
+                    <View className='gap-4'>
                         <Text className="text-white">{"일상 속 모든 순간, 한장으로\n더 똑똑한 소비의 시작 에리 체크카드"}</Text>
-                        <Button>혜택 확인하기</Button>
+                        <Pressable className='bg-white p-1 rounded-lg self-start'>
+                            <Text className='p-1 font-bold text-blue-500'>
+                                혜택 확인하기
+                            </Text>
+                        </Pressable>
                     </View>
+                    <Image source={ericard} className="w-30 h-24" resizeMode="contain" />
                 </Card>
+                <View className='self-end relative'>
+                    <Pressable
+                        className='flex-row gap-1 items-center p-2'
+                        onPress={() => setIsSortOpen(!isSortOpen)}
+                    >
+                        <Text>{sortOption}</Text>
+                        <Icon name="dropdown" width={10} height={13} />
+                    </Pressable>
+                    {isSortOpen && (
+                        <View
+                            className="absolute top-full right-0 mt-1 bg-white rounded-lg overflow-hidden"
+                            style={{
+                                borderWidth: 1,
+                                borderColor: 'rgba(226, 232, 240, 1)',
+                                zIndex: 1000,
+                            }}
+                        >
+                            <ScrollView>
+                                {SORT_OPTIONS.map((option) => (
+                                    <Pressable
+                                        key={option}
+                                        onPress={async () => {
+                                            setSortOption(option);
+                                            setIsSortOpen(false);
+                                            if (option === '위치순') {
+                                                let coords = userLocation;
+                                                if (!coords) {
+                                                    coords = await requestLocationAndUpdate();
+                                                }
+                                                if (coords) {
+                                                    setFilterParams(prev => ({
+                                                        ...prev,
+                                                        sort: SORT_MAP[option],
+                                                        lat: coords.lat,
+                                                        lng: coords.lng,
+                                                    }));
+                                                } else {
+                                                    Alert.alert('위치 권한 필요', '위치순 정렬을 사용하려면 위치 권한이 필요합니다.');
+                                                    setSortOption('별점순');
+                                                    setFilterParams(prev => ({ ...prev, sort: 'rating' }));
+                                                }
+                                            } else {
+                                                setFilterParams(prev => ({ ...prev, sort: SORT_MAP[option] }));
+                                            }
+                                        }}
+                                        className="px-4 py-3 border-b border-gray-100"
+                                    >
+                                        <Text className={`text-base ${sortOption === option ? 'font-bold text-blue-600' : 'text-black'}`}>
+                                            {option}
+                                        </Text>
+                                    </Pressable>
+                                ))}
+                            </ScrollView>
+                        </View>
+                    )}
+                </View>
 
                 {isLoading && <Text className="p-4">로딩중...</Text>}
                 {error && <Text className="p-4 text-red-500">에러 발생</Text>}
@@ -44,6 +139,7 @@ export default function RestuarantScreen() {
                         status={restaurant.status as '영업중' | '영업종료' | '브레이크타임'}
                         rating={restaurant.average_rating}
                         restaurantId={restaurant.id.toString()}
+                        thumbnailUrls={restaurant.thumbnail_urls}
                     />
                 ))}
             </SearchBar>
