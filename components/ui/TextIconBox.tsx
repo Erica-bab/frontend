@@ -1,5 +1,6 @@
 import React from "react";
 import { View, Text } from "react-native";
+import Icon, { IconName } from "@/components/Icon";
 
 const stylePreset = {
   red: {
@@ -37,21 +38,33 @@ const stylePreset = {
 interface TextIconBoxProps {
   preset?: keyof typeof stylePreset;
   boxClass?: string;
-  icon?: React.ComponentType<{ color?: string; width?: number; height?: number }>;
+  icon?: IconName;
   text?: string;
   textClass?: string;
+  iconSize?: number;
+  iconColor?: string;
 }
 
-export default function TextIconBox({ preset = "none", boxClass = "", icon: Icon, text = "", textClass = "", }: TextIconBoxProps) {
+export default function TextIconBox({
+  preset = "none",
+  boxClass = "",
+  icon = "clock",
+  text = "",
+  textClass = "",
+  iconSize = 16,
+  iconColor,
+}: TextIconBoxProps) {
   const presetStyle = stylePreset[preset];
 
   return (
     <View className={`flex-row items-center px-[5px] py-[5px] ${presetStyle.box} ${boxClass}`}>
-      {Icon && (
-        <View className="pl-[5px]">
-          <Icon width={20} height={20} color={presetStyle.iconColor} />
-        </View>
-      )}
+      <View className="pl-[5px]">
+        <Icon
+          name={icon}
+          size={iconSize}
+          color={iconColor ?? presetStyle.iconColor}
+        />
+      </View>
 
       <Text className={`px-[5px] ${presetStyle.text} ${textClass}`}>
         {text}

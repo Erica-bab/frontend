@@ -1,86 +1,77 @@
 import React, { useState } from 'react';
-import { View,ScrollView, Text, TouchableOpacity } from 'react-native';
-import TextIconButton from '../components/ui/TextIconButton';
-import ClockIcon from '../assets/icon/clock.svg';
-import CafeteriaList from '../components/cafeteria/CafeteriaList';
-import RightanlgeICon from '../assets/icon/right_angle.svg';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { View } from 'react-native';
+import CafeteriaList from '@/components/cafeteria/CafeteriaList';
+import CafeteriaHeader from '@/components/cafeteria/CafeteriaHeader';
+import {
+  RestaurantCode,
+  MealType,
+  CafeteriaParams,
+} from '@/api/cafeteria/types';
+import { useCafeteria } from '@/api/cafeteria/useCafeteria';
 
-type CafeteriaType = 'student' | 'staff' | 'startup' | 'dorm';
+type SortType = 'time' | 'location';
 
 export default function SchoolRestaurantScreen() {
-  const [selectedType, setSelectedType] = useState<CafeteriaType>('student');
+  const [sortModeType, setSortModeType] = useState<SortType>('time');
+
+  // 기본 장소: 학생식당
+  const [selectedLocation, setSelectedLocation] =
+    useState<RestaurantCode>('re12');
+
+  // 기본 시간대: 중식
+  const [selectedTime, setSelectedTime] = useState<MealType>('조식');
+
+  const [currentDate, setCurrentDate] = useState(new Date());
+
+  const goPrevDay = () => {
+    setCurrentDate(prev => {
+      const next = new Date(prev);
+      next.setDate(prev.getDate() - 1);
+      return next;
+    });
+  };
+
+  const goNextDay = () => {
+    setCurrentDate(prev => {
+      const next = new Date(prev);
+      next.setDate(prev.getDate() + 1);
+      return next;
+    });
+  };
+
+  // 날짜 기준 하루치 전체 학식 데이터 호출
+  const cafeteriaParams: CafeteriaParams = {
+    year: currentDate.getFullYear(),
+    month: currentDate.getMonth() + 1,
+    day: currentDate.getDate(),
+    cafeteria_details: true,
+  };
+
+  const { data, isLoading, error } = useCafeteria(cafeteriaParams);
 
   return (
     <View className="flex-1 bg-white">
-      <CafeteriaHeader selectedType={selectedType} onChangeType={setSelectedType} />
-      <ScrollView>
-        <CafeteriaList />
-      </ScrollView>
+      <CafeteriaHeader
+        sortModeType={sortModeType}
+        onChangeSortModeType={setSortModeType}
+        selectedLocation={selectedLocation}
+        onChangeLocation={setSelectedLocation}
+        selectedTime={selectedTime}
+        onChangeTime={setSelectedTime}
+        currentDate={currentDate}
+        onPrevDate={goPrevDay}
+        onNextDate={goNextDay}
+      />
+
+      <CafeteriaList
+        sortModeType={sortModeType}
+        selectedLocation={selectedLocation}
+        selectedTime={selectedTime}
+        currentDate={currentDate}
+        data={data}
+        isLoading={isLoading}
+        error={error ?? null}
+      />
     </View>
-  );
-}
-
-
-function CafeteriaHeader({ selectedType, onChangeType, }: { selectedType: CafeteriaType; onChangeType: (type: CafeteriaType) => void; }) {
-  return (
-    <SafeAreaView className="w-full flex bg-white px-10">
-      <View className="flex-row justify-end -mr-4 mt-1">
-        <TouchableOpacity onPress={() => console.log("왼쪽 클릭")}>
-          <ClockIcon width={24} height={24} color={"#6B6B6B"}/>
-        </TouchableOpacity>
-      </View>
-      <View className="flex-row items-center justify-center mb-4 gap-2">
-        <RightanlgeICon width={40} height={40} style={{ transform: [{ rotate: '180deg' }] }}/>
-        <Text className="font-bold text-4xl mt-1">2024. 05. 01</Text>
-        <RightanlgeICon width={40} height={40} />
-      </View>
-      <View className="w-full flex-row justify-around pb-2">
-        <TextIconButton
-          isOn={selectedType === 'student'}
-          onPress={() => onChangeType('student')}
-          text="학생"
-
-          baseBoxClass="-pb-4"
-
-          offTextClass="text-[#000000] font-medium text-xl"
-          onTextClass="text-[#2563EB] font-medium text-xl"
-          onBoxClass="border-b-2 border-[#2563EB] -pb-2"
-        />
-        <TextIconButton
-          isOn={selectedType === 'staff'}
-          onPress={() => onChangeType('staff')}
-          text="교직원"
-          
-          baseBoxClass="-pb-4"
-
-          offTextClass="text-[#000000] font-medium text-xl"
-          onTextClass="text-[#2563EB] font-medium text-xl"
-          onBoxClass="border-b-2 border-[#2563EB] -pb-2"
-        />
-        <TextIconButton
-          isOn={selectedType === 'startup'}
-          onPress={() => onChangeType('startup')}
-          text="창업보육"
-          
-          baseBoxClass="-pb-4"
-
-          offTextClass="text-[#000000] font-medium text-xl"
-          onTextClass="text-[#2563EB] font-medium text-xl"
-          onBoxClass="border-b-2 border-[#2563EB] -pb-2"
-        />
-        <TextIconButton
-          isOn={selectedType === 'dorm'}
-          onPress={() => onChangeType('dorm')}
-          text="창의인재"
-          
-          baseBoxClass="-pb-4"
-
-          offTextClass="text-[#000000] font-medium text-xl"
-          onTextClass="text-[#2563EB] font-medium text-xl"
-          onBoxClass="border-b-2 border-[#2563EB] -pb-2"
-        />
-      </View>
-    </SafeAreaView>
   );
 }
