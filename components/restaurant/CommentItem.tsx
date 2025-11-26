@@ -11,21 +11,7 @@ import {
 } from '@/api/restaurants/useReviewComment';
 import { useCurrentUser, useAuth } from '@/api/auth/useAuth';
 import Icon from '@/components/Icon';
-
-function formatDate(dateString: string | null | undefined) {
-  if (!dateString) return '';
-  try {
-    const date = new Date(dateString);
-    if (isNaN(date.getTime())) return '';
-    const month = (date.getMonth() + 1).toString().padStart(2, '0');
-    const day = date.getDate().toString().padStart(2, '0');
-    const hours = date.getHours().toString().padStart(2, '0');
-    const mins = date.getMinutes().toString().padStart(2, '0');
-    return `${month}/${day} ${hours}:${mins}`;
-  } catch {
-    return '';
-  }
-}
+import { formatDate } from '@/utils/date';
 
 interface CommentItemProps {
   comment: CommentItemType;

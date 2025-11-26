@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { View, Text, Pressable, ActivityIndicator, Alert } from 'react-native';
 import { RestaurantDetailResponse } from '@/api/restaurants/types';
 import {
@@ -12,26 +12,11 @@ import Icon from '@/components/Icon';
 import LoginPopup from '@/components/LoginPopup';
 import CommentItem from '@/components/restaurant/CommentItem';
 import CommentInput from '@/components/restaurant/CommentInput';
+import StarRating from '@/components/restaurant/StarRating';
+import { useLikedCommentIds } from '@/hooks/useLikedCommentIds';
 
 interface RestaurantCommentsTabProps {
   restaurant: RestaurantDetailResponse;
-}
-
-// 별점 선택 컴포넌트
-function StarRating({ rating, onRate, isLoading }: { rating: number; onRate: (r: number) => void; isLoading?: boolean }) {
-  return (
-    <View className="flex-row gap-2">
-      {[1, 2, 3, 4, 5].map((star) => (
-        <Pressable key={star} onPress={() => onRate(star)} disabled={isLoading}>
-          <Icon
-            name="star"
-            size={32}
-            color={star <= rating ? '#3B82F6' : '#D1D5DB'}
-          />
-        </Pressable>
-      ))}
-    </View>
-  );
 }
 
 export default function RestaurantCommentsTab({ restaurant }: RestaurantCommentsTabProps) {
@@ -43,14 +28,8 @@ export default function RestaurantCommentsTab({ restaurant }: RestaurantComments
   const { data: commentsData, isLoading: isCommentsLoading, refetch: refetchComments } = useComments(restaurant.id);
   const { mutate: createOrUpdateRating, isPending: isRatingLoading } = useCreateOrUpdateRating(restaurant.id);
   const { mutate: createComment, isPending: isCreatingComment } = useCreateComment(restaurant.id);
-  // 인증된 경우에만 좋아요한 댓글 목록 조회 (limit 최대값 100)
   const { data: likedComments, refetch: refetchLikedComments } = useLikedComments(1, 100, isAuthenticated === true);
-
-  // 좋아요한 댓글 ID Set 생성
-  const likedCommentIds = useMemo(() => {
-    if (!isAuthenticated || !likedComments) return new Set<number>();
-    return new Set(likedComments.map(like => like.id));
-  }, [likedComments, isAuthenticated]);
+  const likedCommentIds = useLikedCommentIds(isAuthenticated === true);
 
   // 로그인 성공 시 팝업 자동 닫기
   useEffect(() => {

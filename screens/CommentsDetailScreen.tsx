@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { View, Text, Pressable, ScrollView, KeyboardAvoidingView, Platform, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
@@ -6,6 +6,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useDeleteComment, useCreateComment, useComments } from '@/api/restaurants/useReviewComment';
 import { useAuth } from '@/api/auth/useAuth';
 import { useLikedComments } from '@/api/user/useUserActivity';
+import { useLikedCommentIds } from '@/hooks/useLikedCommentIds';
 import Icon from '@/components/Icon';
 import LoginPopup from '@/components/LoginPopup';
 import CommentItem from '@/components/restaurant/CommentItem';
@@ -24,13 +25,8 @@ export default function CommentDetailScreen() {
   const { data: commentsData, isLoading: isCommentsLoading, refetch: refetchComments } = useComments(restaurantId || 0);
   
   // 인증된 경우에만 좋아요한 댓글 목록 조회 (limit 최대값 100)
-  const { data: likedComments, refetch: refetchLikedComments } = useLikedComments(1, 100, isAuthenticated === true);
-
-  // 좋아요한 댓글 ID Set 생성
-  const likedCommentIds = useMemo(() => {
-    if (!isAuthenticated || !likedComments) return new Set<number>();
-    return new Set(likedComments.map(like => like.id));
-  }, [likedComments, isAuthenticated]);
+  const { refetch: refetchLikedComments } = useLikedComments(1, 100, isAuthenticated === true);
+  const likedCommentIds = useLikedCommentIds(isAuthenticated === true);
   
   // 원댓글과 대댓글 찾기
   const comment = commentsData?.comments.find(c => c.id === commentId);
