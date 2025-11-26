@@ -1,16 +1,9 @@
-// useCafeteriaMenu 관련 타입
+// Get Menu (all)
 
-// 식사 카테고리 타입 (이제 한글로)
 export type MealType = '조식' | '중식' | '석식';
+// location code re11: 교직원식당 re12: 학생식당 re13: 창의인재원식당 re15: 창업보육센터
 
-// 식당 코드
 export type RestaurantCode = 're11' | 're12' | 're13' | 're15';
-/*
-re11: 교직원식당
-re12: 학생식당
-re13: 창의인재원식당
-re15: 창업보육센터
-*/
 
 // 개별 메뉴 항목
 export interface MealItem {
@@ -28,7 +21,7 @@ export interface MealItem {
   user_reaction: string | null;
 }
 
-// 운영 시간 (API 응답 형태 그대로)
+// time
 export interface OpenTimes {
   Breakfast: string | null;
   Lunch: string | null;
@@ -61,7 +54,6 @@ export interface CafeteriaResponse {
   restaurants: Restaurant[];
 }
 
-// API 요청 파라미터 타입
 export interface CafeteriaParams {
   year: number;
   month: number;
@@ -69,4 +61,35 @@ export interface CafeteriaParams {
   restaurant_codes?: RestaurantCode;
   meal_types?: MealType;
   cafeteria_details?: boolean; // 위치/운영시간 포함 여부(백엔드 정의대로)
+}
+
+// like
+export interface CafeteriaLikeParams {
+  meal_id: number;
+}
+
+export interface CafeteriaLikeErrorResponse {
+  detail?: string;
+}
+
+// Get like
+export interface CafeteriaLikeResponse {
+  meal_id: number;      
+  like_count: number;   
+  dislike_count: number;
+  user_reaction: string;
+}
+
+// post like
+export interface CafeteriaLikeToggleResponse {
+  meal_id: number;
+  user_id: number;
+  is_like: boolean;
+  like_count: number;
+  dislike_count: number;
+  message: string;
+}
+
+export interface CafeteriaLikeToggleBody {
+  is_like: true;
 }

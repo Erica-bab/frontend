@@ -6,6 +6,7 @@ import {
   RestaurantCode,
   MealType,
 } from '@/api/cafeteria/types';
+import { useCurrentUser } from '@/api/auth/useAuth'
 
 interface CafeteriaListProps {
   sortModeType: 'time' | 'location';
@@ -13,9 +14,9 @@ interface CafeteriaListProps {
   selectedTime: MealType;
   currentDate: Date;
 
-  data?: CafeteriaResponse;
+  meal_data?: CafeteriaResponse;
   isLoading: boolean;
-  error: Error | null;
+  meal_error: Error | null;
 }
 
 // 시간대 순서 고정
@@ -40,10 +41,12 @@ export default function CafeteriaList({
   selectedLocation,
   selectedTime,
   currentDate,
-  data,
+  meal_data,
   isLoading,
-  error,
+  meal_error,
 }: CafeteriaListProps) {
+   const {data, error} = useCurrentUser();
+
   if (isLoading) {
     return (
       <View className="flex-1 items-center justify-center bg-[#F8FAFC]">
@@ -52,16 +55,16 @@ export default function CafeteriaList({
     );
   }
 
-  if (error) {
+  if (meal_error) {
     return (
       <View className="flex-1 items-center justify-center bg-[#F8FAFC] px-4">
         <Text>에러가 발생했어요.</Text>
-        <Text>{error.message}</Text>
+        <Text>{meal_error.message}</Text>
       </View>
     );
   }
 
-  if (!data) {
+  if (!meal_data) {
     return (
       <View className="flex-1 items-center justify-center bg-[#F8FAFC]">
         <Text>메뉴 정보가 없습니다.</Text>
@@ -71,7 +74,7 @@ export default function CafeteriaList({
 
   // 시간 
   if (sortModeType === 'time') {
-    const restaurant = data.restaurants.find(
+    const restaurant = meal_data.restaurants.find(
       r => r.restaurant_code === selectedLocation,
     );
 
@@ -99,6 +102,7 @@ export default function CafeteriaList({
               latitude={Number(restaurant.latitude)}
               longitude={Number(restaurant.longitude)}
               viewName={restaurant.restaurant_name}
+              auth={data ? true : false}
             />
           );
         })}
@@ -111,7 +115,7 @@ export default function CafeteriaList({
 
   return (
     <ScrollView className="flex-1 px-10 py-4 bg-[#F8FAFC]">
-      {data.restaurants.map(restaurant => {
+      {meal_data.restaurants.map(restaurant => {
         const menus = getMenusByMealType(restaurant, targetMealType);
         if (!menus || menus.length === 0) return null;
 
@@ -125,6 +129,7 @@ export default function CafeteriaList({
             latitude={Number(restaurant.latitude)}
             longitude={Number(restaurant.longitude)}
             viewName={restaurant.restaurant_name}
+            auth={data ? true : false}
           />
         );
       })}

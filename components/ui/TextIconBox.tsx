@@ -48,7 +48,7 @@ interface TextIconBoxProps {
 export default function TextIconBox({
   preset = "none",
   boxClass = "",
-  icon = "clock",
+  icon,
   text = "",
   textClass = "",
   iconSize = 16,
@@ -58,13 +58,15 @@ export default function TextIconBox({
 
   return (
     <View className={`flex-row items-center px-[5px] py-[5px] ${presetStyle.box} ${boxClass}`}>
-      <View className="pl-[5px]">
-        <Icon
-          name={icon}
-          size={iconSize}
-          color={iconColor ?? presetStyle.iconColor}
-        />
-      </View>
+      {icon && (
+        <View className="pl-[5px]">
+          <Icon
+            name={icon}
+            size={iconSize}
+            color={iconColor ?? presetStyle.iconColor}
+          />
+        </View>
+      )}
 
       <Text className={`px-[5px] ${presetStyle.text} ${textClass}`}>
         {text}

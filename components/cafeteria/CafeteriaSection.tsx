@@ -3,6 +3,8 @@ import CafeteriaInfo from '@/components/cafeteria/CafeteriaInfo';
 import TextIconBox from '@/components/ui/TextIconBox';
 import { Restaurant, MealType, MealItem } from '@/api/cafeteria/types';
 import { IconName } from '@/components/Icon';
+import { User } from '@/api/auth/types'
+import { useCurrentUser } from '@/api/auth/useAuth'
 
 interface CafeteriaSectionProps {
   sortModeType: 'time' | 'location';
@@ -12,6 +14,7 @@ interface CafeteriaSectionProps {
   latitude: number;
   longitude: number;
   viewName?: string;
+  auth: boolean;
 }
 
 // MealType(조/중/석) → open_times 키 매핑
@@ -36,23 +39,18 @@ export default function CafeteriaSection({
   latitude,
   longitude,
   viewName,
+  auth,
 }: CafeteriaSectionProps) {
   const openKey = mealTypeToOpenKey[mealType];
   const openTime = restaurant.open_times[openKey];
 
-  const mainLabelText =
-    sortModeType === 'time' ? mealType : restaurant.restaurant_name;
-
-  const mainLabelIcon: IconName =
-    sortModeType === 'time' ? mealTypeToIcon[mealType] : 'school';
-
+  const mainLabelText = sortModeType === 'time' ? mealType : restaurant.restaurant_name;
+  const mainLabelIcon: IconName = sortModeType === 'time' ? mealTypeToIcon[mealType] : 'school';
   const locationText = `${restaurant.building} ${restaurant.floor}`;
 
   return (
     <View className="mb-6">
-      {/* 섹션 헤더 */}
       <View className="flex-col justify-left items-start mb-3">
-        {/* 왼쪽: 시간/장소 메인 배지 */}
         <TextIconBox
           icon={mainLabelIcon}
           iconColor="black"
@@ -61,7 +59,6 @@ export default function CafeteriaSection({
           iconSize={35}
         />
 
-        {/* 오른쪽: 운영시간 + 위치 배지 */}
         <View className="flex-col gap-2">
           {openTime && (
             <TextIconBox
@@ -76,7 +73,6 @@ export default function CafeteriaSection({
         </View>
       </View>
 
-      {/* 메뉴 카드들 */}
       {menus.map(menu => (
         <View key={menu.id} className="mb-3">
           <CafeteriaInfo
@@ -84,10 +80,14 @@ export default function CafeteriaSection({
             price={menu.price}
             menu={menu.korean_name}
             location={locationText}
-            sortModeType={sortModeType}
+            like={menu.like_count}
+
             latitude={latitude}
             longitude={longitude}
             viewName={viewName}
+            
+            meal_id={menu.id}
+            auth={auth}
           />
         </View>
       ))}

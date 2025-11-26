@@ -13,16 +13,11 @@ type SortType = 'time' | 'location';
 
 export default function SchoolRestaurantScreen() {
   const [sortModeType, setSortModeType] = useState<SortType>('time');
-
-  // 기본 장소: 학생식당
-  const [selectedLocation, setSelectedLocation] =
-    useState<RestaurantCode>('re12');
-
-  // 기본 시간대: 중식
+  const [selectedLocation, setSelectedLocation] = useState<RestaurantCode>('re12');
   const [selectedTime, setSelectedTime] = useState<MealType>('조식');
-
   const [currentDate, setCurrentDate] = useState(new Date());
 
+  // switch day
   const goPrevDay = () => {
     setCurrentDate(prev => {
       const next = new Date(prev);
@@ -30,7 +25,6 @@ export default function SchoolRestaurantScreen() {
       return next;
     });
   };
-
   const goNextDay = () => {
     setCurrentDate(prev => {
       const next = new Date(prev);
@@ -39,14 +33,12 @@ export default function SchoolRestaurantScreen() {
     });
   };
 
-  // 날짜 기준 하루치 전체 학식 데이터 호출
   const cafeteriaParams: CafeteriaParams = {
     year: currentDate.getFullYear(),
     month: currentDate.getMonth() + 1,
     day: currentDate.getDate(),
     cafeteria_details: true,
   };
-
   const { data, isLoading, error } = useCafeteria(cafeteriaParams);
 
   return (
@@ -68,9 +60,9 @@ export default function SchoolRestaurantScreen() {
         selectedLocation={selectedLocation}
         selectedTime={selectedTime}
         currentDate={currentDate}
-        data={data}
+        meal_data={data}
         isLoading={isLoading}
-        error={error ?? null}
+        meal_error={error ?? null}
       />
     </View>
   );
