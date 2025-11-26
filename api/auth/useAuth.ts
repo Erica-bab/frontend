@@ -30,8 +30,8 @@ export const useAuth = () => {
     checkAuth();
   }, [checkAuth]);
 
-  const refreshAuthState = useCallback(() => {
-    checkAuth();
+  const refreshAuthState = useCallback(async () => {
+    await checkAuth();
   }, [checkAuth]);
 
   return { isAuthenticated, isLoading, refreshAuthState };

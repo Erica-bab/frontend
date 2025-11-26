@@ -12,7 +12,8 @@ import RestaurantStatusTag from '@/components/ui/RestaurantStatusTag';
 import TextIconButton from '@/components/ui/TextIconButton';
 import RestaurantHomeTab from '@/components/restaurant/RestaurantHomeTab';
 import RestaurantMenuTab from '@/components/restaurant/RestaurantMenuTab';
-import RestaurantCommentsTab, { CommentInput } from '@/components/restaurant/RestaurantCommentsTab';
+import RestaurantCommentsTab from '@/components/restaurant/RestaurantCommentsTab';
+import CommentInput from '@/components/restaurant/CommentInput';
 import NaverMapWebView from '@/components/NaverMapWebView';
 import Icon from '@/components/Icon';
 

@@ -101,13 +101,18 @@ export const useDeleteComment = (restaurantId: number) => {
 };
 
 // 댓글 좋아요 토글
+export interface ToggleCommentLikeRequest {
+  is_like: boolean;
+}
+
 export const useToggleCommentLike = (restaurantId: number) => {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (commentId: number) => {
       const { data } = await apiClient.post(
-        `/restaurants/${restaurantId}/comments/${commentId}/like`
+        `/restaurants/${restaurantId}/comments/${commentId}/like`,
+        { is_like: true } // 좋아요는 true로 고정 (싫어요는 별도로 구현 가능)
       );
       return data;
     },

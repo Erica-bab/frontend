@@ -1,8 +1,10 @@
+import { useState, useEffect } from 'react';
 import { View, Text, Pressable, ScrollView, Linking, Alert, ActivityIndicator } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import Icon from '@/components/Icon';
 import { useLogout, useCurrentUser } from '@/api/auth/useAuth';
 import { useAuth } from '@/api/auth/useAuth';
+import LoginPopup from '@/components/LoginPopup';
 
 const MENU_ITEMS = [
   { icon: 'star' as const, label: '쓴 댓글 보기', action: 'comments' },
@@ -18,6 +20,7 @@ export default function ProfileScreen() {
   const { isAuthenticated, refreshAuthState } = useAuth();
   const { mutate: logout, isPending: isLoggingOut } = useLogout();
   const { data: currentUser, isLoading: isLoadingUser } = useCurrentUser();
+  const [showLoginPopup, setShowLoginPopup] = useState(false);
 
   // 프로필 정보 동적 생성
   const getProfileInfo = () => {
@@ -76,6 +79,13 @@ export default function ProfileScreen() {
       ]
     );
   };
+
+  // 로그인 성공 시 팝업 자동 닫기
+  useEffect(() => {
+    if (isAuthenticated && showLoginPopup) {
+      setShowLoginPopup(false);
+    }
+  }, [isAuthenticated, showLoginPopup]);
 
   const handleMenuPress = async (action: string) => {
     switch (action) {
@@ -193,9 +203,9 @@ export default function ProfileScreen() {
           <Text className="text-gray-400 text-sm">3.1.5(43)</Text>
         </View>
 
-        {/* 로그아웃 */}
-        {isAuthenticated && (
-          <View className="mt-4">
+        {/* 로그인/로그아웃 버튼 */}
+        <View className="mt-4">
+          {isAuthenticated ? (
             <Pressable
               className="bg-blue-500 p-3 rounded-lg"
               onPress={handleLogout}
@@ -207,9 +217,24 @@ export default function ProfileScreen() {
                 <Text className="text-white text-center font-medium">로그아웃</Text>
               )}
             </Pressable>
-          </View>
-        )}
+          ) : (
+            <Pressable
+              className="bg-blue-500 p-3 rounded-lg"
+              onPress={() => setShowLoginPopup(true)}
+            >
+              <Text className="text-white text-center font-medium">로그인</Text>
+            </Pressable>
+          )}
+        </View>
       </ScrollView>
+
+      <LoginPopup
+        visible={showLoginPopup}
+        onClose={() => setShowLoginPopup(false)}
+        onLoginSuccess={async () => {
+          await refreshAuthState();
+        }}
+      />
     </View>
   );
 }
