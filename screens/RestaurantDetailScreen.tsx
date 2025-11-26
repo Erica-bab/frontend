@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, Pressable, ActivityIndicator, KeyboardAvoidingView, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
@@ -6,6 +6,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useRestaurantDetail } from '@/api/restaurants/useRestaurant';
 import { useCreateComment } from '@/api/restaurants/useReviewComment';
 import { useAuth } from '@/api/auth/useAuth';
+import { toggleBookmark, checkIsBookmarked } from '@/services/bookmarkStoarge';
 import LoginPopup from '@/components/LoginPopup';
 import RestaurantStatusTag from '@/components/ui/RestaurantStatusTag';
 import TextIconButton from '@/components/ui/TextIconButton';
@@ -24,11 +25,34 @@ export default function RestaurantDetailScreen() {
   const [selectedTab, setSelectedTab] = useState<RestaurantTabType>('home');
   const [commentText, setCommentText] = useState('');
   const [showLoginPopup, setShowLoginPopup] = useState(false);
+  const [isBookmarked, setIsBookmarked] = useState(false);
 
   const { isAuthenticated } = useAuth();
 
   const { data: restaurant, isLoading, error } = useRestaurantDetail(Number(restaurantId));
   const { mutate: createComment, isPending: isCommentLoading } = useCreateComment(Number(restaurantId));
+
+  // 북마크 상태 확인
+  useEffect(() => {
+    const loadBookmarkStatus = async () => {
+      if (restaurantId) {
+        const bookmarked = await checkIsBookmarked(String(restaurantId));
+        setIsBookmarked(bookmarked);
+      }
+    };
+    loadBookmarkStatus();
+  }, [restaurantId]);
+
+  // 북마크 토글 핸들러
+  const handleBookmarkPress = async () => {
+    if (!restaurantId) return;
+    try {
+      const newBookmarkState = await toggleBookmark(String(restaurantId));
+      setIsBookmarked(newBookmarkState);
+    } catch (error) {
+      console.error('Failed to toggle bookmark:', error);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -91,6 +115,23 @@ export default function RestaurantDetailScreen() {
                 rating={restaurant.rating.average}
               />
             </View>
+          </View>
+          <View className="flex-row border-t border-gray-200">
+            <Pressable
+              className='flex-1 items-center justify-center p-2 gap-1'
+              onPress={handleBookmarkPress}
+            >
+              <Icon name='bookmark' width={15} color={isBookmarked ? '#3B82F6' : '#000000'} />
+              <Text>저장</Text>
+            </Pressable>
+            <Pressable className='flex-1 items-center justify-center p-2 gap-1'>
+              <Icon name='star' />
+              <Text>공유</Text>
+            </Pressable>
+            <Pressable className='flex-1 items-center justify-center p-2 gap-1'>
+              <Icon name='star' />
+              <Text>수정</Text>
+            </Pressable>
           </View>
           <View className="border-t border-t-2 border-gray-200 mb-4">
             <View className="w-full flex-row justify-around border-b border-gray-200">

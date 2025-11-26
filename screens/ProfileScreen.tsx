@@ -1,4 +1,5 @@
-import { View, Text, Pressable, ScrollView } from 'react-native';
+import { View, Text, Pressable, ScrollView, Linking } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 import Icon from '@/components/Icon';
 
 const PROFILE_INFO = [
@@ -8,15 +9,53 @@ const PROFILE_INFO = [
 ];
 
 const MENU_ITEMS = [
-  { icon: 'star' as const, label: '쓴 댓글 보기' },
-  { icon: 'star' as const, label: '저장' },
-  { icon: 'send' as const, label: '문의하기' },
-  { icon: 'star' as const, label: '서비스 이용약관' },
-  { icon: 'star' as const, label: '개인정보 처리방침' },
-  { icon: 'star' as const, label: '만든사람' },
+  { icon: 'star' as const, label: '쓴 댓글 보기', action: 'comments' },
+  { icon: 'star' as const, label: '북마크', action: 'bookmark' },
+  { icon: 'send' as const, label: '문의하기', action: 'contact' },
+  { icon: 'star' as const, label: '서비스 이용약관', action: 'terms' },
+  { icon: 'star' as const, label: '개인정보 처리방침', action: 'privacy' },
+  { icon: 'star' as const, label: '만든사람', action: 'about' },
 ];
 
 export default function ProfileScreen() {
+  const navigation = useNavigation();
+
+  const handleMenuPress = async (action: string) => {
+    switch (action) {
+      case 'bookmark':
+        navigation.navigate('Bookmark' as never);
+        break;
+      case 'comments':
+        // TODO: 댓글 화면 구현
+        console.log('댓글 보기');
+        break;
+      case 'contact':
+        try {
+          const url = 'https://www.notion.so/2b5e2e83b8368078a7f4ed0f5347a31f';
+          const canOpen = await Linking.canOpenURL(url);
+          if (canOpen) {
+            await Linking.openURL(url);
+          } else {
+            console.error('Cannot open URL:', url);
+          }
+        } catch (error) {
+          console.error('Failed to open contact link:', error);
+        }
+        break;
+      case 'terms':
+        // TODO: 이용약관 구현
+        console.log('서비스 이용약관');
+        break;
+      case 'privacy':
+        // TODO: 개인정보 처리방침 구현
+        console.log('개인정보 처리방침');
+        break;
+      case 'about':
+        // TODO: 만든사람 구현
+        console.log('만든사람');
+        break;
+    }
+  };
   return (
     <View className="flex-1 bg-white">
       <ScrollView className="flex-1 p-4">
@@ -51,7 +90,10 @@ export default function ProfileScreen() {
         <View>
           {MENU_ITEMS.map((item) => (
             <View key={item.label}>
-              <Pressable className="flex-row items-center p-4 gap-2 justify-between">
+              <Pressable
+                className="flex-row items-center p-4 gap-2 justify-between"
+                onPress={() => handleMenuPress(item.action)}
+              >
                 <View className="flex-row items-center gap-2">
                   <Icon name={item.icon} />
                   <Text>{item.label}</Text>

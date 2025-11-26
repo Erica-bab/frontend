@@ -11,6 +11,7 @@ import ProfileScreen from './screens/ProfileScreen';
 import FilterScreen from './screens/FilterScreen';
 import RestaurantDetailScreen from './screens/RestaurantDetailScreen';
 import CommentDetailScreen from './screens/CommentsDetailScreen';
+import BookmarkScreen from './screens/BookmarkScreen';
 
 import MyIcon from './assets/icon/tabicon/my.svg';
 import CafeIcon from './assets/icon/tabicon/cafe.svg';
@@ -79,7 +80,7 @@ export default function App() {
         <QueryClientProvider client={queryClient}>
           <NavigationContainer>
             <Stack.Navigator screenOptions={{ headerShown: false }}>
-              <Stack.Screen name="MainTabs" component={TabNavigator} />
+              <Stack.Screen name="Main" component={TabNavigator} />
               <Stack.Screen
                 name="Filter"
                 component={FilterScreen}
@@ -101,6 +102,17 @@ export default function App() {
                 component={CommentDetailScreen}
                 options={{
                   headerShown: false,
+                }}
+              />
+              <Stack.Screen
+                name="Bookmark"
+                component={BookmarkScreen}
+                options={{
+                  headerShown: true,
+                  headerTitle: '북마크',
+                  headerStyle: { backgroundColor: '#3B82F6' },
+                  headerTintColor: '#FFFFFF',
+                  headerTitleStyle: { fontWeight: 'bold' },
                 }}
               />
             </Stack.Navigator>
