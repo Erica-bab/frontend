@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { View, Text, Pressable, Animated, Dimensions, Modal, ActivityIndicator } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useNavigation } from '@react-navigation/native';
 import { useGoogleSignIn } from '@/services/googleAuth';
 
 interface LoginPopupProps {
@@ -13,11 +14,18 @@ const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 export default function LoginPopup({ visible, onClose, onLoginSuccess }: LoginPopupProps) {
   const insets = useSafeAreaInsets();
+  const navigation = useNavigation();
   const slideAnim = useRef(new Animated.Value(SCREEN_HEIGHT)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
-  const { signIn, isLoading, isReady, isError, error } = useGoogleSignIn(() => {
+  const { signIn, isLoading, isReady, isError, error } = useGoogleSignIn((user) => {
     onClose();
+    
+    // 사용자 정보가 없거나 requires_setup이 true이면 AddInfo 화면으로 이동
+    if (user && (user.requires_setup || !user.student_year || !user.college)) {
+      navigation.navigate('AddInfo' as never);
+    }
+    
     onLoginSuccess?.();
   });
 

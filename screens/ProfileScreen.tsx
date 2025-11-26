@@ -1,12 +1,8 @@
-import { View, Text, Pressable, ScrollView, Linking } from 'react-native';
+import { View, Text, Pressable, ScrollView, Linking, Alert, ActivityIndicator } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import Icon from '@/components/Icon';
-
-const PROFILE_INFO = [
-  { label: '유형', value: '학생' },
-  { label: '학번', value: '25학번' },
-  { label: '단과대', value: '소프트웨어융합대학' },
-];
+import { useLogout, useCurrentUser } from '@/api/auth/useAuth';
+import { useAuth } from '@/api/auth/useAuth';
 
 const MENU_ITEMS = [
   { icon: 'star' as const, label: '쓴 댓글 보기', action: 'comments' },
@@ -19,6 +15,67 @@ const MENU_ITEMS = [
 
 export default function ProfileScreen() {
   const navigation = useNavigation();
+  const { isAuthenticated, refreshAuthState } = useAuth();
+  const { mutate: logout, isPending: isLoggingOut } = useLogout();
+  const { data: currentUser, isLoading: isLoadingUser } = useCurrentUser();
+
+  // 프로필 정보 동적 생성
+  const getProfileInfo = () => {
+    if (!currentUser) return [];
+    
+    const info = [];
+    
+    // 유형
+    const userType = currentUser.student_year && currentUser.college ? '학생' : '기타(비공개)';
+    info.push({ label: '유형', value: userType });
+    
+    // 학번 (학생인 경우만)
+    if (currentUser.student_year) {
+      info.push({ label: '학번', value: currentUser.student_year });
+    }
+    
+    // 단과대 (학생인 경우만)
+    if (currentUser.college?.name) {
+      info.push({ label: '단과대', value: currentUser.college.name });
+    }
+    
+    return info;
+  };
+
+  const handleUpdateInfo = () => {
+    navigation.navigate('AddInfo' as never);
+  };
+
+  const handleLogout = () => {
+    Alert.alert(
+      '로그아웃',
+      '정말 로그아웃하시겠습니까?',
+      [
+        {
+          text: '취소',
+          style: 'cancel',
+        },
+        {
+          text: '로그아웃',
+          style: 'destructive',
+          onPress: () => {
+            logout(undefined, {
+              onSuccess: () => {
+                refreshAuthState();
+                Alert.alert('로그아웃 완료', '로그아웃되었습니다.');
+              },
+              onError: (error) => {
+                // 에러가 발생해도 로컬 토큰은 삭제되었으므로 상태 갱신
+                refreshAuthState();
+                console.error('로그아웃 에러:', error);
+                Alert.alert('로그아웃 완료', '로그아웃되었습니다.');
+              },
+            });
+          },
+        },
+      ]
+    );
+  };
 
   const handleMenuPress = async (action: string) => {
     switch (action) {
@@ -70,21 +127,47 @@ export default function ProfileScreen() {
 
         <View className="px-4 gap-2">
           <View className="bg-gray-200 h-px" />
-          {PROFILE_INFO.map((item) => (
-            <View key={item.label} className=''>
-              <View className="p-1">
-                <View className="flex-row justify-between items-center">
-                  <View className="flex-row flex-1 items-center">
-                    <Text className="text-gray-500 w-20">{item.label}</Text>
-                    <Text className="font-bold">{item.value}</Text>
-                  </View>
-                  <Pressable className="bg-blue-100 px-4 py-2 rounded-full">
-                    <Text className="text-blue-500">수정</Text>
-                  </Pressable>
-                </View>
-              </View>
+          {isLoadingUser ? (
+            <View className="p-4 items-center">
+              <ActivityIndicator size="small" color="#3B82F6" />
+              <Text className="text-gray-500 mt-2">정보를 불러오는 중...</Text>
             </View>
-          ))}
+          ) : isAuthenticated && getProfileInfo().length > 0 ? (
+            <>
+              {getProfileInfo().map((item) => (
+                <View key={item.label} className=''>
+                  <View className="p-1">
+                    <View className="flex-row justify-between items-start">
+                      <View className="flex-row flex-1 items-center">
+                        <Text className="text-gray-500 w-20">{item.label}</Text>
+                        <Text className="font-bold">{item.value}</Text>
+                      </View>
+                      <Pressable 
+                        className="bg-blue-100 px-4 py-2 rounded-full"
+                        onPress={handleUpdateInfo}
+                      >
+                        <Text className="text-blue-500 font-medium">수정</Text>
+                      </Pressable>
+                    </View>
+                  </View>
+                </View>
+              ))}
+            </>
+          ) : isAuthenticated ? (
+            <View className="p-4">
+              <Text className="text-gray-500 mb-2">정보가 없습니다.</Text>
+              <Pressable 
+                className="bg-blue-100 px-4 py-2 rounded-full self-start"
+                onPress={handleUpdateInfo}
+              >
+                <Text className="text-blue-500 font-medium">정보 입력</Text>
+              </Pressable>
+            </View>
+          ) : (
+            <View className="p-4">
+              <Text className="text-gray-500">로그인 후 정보를 확인할 수 있습니다.</Text>
+            </View>
+          )}
           <View className="bg-gray-200 h-px" />
         </View>
         <View>
@@ -111,11 +194,21 @@ export default function ProfileScreen() {
         </View>
 
         {/* 로그아웃 */}
-        <View className="mt-4">
-          <Pressable className="bg-blue-500 p-3 rounded-lg">
-            <Text className="text-white text-center font-medium">로그아웃</Text>
-          </Pressable>
-        </View>
+        {isAuthenticated && (
+          <View className="mt-4">
+            <Pressable
+              className="bg-blue-500 p-3 rounded-lg"
+              onPress={handleLogout}
+              disabled={isLoggingOut}
+            >
+              {isLoggingOut ? (
+                <ActivityIndicator size="small" color="#FFFFFF" />
+              ) : (
+                <Text className="text-white text-center font-medium">로그아웃</Text>
+              )}
+            </Pressable>
+          </View>
+        )}
       </ScrollView>
     </View>
   );

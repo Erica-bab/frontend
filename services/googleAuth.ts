@@ -4,6 +4,7 @@ import { makeRedirectUri } from 'expo-auth-session';
 import { useEffect, useRef } from 'react';
 import { Platform } from 'react-native';
 import { useGoogleLogin } from '@/api/auth/useAuth';
+import { useQueryClient } from '@tanstack/react-query';
 
 // 웹 브라우저 세션 완료 처리
 WebBrowser.maybeCompleteAuthSession();
@@ -13,8 +14,9 @@ const GOOGLE_WEB_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID;
 const GOOGLE_IOS_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID;
 const GOOGLE_ANDROID_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID;
 
-export const useGoogleSignIn = (onSuccess?: () => void) => {
+export const useGoogleSignIn = (onSuccess?: (user?: any) => void) => {
   const { mutate: googleLogin, isPending, isError, error } = useGoogleLogin();
+  const queryClient = useQueryClient();
   const isProcessing = useRef(false);
 
   // iOS는 iOS Client ID의 reversed scheme 사용
@@ -69,9 +71,10 @@ export const useGoogleSignIn = (onSuccess?: () => void) => {
         googleLogin(
           { id_token },
           {
-            onSuccess: () => {
+            onSuccess: (data) => {
               console.log('Backend login success');
-              onSuccess?.();
+              // 사용자 정보를 콜백으로 전달
+              onSuccess?.(data.user);
               isProcessing.current = false;
             },
             onError: (error: any) => {

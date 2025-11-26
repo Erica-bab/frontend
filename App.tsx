@@ -12,6 +12,7 @@ import FilterScreen from './screens/FilterScreen';
 import RestaurantDetailScreen from './screens/RestaurantDetailScreen';
 import CommentDetailScreen from './screens/CommentsDetailScreen';
 import BookmarkScreen from './screens/BookmarkScreen';
+import AddInfoScreen from './screens/AddInfo';
 
 import MyIcon from './assets/icon/tabicon/my.svg';
 import CafeIcon from './assets/icon/tabicon/cafe.svg';
@@ -110,6 +111,17 @@ export default function App() {
                 options={{
                   headerShown: true,
                   headerTitle: '북마크',
+                  headerStyle: { backgroundColor: '#3B82F6' },
+                  headerTintColor: '#FFFFFF',
+                  headerTitleStyle: { fontWeight: 'bold' },
+                }}
+              />
+              <Stack.Screen
+                name="AddInfo"
+                component={AddInfoScreen}
+                options={{
+                  headerShown: true,
+                  headerTitle: '정보 입력',
                   headerStyle: { backgroundColor: '#3B82F6' },
                   headerTintColor: '#FFFFFF',
                   headerTitleStyle: { fontWeight: 'bold' },

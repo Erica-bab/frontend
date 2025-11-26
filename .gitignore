@@ -40,5 +40,8 @@ yarn-error.*
 /ios
 /android
 
+# Git config backup files
+.git_config_backup.txt
+.git_config_backup.sh
 
 claude-glm.bat

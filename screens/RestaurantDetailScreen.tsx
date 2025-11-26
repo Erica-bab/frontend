@@ -27,7 +27,7 @@ export default function RestaurantDetailScreen() {
   const [showLoginPopup, setShowLoginPopup] = useState(false);
   const [isBookmarked, setIsBookmarked] = useState(false);
 
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isLoading: isAuthLoading, refreshAuthState } = useAuth();
 
   const { data: restaurant, isLoading, error } = useRestaurantDetail(Number(restaurantId));
   const { mutate: createComment, isPending: isCommentLoading } = useCreateComment(Number(restaurantId));
@@ -177,14 +177,16 @@ export default function RestaurantDetailScreen() {
         <CommentInput
           commentText={commentText}
           onChangeText={(text) => {
-            if (!isAuthenticated && text.length > 0) {
+            // 인증 상태 로딩 중이면 팝업 표시하지 않음
+            if (!isAuthLoading && !isAuthenticated && text.length > 0) {
               setShowLoginPopup(true);
               return;
             }
             setCommentText(text);
           }}
           onSubmit={() => {
-            if (!isAuthenticated) {
+            // 인증 상태 로딩 중이면 팝업 표시하지 않음
+            if (!isAuthLoading && !isAuthenticated) {
               setShowLoginPopup(true);
               return;
             }
@@ -207,7 +209,8 @@ export default function RestaurantDetailScreen() {
         visible={showLoginPopup}
         onClose={() => setShowLoginPopup(false)}
         onLoginSuccess={() => {
-          // 로그인 성공 후 인증 상태 갱신 필요시 처리
+          // 로그인 성공 후 인증 상태 갱신
+          refreshAuthState();
         }}
       />
     </SafeAreaView>
