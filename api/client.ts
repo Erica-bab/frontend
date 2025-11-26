@@ -3,6 +3,21 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL!;
 
+// 로그아웃 이벤트 리스너들
+const logoutListeners: (() => void)[] = [];
+
+export const onAuthError = (callback: () => void) => {
+  logoutListeners.push(callback);
+  return () => {
+    const index = logoutListeners.indexOf(callback);
+    if (index > -1) logoutListeners.splice(index, 1);
+  };
+};
+
+const notifyAuthError = () => {
+  logoutListeners.forEach(listener => listener());
+};
+
 export const apiClient = axios.create({
     baseURL: API_BASE_URL,
     timeout: 30000,
@@ -97,6 +112,8 @@ apiClient.interceptors.response.use(
             } catch (refreshError) {
                 // 리프레시 실패 시 토큰 삭제
                 await AsyncStorage.multiRemove(['accessToken', 'refreshToken']);
+                // 인증 에러 알림 (로그아웃 처리)
+                notifyAuthError();
                 return Promise.reject(refreshError);
             }
         }

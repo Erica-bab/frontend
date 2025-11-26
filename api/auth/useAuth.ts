@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { apiClient } from '../client';
+import { apiClient, onAuthError } from '../client';
 import {
   GoogleLoginRequest,
   AuthResponse,
@@ -29,6 +29,14 @@ export const useAuth = () => {
   useEffect(() => {
     checkAuth();
   }, [checkAuth]);
+
+  // 인증 에러 발생 시 자동으로 로그아웃 처리
+  useEffect(() => {
+    const unsubscribe = onAuthError(() => {
+      setIsAuthenticated(false);
+    });
+    return unsubscribe;
+  }, []);
 
   const refreshAuthState = useCallback(async () => {
     await checkAuth();
@@ -64,13 +72,12 @@ export const useLogout = () => {
 
   return useMutation({
     mutationFn: async () => {
-      const { data } = await apiClient.post('/auth/logout');
-      return data;
+      // 서버에 로그아웃 요청
+      await apiClient.post('/auth/logout');
     },
     onSuccess: async () => {
-      // 토큰 삭제
+      // 토큰 삭제 및 캐시 초기화
       await AsyncStorage.multiRemove(['accessToken', 'refreshToken']);
-      // 캐시 초기화
       queryClient.clear();
     },
     onError: async () => {
@@ -83,12 +90,15 @@ export const useLogout = () => {
 
 // 현재 사용자 정보 조회
 export const useCurrentUser = () => {
+  const { isAuthenticated } = useAuth();
+
   return useQuery({
     queryKey: ['currentUser'],
     queryFn: async () => {
       const { data } = await apiClient.get<User>('/auth/me');
       return data;
     },
+    enabled: isAuthenticated === true, // 로그인된 경우에만 API 호출
     retry: false,
   });
 };

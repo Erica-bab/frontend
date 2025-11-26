@@ -7,7 +7,7 @@ import { useAuth } from '@/api/auth/useAuth';
 import LoginPopup from '@/components/LoginPopup';
 
 const MENU_ITEMS = [
-  { icon: 'chat' as const, label: '쓴 댓글 보기', action: 'comments' },
+  // { icon: 'chat' as const, label: '쓴 댓글 보기', action: 'comments' },
   { icon: 'bookmark1' as const, label: '북마크', action: 'bookmark' },
   { icon: 'mail' as const, label: '문의하기', action: 'contact' },
   { icon: 'paper' as const, label: '서비스 이용약관', action: 'terms' },
