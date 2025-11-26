@@ -11,8 +11,10 @@ import DinnerIcon from '@/assets/icon/dinner.svg';
 import DocsIcon from '@/assets/icon/docs.svg';
 import DownAngleIcon from '@/assets/icon/down_angle.svg';
 import DropdownIcon from '@/assets/icon/dropdown.svg';
+import EditIcon from '@/assets/icon/edit.svg';
 import FilterIcon from '@/assets/icon/filter.svg';
 import GoodIcon from '@/assets/icon/good.svg';
+import GoodFilledIcon from '@/assets/icon/good_filled.svg';
 import LeftAngleIcon from '@/assets/icon/left_angle.svg';
 import LocationIcon from '@/assets/icon/location.svg';
 import LunchIcon from '@/assets/icon/lunch.svg';
@@ -27,12 +29,12 @@ import RightAngleIcon from '@/assets/icon/right_angle.svg';
 import SchoolIcon from '@/assets/icon/school.svg';
 import SearchIcon from '@/assets/icon/search.svg';
 import SendIcon from '@/assets/icon/send.svg';
+import ShareIcon from '@/assets/icon/share.svg';
 import StarIcon from '@/assets/icon/star.svg';
 import TelephoneIcon from '@/assets/icon/telephone.svg';
 import TriangleIcon from '@/assets/icon/triangle.svg';
 import UpAngleIcon from '@/assets/icon/up_angle.svg';
 import WarnningIcon from '@/assets/icon/warnning.svg';
-import filledGoodIcon from '@/assets/icon/good_filled.svg'
 
 // 아이콘 매핑
 const icons = {
@@ -46,9 +48,10 @@ const icons = {
   docs: DocsIcon,
   downAngle: DownAngleIcon,
   dropdown: DropdownIcon,
+  edit: EditIcon,
   filter: FilterIcon,
   good: GoodIcon,
-  filledgood: filledGoodIcon,
+  goodFilled: GoodFilledIcon,
   leftAngle: LeftAngleIcon,
   location: LocationIcon,
   lunch: LunchIcon,
@@ -63,6 +66,7 @@ const icons = {
   school: SchoolIcon,
   search: SearchIcon,
   send: SendIcon,
+  share: ShareIcon,
   star: StarIcon,
   telephone: TelephoneIcon,
   triangle: TriangleIcon,

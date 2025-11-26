@@ -71,7 +71,7 @@ export default function CafeteriaLikeButton({ like, meal_id, auth, }: CafeteriaL
         className="flex-row items-center rounded-3xl border-2 border-[#3B82F6] bg-white px-3 py-1"
       >
         <Icon
-          name={isLiked ? 'good' : 'filledgood'}
+          name={isLiked ? 'goodFilled' : 'good'}
           size={15}
           color="#3B82F6"
         />

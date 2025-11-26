@@ -122,15 +122,20 @@ export default function RestaurantDetailScreen() {
               className='flex-1 items-center justify-center p-2 gap-1'
               onPress={handleBookmarkPress}
             >
-              <Icon name='bookmark' width={15} color={isBookmarked ? '#3B82F6' : '#000000'} />
+              <Icon
+                name={isBookmarked ? 'bookmark' : 'bookmark1'}
+                width={15}
+                height={15}
+                color={isBookmarked ? '#3B82F6' : '#000000'}
+              />
               <Text>저장</Text>
             </Pressable>
             <Pressable className='flex-1 items-center justify-center p-2 gap-1'>
-              <Icon name='star' />
+              <Icon width={15} name='share' />
               <Text>공유</Text>
             </Pressable>
             <Pressable className='flex-1 items-center justify-center p-2 gap-1'>
-              <Icon name='star' />
+              <Icon width={15} name='edit' />
               <Text>수정</Text>
             </Pressable>
           </View>

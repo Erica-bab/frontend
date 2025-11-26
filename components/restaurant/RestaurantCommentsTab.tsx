@@ -115,20 +115,6 @@ export default function RestaurantCommentsTab({ restaurant }: RestaurantComments
         )}
       </View>
 
-      {/* 댓글 입력 */}
-      <CommentInput
-        commentText={commentText}
-        onChangeText={(text) => {
-          if (!isAuthLoading && !isAuthenticated && text.length > 0) {
-            setShowLoginPopup(true);
-            return;
-          }
-          setCommentText(text);
-        }}
-        onSubmit={handleSubmitComment}
-        isLoading={isCreatingComment}
-      />
-
       <LoginPopup
         visible={showLoginPopup}
         onClose={() => setShowLoginPopup(false)}

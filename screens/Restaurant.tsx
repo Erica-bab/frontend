@@ -44,7 +44,12 @@ export default function RestuarantScreen() {
         (async () => {
             const coords = await requestLocationAndUpdate();
             if (coords && sortOption === '위치순') {
-                setFilterParams(prev => ({ ...prev, lat: coords.lat, lng: coords.lng }));
+                setFilterParams(prev => ({
+                    ...prev,
+                    sort: 'distance', // 위치순 정렬 추가
+                    lat: coords.lat,
+                    lng: coords.lng
+                }));
             }
         })();
     }, []);
