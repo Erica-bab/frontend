@@ -5,12 +5,12 @@ import { useLogout, useCurrentUser } from '@/api/auth/useAuth';
 import { useAuth } from '@/api/auth/useAuth';
 
 const MENU_ITEMS = [
-  { icon: 'star' as const, label: '쓴 댓글 보기', action: 'comments' },
-  { icon: 'star' as const, label: '북마크', action: 'bookmark' },
-  { icon: 'send' as const, label: '문의하기', action: 'contact' },
-  { icon: 'star' as const, label: '서비스 이용약관', action: 'terms' },
-  { icon: 'star' as const, label: '개인정보 처리방침', action: 'privacy' },
-  { icon: 'star' as const, label: '만든사람', action: 'about' },
+  { icon: 'chat' as const, label: '쓴 댓글 보기', action: 'comments' },
+  { icon: 'bookmark1' as const, label: '북마크', action: 'bookmark' },
+  { icon: 'mail' as const, label: '문의하기', action: 'contact' },
+  { icon: 'paper' as const, label: '서비스 이용약관', action: 'terms' },
+  { icon: 'docs' as const, label: '개인정보 처리방침', action: 'privacy' },
+  { icon: 'people' as const, label: '만든사람', action: 'about' },
 ];
 
 export default function ProfileScreen() {

@@ -27,7 +27,7 @@ export const useCafeteria = (params: CafeteriaParams) => {
     ],
     queryFn: async () => {
       const { data } = await apiClient.get<CafeteriaResponse>(
-        '/cafeteria/meals',
+        '/cafeteria/meals/',
         { params: finalParams },
       );
       return data;
