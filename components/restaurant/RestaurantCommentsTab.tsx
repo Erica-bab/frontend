@@ -40,6 +40,10 @@ export default function RestaurantCommentsTab({ restaurant }: RestaurantComments
   }, [isAuthenticated, showLoginPopup]);
 
   const handleRating = (rating: number) => {
+    if (!isAuthLoading && !isAuthenticated) {
+      setShowLoginPopup(true);
+      return;
+    }
     createOrUpdateRating(
       { rating },
       {
