@@ -1,13 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { View, Text, ScrollView, Pressable, ActivityIndicator, KeyboardAvoidingView, Platform, Alert, Share } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useRestaurantDetail } from '@/api/restaurants/useRestaurant';
-import { apiClient } from '@/api/client';
 import { useCreateComment } from '@/api/restaurants/useReviewComment';
 import { useAuth } from '@/api/auth/useAuth';
-import { toggleBookmark, checkIsBookmarked } from '@/services/bookmarkStoarge';
+import { useCheckBookmark, useToggleBookmark } from '@/api/user/useUserActivity';
+import { AxiosError } from 'axios';
 import RestaurantStatusTag from '@/components/ui/RestaurantStatusTag';
 import TextIconButton from '@/components/ui/TextIconButton';
 import RestaurantHomeTab from '@/components/restaurant/RestaurantHomeTab';
@@ -25,53 +25,41 @@ export default function RestaurantDetailScreen() {
   const { restaurantId, initialTab } = route.params as { restaurantId?: string; initialTab?: RestaurantTabType };
   const [selectedTab, setSelectedTab] = useState<RestaurantTabType>(initialTab || 'home');
   const [commentText, setCommentText] = useState('');
-  const [isBookmarked, setIsBookmarked] = useState(false);
 
   const { isAuthenticated, isLoading: isAuthLoading, refreshAuthState } = useAuth();
 
   const { data: restaurant, isLoading, error } = useRestaurantDetail(Number(restaurantId));
   const { mutate: createComment, isPending: isCommentLoading } = useCreateComment(Number(restaurantId));
 
-  // 북마크 상태 확인
-  useEffect(() => {
-    const loadBookmarkStatus = async () => {
-      if (!restaurantId) return;
-      try {
-        if (!isAuthLoading && isAuthenticated) {
-          const { data } = await apiClient.get<{ is_bookmarked: boolean }>(
-            `/users/me/bookmarks/${restaurantId}/check`,
-          );
-          setIsBookmarked(Boolean(data?.is_bookmarked));
-        } else {
-          const bookmarked = await checkIsBookmarked(String(restaurantId));
-          setIsBookmarked(bookmarked);
-        }
-      } catch (err) {
-        console.error('Failed to load bookmark status:', err);
-      }
-    };
-    loadBookmarkStatus();
-  }, [restaurantId, isAuthenticated, isAuthLoading]);
+  // 북마크 상태 확인 (로그인한 경우에만)
+  const { data: isBookmarked = false, refetch: refetchBookmark } = useCheckBookmark(
+    Number(restaurantId),
+    isAuthenticated === true
+  );
+
+  const { mutate: toggleBookmark } = useToggleBookmark();
 
   // 북마크 토글 핸들러
   const handleBookmarkPress = async () => {
     if (!restaurantId) return;
-    try {
-      if (!isAuthLoading && isAuthenticated) {
-        if (isBookmarked) {
-          await apiClient.delete(`/users/me/bookmarks/${restaurantId}`);
-          setIsBookmarked(false);
-        } else {
-          await apiClient.post(`/users/me/bookmarks/${restaurantId}`);
-          setIsBookmarked(true);
-        }
-      } else {
-        const newBookmarkState = await toggleBookmark(String(restaurantId));
-        setIsBookmarked(newBookmarkState);
-      }
-    } catch (error) {
-      console.error('Failed to toggle bookmark:', error);
+
+    // 로그인 안되어 있으면 로그인 화면으로
+    if (!isAuthLoading && !isAuthenticated) {
+      (navigation.navigate as any)('Login', { onSuccess: refreshAuthState });
+      return;
     }
+
+    toggleBookmark(Number(restaurantId), {
+      onSuccess: () => {
+        refetchBookmark();
+      },
+      onError: (err) => {
+        if ((err as AxiosError)?.response?.status === 403) {
+          (navigation.navigate as any)('Login', { onSuccess: refreshAuthState });
+        }
+        console.error('Failed to toggle bookmark:', err);
+      },
+    });
   };
 
   // 공유 핸들러

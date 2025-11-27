@@ -13,7 +13,7 @@ export default function LoginScreen() {
   const route = useRoute();
   const { onSuccess } = route.params as { onSuccess?: () => void } || {};
 
-  const snapPoints = useMemo(() => ['55%'], []);
+  const snapPoints = useMemo(() => ['45%'], []);
 
   const handleAuthSuccess = (user?: any) => {
     navigation.goBack();
@@ -112,7 +112,7 @@ export default function LoginScreen() {
           )}
 
           <Pressable
-            style={[styles.button, styles.closeButtonAlt]}
+            style={[styles.button, styles.buttonSmall, styles.closeButtonAlt]}
             onPress={handleClose}
           >
             <Text style={styles.closeButtonText}>
@@ -187,6 +187,10 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     minHeight: 56,
   },
+  buttonSmall: {
+    minHeight: 48,
+    paddingVertical: 12,
+  },
   googleButton: {
     backgroundColor: 'white',
     borderWidth: 1,
@@ -196,7 +200,7 @@ const styles = StyleSheet.create({
     opacity: 0.5,
   },
   buttonText: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: '600',
   },
   googleButtonText: {
@@ -208,13 +212,15 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   closeButtonAlt: {
-    backgroundColor: '#000',
+    backgroundColor: 'transparent',
     marginTop: 8,
+    borderWidth: 1,
+    borderColor: '#d1d5db',
   },
   closeButtonText: {
-    color: 'white',
+    color: '#6b7280',
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '400',
   },
   errorContainer: {
     backgroundColor: '#fef2f2',

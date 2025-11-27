@@ -2,6 +2,7 @@ import { View, Text, TouchableOpacity } from 'react-native';
 import Icon from '@/components/Icon';
 import React from 'react';
 import { useQueryClient } from '@tanstack/react-query';
+import { useState } from 'react';
 
 import { CafeteriaLikeParams } from '@/api/cafeteria/types';
 import { useCafeteriaLike, useToggleCafeteriaLike } from '@/api/cafeteria/useCafeteria';
@@ -27,6 +28,7 @@ export default function CafeteriaLikeButton({
   const cafeteriaLikeParams: CafeteriaLikeParams = { meal_id };
 
   const { data, isLoading: isDataLoading } = useCafeteriaLike(cafeteriaLikeParams);
+  const [isInitialized, setIsInitialized] = useState(false);
 
 
   const isLiked =

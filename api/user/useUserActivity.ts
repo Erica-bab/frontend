@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '../client';
 
 // 활동 내역 요약
@@ -156,6 +156,75 @@ export const useMyReplies = (page: number = 1, limit: number = 100, enabled: boo
       return data.activities.replies || [];
     },
     enabled,
+    retry: false,
+  });
+};
+
+// 북마크 활동 항목
+export interface BookmarkActivity {
+  restaurant_id: number;
+  restaurant_name: string | null;
+  restaurant_category: string | null;
+  restaurant_address: string | null;
+  created_at: string;
+}
+
+// 북마크 목록 조회
+export const useMyBookmarks = (page: number = 1, limit: number = 100, enabled: boolean = true) => {
+  return useQuery<BookmarkActivity[], Error>({
+    queryKey: ['user', 'bookmarks', page, limit],
+    queryFn: async () => {
+      const { data } = await apiClient.get<UserActivitiesResponse>('/users/me/activities', {
+        params: {
+          category: 'bookmarks',
+          page,
+          limit,
+        },
+      });
+      return data.activities.bookmarks || [];
+    },
+    enabled,
+    retry: false,
+  });
+};
+
+// 북마크 추가/삭제
+export const useToggleBookmark = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation<void, Error, number>({
+    mutationFn: async (restaurantId: number) => {
+      // 먼저 체크 API 호출
+      const { data: checkData } = await apiClient.get<{ is_bookmarked: boolean }>(
+        `/users/me/bookmarks/${restaurantId}/check`
+      );
+
+      if (checkData.is_bookmarked) {
+        // 이미 북마크되어 있으면 삭제
+        await apiClient.delete(`/users/me/bookmarks/${restaurantId}`);
+      } else {
+        // 북마크 안되어 있으면 추가
+        await apiClient.post(`/users/me/bookmarks/${restaurantId}`);
+      }
+    },
+    onSuccess: () => {
+      // 북마크 목록 새로고침
+      queryClient.invalidateQueries({ queryKey: ['user', 'bookmarks'] });
+    },
+  });
+};
+
+// 북마크 체크
+export const useCheckBookmark = (restaurantId: number, enabled: boolean = true) => {
+  return useQuery<boolean, Error>({
+    queryKey: ['bookmark', 'check', restaurantId],
+    queryFn: async () => {
+      const { data } = await apiClient.get<{ is_bookmarked: boolean }>(
+        `/users/me/bookmarks/${restaurantId}/check`
+      );
+      return data.is_bookmarked;
+    },
+    enabled: enabled && !!restaurantId,
     retry: false,
   });
 };

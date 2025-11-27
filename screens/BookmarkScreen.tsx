@@ -1,56 +1,56 @@
 import { View, Text, FlatList, Pressable, ActivityIndicator } from 'react-native';
-import { useState, useCallback } from 'react';
-import { useNavigation, useFocusEffect } from '@react-navigation/native';
-import { getBookmarks, removeBookmark, type Bookmark } from '@/services/bookmarkStoarge';
-import { useRestaurantList } from '@/api/restaurants/useRestaurant';
+import { useNavigation } from '@react-navigation/native';
+import { useMyBookmarks, useToggleBookmark } from '@/api/user/useUserActivity';
+import { useAuth } from '@/api/auth/useAuth';
 import Icon from '@/components/Icon';
+import { AxiosError } from 'axios';
 
 export default function BookmarkScreen() {
   const navigation = useNavigation();
-  const [bookmarks, setBookmarks] = useState<Bookmark[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
 
-  const { data: restaurantsData } = useRestaurantList();
-  const restaurants = restaurantsData?.restaurants || [];
+  const { data: bookmarks = [], isLoading, error, refetch } = useMyBookmarks(1, 100, isAuthenticated === true);
+  const { mutate: toggleBookmark } = useToggleBookmark();
 
-  const loadBookmarks = async () => {
-    try {
-      setLoading(true);
-      const data = await getBookmarks();
-      // 최신순 정렬 (timestamp 기준)
-      setBookmarks(data.sort((a, b) => b.timestamp - a.timestamp));
-    } catch (error) {
-      console.error('Failed to load bookmarks:', error);
-    } finally {
-      setLoading(false);
-    }
+  // 403 에러 처리 (로그인 필요)
+  const is403Error = error instanceof Error && (error as AxiosError)?.response?.status === 403;
+
+  const handleRemoveBookmark = async (restaurantId: number) => {
+    toggleBookmark(restaurantId, {
+      onSuccess: () => {
+        refetch();
+      },
+      onError: (err) => {
+        if ((err as AxiosError)?.response?.status === 403) {
+          (navigation.navigate as any)('Login');
+        }
+        console.error('Failed to remove bookmark:', err);
+      },
+    });
   };
 
-  // 화면이 포커스될 때마다 북마크 새로고침
-  useFocusEffect(
-    useCallback(() => {
-      loadBookmarks();
-    }, [])
-  );
-
-  const handleRemoveBookmark = async (restaurantId: string) => {
-    try {
-      await removeBookmark(restaurantId);
-      await loadBookmarks();
-    } catch (error) {
-      console.error('Failed to remove bookmark:', error);
-    }
+  const handleRestaurantPress = (restaurantId: number) => {
+    (navigation.navigate as any)('RestaurantDetail', { restaurantId });
   };
 
-  const handleRestaurantPress = (restaurantId: string) => {
-    (navigation.navigate as any)('RestaurantDetail', { restaurantId: Number(restaurantId) });
-  };
+  // 로그인 안됨 또는 403 에러
+  if (is403Error || (!isAuthLoading && !isAuthenticated)) {
+    return (
+      <View className="flex-1 bg-white items-center justify-center p-4">
+        <Icon name="star" width={64} height={64} color="#D1D5DB" />
+        <Text className="text-gray-400 text-lg mt-4">로그인이 필요합니다</Text>
+        <Text className="text-gray-400 text-sm mt-2">북마크를 보려면 로그인해주세요</Text>
+        <Pressable
+          className="mt-4 bg-blue-500 px-6 py-3 rounded-lg"
+          onPress={() => (navigation.navigate as any)('Login')}
+        >
+          <Text className="text-white font-semibold">로그인하기</Text>
+        </Pressable>
+      </View>
+    );
+  }
 
-  const getRestaurantInfo = (restaurantId: string) => {
-    return restaurants?.find((r: any) => r.id === Number(restaurantId));
-  };
-
-  if (loading) {
+  if (isLoading || isAuthLoading) {
     return (
       <View className="flex-1 bg-white items-center justify-center">
         <ActivityIndicator size="large" color="#3B82F6" />
@@ -72,42 +72,40 @@ export default function BookmarkScreen() {
     <View className="flex-1 bg-white">
       <FlatList
         data={bookmarks}
-        keyExtractor={(item) => item.restaurantId}
+        keyExtractor={(item) => String(item.restaurant_id)}
         contentContainerClassName="p-4"
         ItemSeparatorComponent={() => <View className="h-3" />}
         renderItem={({ item }) => {
-          const restaurant = getRestaurantInfo(item.restaurantId);
-
           return (
             <Pressable
-              onPress={() => handleRestaurantPress(item.restaurantId)}
+              onPress={() => handleRestaurantPress(item.restaurant_id)}
               className="bg-white border border-gray-200 rounded-lg p-4"
             >
               <View className="flex-row justify-between items-start">
                 <View className="flex-1">
                   <Text className="text-lg font-bold mb-1">
-                    {restaurant?.name || '알 수 없는 식당'}
+                    {item.restaurant_name || '알 수 없는 식당'}
                   </Text>
-                  {restaurant?.category && (
+                  {item.restaurant_category && (
                     <Text className="text-gray-500 text-sm mb-2">
-                      {restaurant.category}
+                      {item.restaurant_category}
                     </Text>
                   )}
-                  {restaurant?.location?.address && (
+                  {item.restaurant_address && (
                     <Text className="text-gray-400 text-xs">
-                      {restaurant.location.address}
+                      {item.restaurant_address}
                     </Text>
                   )}
                   <Text className="text-gray-300 text-xs mt-2">
-                    {new Date(item.timestamp).toLocaleDateString('ko-KR')}
+                    {new Date(item.created_at).toLocaleDateString('ko-KR')}
                   </Text>
                 </View>
 
                 <Pressable
-                  onPress={() => handleRemoveBookmark(item.restaurantId)}
+                  onPress={() => handleRemoveBookmark(item.restaurant_id)}
                   className="ml-2 p-2"
                 >
-                  <Icon name="star" width={24} height={24} color="#FCD34D" />
+                  <Icon name="bookmark" width={24} height={24} color="#3B82F6" />
                 </Pressable>
               </View>
             </Pressable>
