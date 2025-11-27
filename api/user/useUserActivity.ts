@@ -22,11 +22,35 @@ export interface LikedCommentActivity {
   created_at: string;
 }
 
+// 별점 활동 항목
+export interface RatingActivity {
+  id: number;
+  rating: number;
+  restaurant_id: number;
+  restaurant_name: string | null;
+  created_at: string;
+  updated_at?: string | null;
+}
+
+// 댓글 활동 항목
+export interface CommentActivity {
+  id: number;
+  content: string;
+  restaurant_id: number;
+  restaurant_name: string | null;
+  like_count: number;
+  reply_count: number;
+  created_at: string;
+  updated_at?: string | null;
+}
+
 // 사용자 활동 내역 응답
 export interface UserActivitiesResponse {
   summary: ActivitySummary;
   activities: {
     liked_comments?: LikedCommentActivity[];
+    favorites?: RatingActivity[];
+    comments?: CommentActivity[];
     [key: string]: any;
   };
 }
@@ -63,6 +87,44 @@ export const useLikedComments = (page: number = 1, limit: number = 100, enabled:
         },
       });
       return data.activities.liked_comments || [];
+    },
+    enabled,
+    retry: false,
+  });
+};
+
+// 내가 준 별점 목록 조회
+export const useMyRatings = (page: number = 1, limit: number = 100, enabled: boolean = true) => {
+  return useQuery<RatingActivity[]>({
+    queryKey: ['user', 'my-ratings', page, limit],
+    queryFn: async () => {
+      const { data } = await apiClient.get<UserActivitiesResponse>('/users/me/activities', {
+        params: {
+          category: 'favorites',
+          page,
+          limit,
+        },
+      });
+      return data.activities.favorites || [];
+    },
+    enabled,
+    retry: false,
+  });
+};
+
+// 내가 작성한 댓글 목록 조회
+export const useMyComments = (page: number = 1, limit: number = 100, enabled: boolean = true) => {
+  return useQuery<CommentActivity[]>({
+    queryKey: ['user', 'my-comments', page, limit],
+    queryFn: async () => {
+      const { data } = await apiClient.get<UserActivitiesResponse>('/users/me/activities', {
+        params: {
+          category: 'comments',
+          page,
+          limit,
+        },
+      });
+      return data.activities.comments || [];
     },
     enabled,
     retry: false,

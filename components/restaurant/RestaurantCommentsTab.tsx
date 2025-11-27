@@ -5,9 +5,8 @@ import {
   useCreateOrUpdateRating,
 } from '@/api/restaurants/useReviewComment';
 import { useAuth } from '@/api/auth/useAuth';
-import { useLikedComments } from '@/api/user/useUserActivity';
+import { useLikedComments, useMyRatings } from '@/api/user/useUserActivity';
 import { useLikedCommentIds } from '@/hooks/useLikedCommentIds';
-import { useMyRating } from '@/api/restaurants/useRating';
 import CommentItem from '@/components/restaurant/CommentItem';
 import StarRating from '@/components/restaurant/StarRating';
 
@@ -22,7 +21,10 @@ export default function RestaurantCommentsTab({ restaurant, onShowLogin }: Resta
   const { mutate: createOrUpdateRating, isPending: isRatingLoading } = useCreateOrUpdateRating(restaurant.id);
   const { refetch: refetchLikedComments } = useLikedComments(1, 100, isAuthenticated === true);
   const likedCommentIds = useLikedCommentIds(isAuthenticated === true);
-  const { myRating, refetchRatingStats } = useMyRating(restaurant.id, isAuthenticated === true);
+  const { data: myRatings, refetch: refetchMyRatings } = useMyRatings(1, 100, isAuthenticated === true);
+
+  // 현재 레스토랑의 내 별점 찾기
+  const myRating = myRatings?.find(rating => rating.restaurant_id === restaurant.id)?.rating || 0;
 
   const handleRating = (rating: number) => {
     if (!isAuthLoading && !isAuthenticated) {
@@ -33,7 +35,7 @@ export default function RestaurantCommentsTab({ restaurant, onShowLogin }: Resta
       { rating },
       {
         onSuccess: () => {
-          refetchRatingStats();
+          refetchMyRatings();
         },
       }
     );
