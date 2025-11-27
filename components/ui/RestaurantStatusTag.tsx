@@ -1,4 +1,4 @@
-import { View, Text } from "react-native";
+import { View, Text, Pressable } from "react-native";
 import Tag from "./Tag";
 import { getColor } from "../../utils/colors";
 import StarIcon from "../../assets/icon/star.svg";
@@ -8,6 +8,8 @@ type BusinessStatus = '영업중' | '영업종료' | '브레이크타임';
 interface RestaurantStatusTagProps {
     status: BusinessStatus;
     rating: number;
+    restaurantId?: string;
+    onRatingPress?: () => void;
 }
 
 const statusStyles = {
@@ -31,7 +33,7 @@ const statusStyles = {
     },
 };
 
-export default function RestaurantStatusTag({ status, rating = 0 }: RestaurantStatusTagProps) {
+export default function RestaurantStatusTag({ status, rating = 0, onRatingPress }: RestaurantStatusTagProps) {
     const styles = statusStyles[status];
 
     return (
@@ -44,18 +46,20 @@ export default function RestaurantStatusTag({ status, rating = 0 }: RestaurantSt
             </Tag>
 
             {/* 별점 태그 */}
-            <Tag className={styles.outlined}>
-                <View className="flex-row items-center" style={{ gap: 4 }}>
-                    <StarIcon
-                        width={16}
-                        height={16}
-                        color={styles.tintColor}
-                    />
-                    <Text className={`text-sm font-bold ${styles.textColor}`}>
-                        {rating.toFixed(1)}
-                    </Text>
-                </View>
-            </Tag>
+            <Pressable onPress={onRatingPress}>
+                <Tag className={styles.outlined}>
+                    <View className="flex-row items-center" style={{ gap: 4 }}>
+                        <StarIcon
+                            width={16}
+                            height={16}
+                            color={styles.tintColor}
+                        />
+                        <Text className={`text-sm font-bold ${styles.textColor}`}>
+                            {rating.toFixed(1)}
+                        </Text>
+                    </View>
+                </Tag>
+            </Pressable>
         </View>
     );
 }

@@ -171,15 +171,15 @@ export default function ProfileScreen() {
             </View>
           ) : isAuthenticated && getProfileInfo().length > 0 ? (
             <>
-              {getProfileInfo().map((item) => (
-                <View key={item.label} className=''>
+              {getProfileInfo().map((item, index) => (
+                <View key={item.label} className={index === 0 && getProfileInfo().length === 1 ? 'py-4' : ''}>
                   <View className="p-1">
                     <View className="flex-row justify-between items-start">
                       <View className="flex-row flex-1 items-center">
                         <Text className="text-gray-500 w-20">{item.label}</Text>
                         <Text className="font-bold">{item.value}</Text>
                       </View>
-                      <Pressable 
+                      <Pressable
                         className="bg-blue-100 px-4 py-2 rounded-full"
                         onPress={handleUpdateInfo}
                       >

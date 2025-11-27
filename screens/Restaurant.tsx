@@ -1,15 +1,14 @@
 import { useState, useEffect } from 'react';
-import { View, Text, Pressable, Image, ScrollView, Alert } from 'react-native';
+import { View, Text, Pressable, ScrollView, Alert } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import * as Location from 'expo-location';
 import SearchBar from '@/components/SearchBar';
-import Card from '@/components/ui/Card';
+import AdBanner from '@/components/ui/AdBanner';
 import RestaurantCard from '@/components/restaurant/RestaurantCard';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRestaurantList } from '@/api/restaurants/useRestaurant';
 import { RestaurantListParams } from '@/api/restaurants/types';
-import ericard from '@/assets/images/ericard.png';
 import Icon from '@/components/Icon';
 
 const SORT_OPTIONS = ['위치순', '별점순'];
@@ -65,17 +64,7 @@ export default function RestuarantScreen() {
     return (
         <SafeAreaView edges={['top']} className="flex-1 bg-white">
             <SearchBar onFilterPress={handleFilterPress}>
-                <Card variant="banner" className='flex-row justify-evenly'>
-                    <View className='gap-4'>
-                        <Text className="text-white">{"일상 속 모든 순간, 한장으로\n더 똑똑한 소비의 시작 에리 체크카드"}</Text>
-                        <Pressable className='bg-white p-1 rounded-lg self-start'>
-                            <Text className='p-1 font-bold text-blue-500'>
-                                혜택 확인하기
-                            </Text>
-                        </Pressable>
-                    </View>
-                    <Image source={ericard} className="w-30 h-24" resizeMode="contain" />
-                </Card>
+                <AdBanner />
                 <View className='self-end relative'>
                     <Pressable
                         className='flex-row gap-1 items-center p-2'

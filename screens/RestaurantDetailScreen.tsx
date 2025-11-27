@@ -152,6 +152,7 @@ export default function RestaurantDetailScreen() {
               <RestaurantStatusTag
                 status={restaurant.status as '영업중' | '영업종료' | '브레이크타임'}
                 rating={restaurant.rating.average}
+                onRatingPress={() => navigation.navigate('CommentDetail', { restaurantId })}
               />
             </View>
           </View>

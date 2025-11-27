@@ -55,17 +55,15 @@ export default function FilterScreen() {
     .onEnd(() => {
       // 아래로 일정 이상 내리면 닫기
       if (translateY.value > DISMISS_THRESHOLD) {
-        translateY.value = withTiming(SCREEN_HEIGHT, { duration: 200 }, () => {
-          'worklet';
+        translateY.value = withTiming(SCREEN_HEIGHT, { duration: 200 }, (finished) => {
+          if (finished) {
+            // 애니메이션이 완료된 후에만 goBack 호출
+            goBack();
+          }
         });
       } else {
         // 기본 위치로 스냅 (바운스 없이)
         translateY.value = withTiming(0, { duration: 200 });
-      }
-    })
-    .onFinalize(() => {
-      if (translateY.value > DISMISS_THRESHOLD) {
-        goBack();
       }
     });
 

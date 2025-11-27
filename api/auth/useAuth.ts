@@ -4,6 +4,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { apiClient, onAuthError } from '../client';
 import {
   GoogleLoginRequest,
+  AppleLoginRequest,
   AuthResponse,
   TokenResponse,
   User,
@@ -52,6 +53,27 @@ export const useGoogleLogin = () => {
   return useMutation({
     mutationFn: async (request: GoogleLoginRequest) => {
       const { data } = await apiClient.post<AuthResponse>('/auth/google', request);
+      return data;
+    },
+    onSuccess: async (data) => {
+      // 토큰 저장
+      await AsyncStorage.multiSet([
+        ['accessToken', data.access_token],
+        ['refreshToken', data.refresh_token],
+      ]);
+      // 사용자 정보 캐시
+      queryClient.setQueryData(['currentUser'], data.user);
+    },
+  });
+};
+
+// Apple 로그인
+export const useAppleLogin = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (request: AppleLoginRequest) => {
+      const { data } = await apiClient.post<AuthResponse>('/auth/apple', request);
       return data;
     },
     onSuccess: async (data) => {

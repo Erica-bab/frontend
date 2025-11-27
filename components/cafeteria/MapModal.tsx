@@ -55,9 +55,9 @@ export default function MapModal({ location, latitude, longtitude, viewName, vis
             <TextIconBox
               preset='blue'
               boxClass="bg-white"
-              text={location}
+              text={location.length > 10 ? `${location.substring(0, 10)}...` : location}
             />
-            <TextIconButton 
+            <TextIconButton
               isOn
               onPress={() => setVisible(false)}
               baseBoxClass="px-3 py-2 rounded-full bg-[#2563EB]"

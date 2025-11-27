@@ -21,6 +21,7 @@ export default {
     ios: {
       supportsTablet: true,
       bundleIdentifier: "com.efoo.front",
+      usesAppleSignIn: true,
       infoPlist: {
         NSLocationWhenInUseUsageDescription: "주변 맛집을 위치순으로 정렬하기 위해 위치 정보가 필요합니다."
       },
@@ -54,6 +55,7 @@ export default {
           googleMapsApiKey: process.env.GOOGLE_MAPS_API_KEY
         }
       ],
+      "expo-apple-authentication",
       [
         "expo-location",
         {

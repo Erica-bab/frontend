@@ -27,6 +27,12 @@ export default function RestaurantCard({ name, category, status, rating, comment
     .map(resolveImageUri)
     .filter(Boolean) as string[];
 
+  const handleRatingPress = () => {
+    if (restaurantId) {
+      navigation.navigate('CommentDetail', { restaurantId });
+    }
+  };
+
   return (
     <Card className='bg-white border border-gray-100'>
       <View className="flex-row items-center">

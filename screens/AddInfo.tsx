@@ -77,6 +77,7 @@ export default function AddInfo() {
       // 현재는 임시로 인덱스 + 1을 사용
       updateUser(
         {
+          student_type: 'student',
           student_year: studentYear,
           college_id: collegeIndex + 1, // 임시: 실제로는 백엔드에서 이름으로 ID 조회 필요
         },
@@ -99,8 +100,7 @@ export default function AddInfo() {
       // 기타(비공개)인 경우
       updateUser(
         {
-          student_year: undefined,
-          college_id: undefined,
+          student_type: 'other',
         },
         {
           onSuccess: () => {
