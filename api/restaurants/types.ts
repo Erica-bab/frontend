@@ -232,3 +232,17 @@ export interface SearchResponse {
   has_next: boolean;
   results: SearchResultItem[];
 }
+
+export interface MenuListParams {
+  category?: string;
+  is_available?: boolean;
+  sort?: 'price' | 'popular' | 'name';
+}
+
+export interface MenuListResponse {
+  restaurant_id: number;
+  restaurant_name: string;
+  menus: MenuItem[];
+  categories: string[];
+  total_count: number;
+}

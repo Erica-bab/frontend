@@ -10,6 +10,8 @@ import {
   CommentItem,
   SearchParams,
   SearchResponse,
+  MenuListParams,
+  MenuListResponse,
 } from './types';
 
 // 카테고리 매핑
@@ -164,5 +166,17 @@ export const useRestaurantSearch = (params: SearchParams) => {
       return data;
     },
     enabled: !!params.q && params.q.length > 0,
+  });
+};
+
+// 식당 메뉴 조회
+export const useRestaurantMenus = (restaurantId: number, params?: MenuListParams) => {
+  return useQuery({
+    queryKey: ['restaurant', restaurantId, 'menus', params],
+    queryFn: async () => {
+      const { data } = await apiClient.get<MenuListResponse>(`/restaurants/${restaurantId}/menus`, { params });
+      return data;
+    },
+    enabled: !!restaurantId,
   });
 };
