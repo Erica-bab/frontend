@@ -136,6 +136,17 @@ export interface RestaurantMeta {
   version: number;
 }
 
+export interface PopularComment {
+  id: number;
+  user: {
+    id: number;
+    student_year?: string | null;
+  };
+  content: string;
+  like_count: number;
+  created_at: string;
+}
+
 export interface RestaurantListItem {
   id: number;
   name: string;
@@ -150,6 +161,7 @@ export interface RestaurantListItem {
   average_price?: number | null;
   is_verified: boolean;
   status: string;
+  popular_comment?: PopularComment | null;
 }
 
 export interface RestaurantListResponse {
@@ -180,7 +192,7 @@ export interface RestaurantDetailResponse {
 }
 
 export interface RestaurantListParams {
-  sort?: 'distance' | 'rating' | 'recent';
+  sort?: 'distance' | 'rating' | 'recent' | 'price';
   lat?: number;
   lng?: number;
   is_open_only?: boolean;

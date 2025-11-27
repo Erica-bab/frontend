@@ -11,10 +11,11 @@ import { useRestaurantList } from '@/api/restaurants/useRestaurant';
 import { RestaurantListParams } from '@/api/restaurants/types';
 import Icon from '@/components/Icon';
 
-const SORT_OPTIONS = ['위치순', '별점순'];
-const SORT_MAP: Record<string, 'distance' | 'rating'> = {
+const SORT_OPTIONS = ['위치순', '별점순', '가격순'];
+const SORT_MAP: Record<string, 'distance' | 'rating' | 'price'> = {
     '위치순': 'distance',
     '별점순': 'rating',
+    '가격순': 'price',
 };
 
 export default function RestuarantScreen() {
@@ -67,7 +68,7 @@ export default function RestuarantScreen() {
                 <AdBanner />
                 <View className='self-end relative'>
                     <Pressable
-                        className='flex-row gap-1 items-center p-2'
+                        className='flex-row gap-1 items-center p-2 mr-2'
                         onPress={() => setIsSortOpen(!isSortOpen)}
                     >
                         <Text>{sortOption}</Text>
@@ -134,6 +135,7 @@ export default function RestuarantScreen() {
                         rating={restaurant.average_rating}
                         restaurantId={restaurant.id.toString()}
                         thumbnailUrls={restaurant.thumbnail_urls}
+                        comment={restaurant.popular_comment?.content}
                     />
                 ))}
             </SearchBar>

@@ -58,12 +58,17 @@ export default function RestaurantCard({ name, category, status, rating, comment
           );
         })}
       </View>
-      {displayComment && <View className= 'bg-gray-100 flex-row rounded-lg p-4 w-full justify-between items-center gap-2'>
-        <Text className='text-gray-500 flex-1' numberOfLines={2}>
-          {displayComment}
-        </Text>
-        <Icon name='rightAngle' width={8}/>
-      </View>}
+      {displayComment && (
+        <Pressable
+          className='bg-gray-100 flex-row rounded-lg p-4 w-full justify-between items-center gap-2'
+          onPress={() => navigation.navigate('RestaurantDetail', { restaurantId, initialTab: 'comments' })}
+        >
+          <Text className='text-gray-500 flex-1' numberOfLines={2}>
+            {displayComment}
+          </Text>
+          <Icon name='rightAngle' width={8}/>
+        </Pressable>
+      )}
       <Pressable
         onPress={() => navigation.navigate('RestaurantDetail', { restaurantId })}
         className='w-full justify-center items-center bg-blue-500 p-1 rounded-lg'

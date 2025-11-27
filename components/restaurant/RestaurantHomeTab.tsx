@@ -91,7 +91,7 @@ export default function RestaurantHomeTab({ restaurant }: RestaurantHomeTabProps
             className='flex-row items-center gap-1'
             onPress={() => setIsHoursExpanded(!isHoursExpanded)}
           >
-            <Text className='mb-2'>{restaurant.status}{nextEvent ? ` · ${nextEvent}` : ''}</Text>
+            <Text>{restaurant.status}{nextEvent ? ` · ${nextEvent}` : ''}</Text>
             <Icon width={12} name={isHoursExpanded ? 'upAngle' : 'downAngle'} />
           </Pressable>
 
