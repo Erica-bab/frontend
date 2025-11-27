@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { View, Text, Pressable, Linking } from 'react-native';
+import { View, Text, Pressable } from 'react-native';
 import { RestaurantDetailResponse, BusinessHoursDay } from '@/api/restaurants/types';
 import Icon from '@/components/Icon';
 
@@ -119,17 +119,10 @@ export default function RestaurantHomeTab({ restaurant }: RestaurantHomeTabProps
           )}
         </View>
       </View>
-      <Pressable
-        className='flex-row gap-4 mb-4 items-center'
-        onPress={() => {
-          if (restaurant.phone) {
-            Linking.openURL(`tel:${restaurant.phone}`);
-          }
-        }}
-      >
+      <View className='flex-row gap-4 mb-4 items-center'>
         <Icon width={20} name='telephone'/>
-        <Text className='text-blue-600'>{restaurant.phone}</Text>
-      </Pressable>
+        <Text>{restaurant.phone}</Text>
+      </View>
       {restaurant.affiliations && restaurant.affiliations.length > 0 && (
         <View className='flex-row gap-4 mb-4 items-center'>
           <Icon name='pin'/>

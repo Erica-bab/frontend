@@ -221,9 +221,16 @@ export default function CommentItem({
 
   return (
     <>
-      <View className="p-4 border-b border-gray-200 relative">
+      <View className={`p-4 border-b border-gray-200 relative ${isMyComment ? 'bg-blue-50' : ''}`}>
         <View className="flex-row justify-between items-center mb-2">
-          <Text className="font-medium">{comment.user?.student_year || '익명'}</Text>
+          <View className="flex-row items-center gap-2">
+            <Text className="font-medium">{comment.user?.student_year || '익명'}</Text>
+            {comment.is_parent_writer && (
+              <View className="bg-blue-500 px-2 py-0.5 rounded">
+                <Text className="text-white text-xs">작성자</Text>
+              </View>
+            )}
+          </View>
           <View className="flex-row gap-3">
             <Pressable className="flex-row gap-1 items-center" onPress={handleLikePress}>
               <Icon 
