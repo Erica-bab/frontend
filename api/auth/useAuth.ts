@@ -11,25 +11,58 @@ import {
   UpdateUserRequest,
 } from './types';
 
+// 전역 상태 변경 알림을 위한 간단한 구현
+let authUpdateCallbacks: (() => void)[] = [];
+
+// 로그인 성공 시 호출될 함수
+export const notifyAuthStateChange = () => {
+  authUpdateCallbacks.forEach(callback => {
+    try {
+      callback();
+    } catch (error) {
+      console.error('Auth callback error:', error);
+    }
+  });
+};
+
 // 인증 상태 확인 훅
 export const useAuth = () => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [updateKey, setUpdateKey] = useState(0);
 
   const checkAuth = useCallback(async () => {
     try {
       const accessToken = await AsyncStorage.getItem('accessToken');
-      setIsAuthenticated(!!accessToken);
+      const authState = !!accessToken;
+      setIsAuthenticated(authState);
+      return authState;
     } catch {
       setIsAuthenticated(false);
+      return false;
     } finally {
       setIsLoading(false);
     }
   }, []);
 
+  // 인증 상태 변경 감지를 위한 callback
+  const authStateChangeCallback = useCallback(() => {
+    console.log('Auth state change callback triggered');
+    // 즉시 상태를 갱신 (딜레이 제거)
+    checkAuth();
+  }, [checkAuth]);
+
   useEffect(() => {
     checkAuth();
   }, [checkAuth]);
+
+  // 인증 상태 변경 callback 등록/해제
+  useEffect(() => {
+    authUpdateCallbacks.push(authStateChangeCallback);
+    return () => {
+      authUpdateCallbacks = authUpdateCallbacks.filter(cb => cb !== authStateChangeCallback);
+    };
+  }, [authStateChangeCallback]);
 
   // 인증 에러 발생 시 자동으로 로그아웃 처리
   useEffect(() => {
@@ -63,6 +96,8 @@ export const useGoogleLogin = () => {
       ]);
       // 사용자 정보 캐시
       queryClient.setQueryData(['currentUser'], data.user);
+      // 모든 useAuth 훅에 알림
+      notifyAuthStateChange();
     },
   });
 };
@@ -84,6 +119,8 @@ export const useAppleLogin = () => {
       ]);
       // 사용자 정보 캐시
       queryClient.setQueryData(['currentUser'], data.user);
+      // 모든 useAuth 훅에 알림
+      notifyAuthStateChange();
     },
   });
 };

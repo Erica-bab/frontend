@@ -41,17 +41,27 @@ function formatDayHours(hours: BusinessHoursDay | null | undefined): string[] {
 
   const lines: string[] = [];
 
+  // 영업시간
   if (hours.open_time && hours.close_time) {
     lines.push(`${hours.open_time} - ${hours.close_time}`);
   }
+
+  // 브레이크타임
   if (hours.break_start && hours.break_end) {
     lines.push(`${hours.break_start} - ${hours.break_end} 브레이크타임`);
   }
+
+  // 라스트오더
   if (hours.last_order) {
-    lines.push(`${hours.last_order} 라스트오더`);
+    lines.push(`라스트오더 ${hours.last_order}`);
   }
 
-  return lines;
+  // 특이사항
+  if (hours.special_note) {
+    lines.push(hours.special_note);
+  }
+
+  return lines.length > 0 ? lines : ['정보 없음'];
 }
 
 export default function RestaurantHomeTab({ restaurant }: RestaurantHomeTabProps) {
@@ -83,7 +93,7 @@ export default function RestaurantHomeTab({ restaurant }: RestaurantHomeTabProps
             className='flex-row items-center gap-1'
             onPress={() => setIsHoursExpanded(!isHoursExpanded)}
           >
-            <Text>{statusText}{nextEventText ? ` · ${nextEventText}` : ''}</Text>
+            <Text>{statusText}{nextEventText ? ` · ${nextEventText}예정` : ''}</Text>
             <Icon width={12} name={isHoursExpanded ? 'upAngle' : 'downAngle'} />
           </Pressable>
 

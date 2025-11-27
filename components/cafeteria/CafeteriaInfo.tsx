@@ -17,8 +17,8 @@ interface CafeteriaInfoProps {
 
   meal_id: number;
 
-  auth: boolean;
-  onShowLogin: () => void;
+  auth?: boolean;
+  onShowLogin?: () => void;
 }
 
 export default function CafeteriaInfo({

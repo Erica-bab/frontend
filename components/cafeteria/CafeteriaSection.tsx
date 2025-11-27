@@ -14,8 +14,8 @@ interface CafeteriaSectionProps {
   latitude: number;
   longitude: number;
   viewName?: string;
-  auth: boolean;
-  onShowLogin: () => void;
+  auth?: boolean;
+  onShowLogin?: () => void;
 }
 
 // MealType(조/중/석) → open_times 키 매핑

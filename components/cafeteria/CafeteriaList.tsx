@@ -6,7 +6,7 @@ import {
   RestaurantCode,
   MealType,
 } from '@/api/cafeteria/types';
-import { useCurrentUser } from '@/api/auth/useAuth'
+import { useCurrentUser, useAuth } from '@/api/auth/useAuth'
 
 interface CafeteriaListProps {
   sortModeType: 'time' | 'location';
@@ -48,6 +48,7 @@ export default function CafeteriaList({
   onShowLogin,
 }: CafeteriaListProps) {
    const {data, error} = useCurrentUser();
+   const {isAuthenticated} = useAuth();
 
   if (isLoading) {
     return (
@@ -104,7 +105,7 @@ export default function CafeteriaList({
               latitude={Number(restaurant.latitude)}
               longitude={Number(restaurant.longitude)}
               viewName={restaurant.restaurant_name}
-              auth={data ? true : false}
+              auth={!!isAuthenticated}
               onShowLogin={onShowLogin}
             />
           );
@@ -132,7 +133,7 @@ export default function CafeteriaList({
             latitude={Number(restaurant.latitude)}
             longitude={Number(restaurant.longitude)}
             viewName={restaurant.restaurant_name}
-            auth={data ? true : false}
+            auth={!!isAuthenticated}
             onShowLogin={onShowLogin}
           />
         );

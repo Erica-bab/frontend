@@ -196,7 +196,7 @@ const styles = StyleSheet.create({
     opacity: 0.5,
   },
   buttonText: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: '600',
   },
   googleButtonText: {

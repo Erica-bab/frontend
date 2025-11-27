@@ -1,6 +1,7 @@
 import { useQuery, useMutation, } from '@tanstack/react-query';
 import { AxiosError } from 'axios';
 import { apiClient } from '@/api/client';
+import { useAuth } from '@/api/auth/useAuth';
 import {
   CafeteriaResponse,
   CafeteriaParams,
@@ -43,6 +44,8 @@ export const useCafeteria = (params: CafeteriaParams) => {
 
 // get like
 export const useCafeteriaLike = ({ meal_id }: CafeteriaLikeParams) => {
+  const { isAuthenticated } = useAuth();
+
   return useQuery<CafeteriaLikeResponse, AxiosError<CafeteriaLikeErrorResponse>>({
     queryKey: ['cafeteriaLike', meal_id],
     queryFn: async () => {
@@ -51,6 +54,7 @@ export const useCafeteriaLike = ({ meal_id }: CafeteriaLikeParams) => {
       );
       return data;
     },
+    enabled: !!isAuthenticated, // 로그인한 경우에만 쿼리 실행
   });
 };
 

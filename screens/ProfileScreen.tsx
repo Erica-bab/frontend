@@ -89,7 +89,7 @@ export default function ProfileScreen() {
         break;
       case 'contact':
         try {
-          const url = '/about/contact';
+          const url = 'https://에리카밥.com/about/contact';
           const canOpen = await Linking.canOpenURL(url);
           if (canOpen) {
             await Linking.openURL(url);
@@ -102,7 +102,7 @@ export default function ProfileScreen() {
         break;
       case 'terms':
         try {
-          const url = '/about/service';
+          const url = 'https://에리카밥.com/about/service';
           const canOpen = await Linking.canOpenURL(url);
           if (canOpen) {
             await Linking.openURL(url);
@@ -115,7 +115,7 @@ export default function ProfileScreen() {
         break;
       case 'privacy':
         try {
-          const url = '/about/privacy';
+          const url = 'https://에리카밥.com/about/privacy';
           const canOpen = await Linking.canOpenURL(url);
           if (canOpen) {
             await Linking.openURL(url);
@@ -128,7 +128,7 @@ export default function ProfileScreen() {
         break;
       case 'about':
         try {
-          const url = '/about/developer';
+          const url = 'https://에리카밥.com/about/developer';
           const canOpen = await Linking.canOpenURL(url);
           if (canOpen) {
             await Linking.openURL(url);
