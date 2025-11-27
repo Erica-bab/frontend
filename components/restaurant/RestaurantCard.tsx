@@ -18,7 +18,14 @@ interface RestaurantCardProps {
 export default function RestaurantCard({ name, category, status, rating, comment, restaurantId, thumbnailUrls }: RestaurantCardProps) {
   const navigation = useNavigation<NativeStackNavigationProp<any>>();
   const displayComment = comment || null;
-  const displayThumbnails = thumbnailUrls?.slice(0, 3) || [];
+  const resolveImageUri = (uri?: string) => {
+    if (!uri) return null;
+    const path = uri.startsWith('/') ? uri.slice(1) : uri;
+    return `https://에리카밥.com/${path}`;
+  };
+  const displayThumbnails = (thumbnailUrls?.slice(0, 3) || [])
+    .map(resolveImageUri)
+    .filter(Boolean) as string[];
 
   return (
     <Card className='bg-white border border-gray-100'>
@@ -27,20 +34,24 @@ export default function RestaurantCard({ name, category, status, rating, comment
         <Text className="ml-1">{category}</Text>
       </View>
       <RestaurantStatusTag status={status} rating={rating} />
-      {displayThumbnails.length > 0 ? (
-        <View className="flex-row gap-2 h-[100px]">
-          {displayThumbnails.map((url, index) => (
-            <Image
-              key={index}
-              source={{ uri: url }}
-              className="flex-1 h-full rounded-lg"
-              resizeMode="cover"
-            />
-          ))}
-        </View>
-      ) : (
-        <View className='bg-gray-200 h-[100px] rounded-lg' />
-      )}
+      <View className="flex-row gap-2 h-[200px] bg-gray-100">
+        {[0, 1, 2].map(index => {
+          const url = displayThumbnails[index];
+          return url ? (
+            <View key={index} className="flex-1 h-full rounded-lg overflow-hidden">
+              <Image
+                source={{ uri: url }}
+                className="w-full h-full"
+                resizeMode="cover"
+              />
+            </View>
+          ) : (
+            <View key={index} className="flex-1 h-full rounded-lg bg-gray-200 items-center justify-center">
+              <Text className="text-gray-500 text-xs">이미지가 없습니다</Text>
+            </View>
+          );
+        })}
+      </View>
       {displayComment && <View className= 'bg-gray-100 flex-row rounded-lg p-4 w-full justify-between items-center gap-2'>
         <Text className='text-gray-500 flex-1' numberOfLines={2}>
           {displayComment}
