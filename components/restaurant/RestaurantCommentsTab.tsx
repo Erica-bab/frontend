@@ -1,47 +1,32 @@
-import { useState, useEffect } from 'react';
-import { View, Text, Pressable, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, ActivityIndicator } from 'react-native';
 import { RestaurantDetailResponse } from '@/api/restaurants/types';
 import {
   useComments,
   useCreateOrUpdateRating,
-  useCreateComment,
 } from '@/api/restaurants/useReviewComment';
 import { useAuth } from '@/api/auth/useAuth';
 import { useLikedComments } from '@/api/user/useUserActivity';
 import { useLikedCommentIds } from '@/hooks/useLikedCommentIds';
 import { useMyRating } from '@/api/restaurants/useRating';
-import Icon from '@/components/Icon';
-import LoginPopup from '@/components/LoginPopup';
 import CommentItem from '@/components/restaurant/CommentItem';
-import CommentInput from '@/components/restaurant/CommentInput';
 import StarRating from '@/components/restaurant/StarRating';
 
 interface RestaurantCommentsTabProps {
   restaurant: RestaurantDetailResponse;
+  onShowLogin: () => void;
 }
 
-export default function RestaurantCommentsTab({ restaurant }: RestaurantCommentsTabProps) {
-  const [showLoginPopup, setShowLoginPopup] = useState(false);
-  const [commentText, setCommentText] = useState('');
-
-  const { isAuthenticated, isLoading: isAuthLoading, refreshAuthState } = useAuth();
-  const { data: commentsData, isLoading: isCommentsLoading, refetch: refetchComments } = useComments(restaurant.id);
+export default function RestaurantCommentsTab({ restaurant, onShowLogin }: RestaurantCommentsTabProps) {
+  const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
+  const { data: commentsData, isLoading: isCommentsLoading } = useComments(restaurant.id);
   const { mutate: createOrUpdateRating, isPending: isRatingLoading } = useCreateOrUpdateRating(restaurant.id);
-  const { mutate: createComment, isPending: isCreatingComment } = useCreateComment(restaurant.id);
-  const { data: likedComments, refetch: refetchLikedComments } = useLikedComments(1, 100, isAuthenticated === true);
+  const { refetch: refetchLikedComments } = useLikedComments(1, 100, isAuthenticated === true);
   const likedCommentIds = useLikedCommentIds(isAuthenticated === true);
   const { myRating, refetchRatingStats } = useMyRating(restaurant.id, isAuthenticated === true);
 
-  // 로그인 성공 시 팝업 자동 닫기
-  useEffect(() => {
-    if (isAuthenticated && showLoginPopup) {
-      setShowLoginPopup(false);
-    }
-  }, [isAuthenticated, showLoginPopup]);
-
   const handleRating = (rating: number) => {
     if (!isAuthLoading && !isAuthenticated) {
-      setShowLoginPopup(true);
+      onShowLogin();
       return;
     }
     createOrUpdateRating(
@@ -49,29 +34,6 @@ export default function RestaurantCommentsTab({ restaurant }: RestaurantComments
       {
         onSuccess: () => {
           refetchRatingStats();
-        },
-      }
-    );
-  };
-
-  const handleSubmitComment = () => {
-    if (!commentText.trim()) return;
-    
-    // 로그인 확인
-    if (!isAuthLoading && !isAuthenticated) {
-      setShowLoginPopup(true);
-      return;
-    }
-
-    createComment(
-      { content: commentText.trim() },
-      {
-        onSuccess: () => {
-          setCommentText('');
-          refetchComments();
-        },
-        onError: (error: any) => {
-          Alert.alert('오류', error?.response?.data?.detail || '댓글 작성에 실패했습니다.');
         },
       }
     );
@@ -106,27 +68,18 @@ export default function RestaurantCommentsTab({ restaurant }: RestaurantComments
           </View>
         ) : (
           comments.map((comment) => (
-            <CommentItem 
-              key={comment.id} 
-              comment={comment} 
+            <CommentItem
+              key={comment.id}
+              comment={comment}
               restaurantId={restaurant.id}
               likedCommentIds={likedCommentIds}
               onLikeToggle={refetchLikedComments}
-              onShowLogin={() => setShowLoginPopup(true)}
+              onShowLogin={onShowLogin}
               showReplyButton
             />
           ))
         )}
       </View>
-
-      <LoginPopup
-        visible={showLoginPopup}
-        onClose={() => setShowLoginPopup(false)}
-        onLoginSuccess={async () => {
-          await refreshAuthState();
-          refetchLikedComments();
-        }}
-      />
     </View>
   );
 }

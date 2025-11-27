@@ -10,6 +10,7 @@ import CafeteriaScreen from './screens/CafeteriaScreen';
 import RestuarantScreen from './screens/Restaurant';
 import ProfileScreen from './screens/ProfileScreen';
 import FilterScreen from './screens/FilterScreen';
+import LoginScreen from './screens/LoginScreen';
 import RestaurantDetailScreen from './screens/RestaurantDetailScreen';
 import CommentDetailScreen from './screens/CommentsDetailScreen';
 import BookmarkScreen from './screens/BookmarkScreen';
@@ -83,6 +84,7 @@ export default function App() {
         Main: 'main',
         RestaurantDetail: 'restaurant/:restaurantId',
         Filter: 'filter',
+        Login: 'login',
         CommentDetail: 'comment/:commentId',
         Bookmark: 'bookmark',
         AddInfo: 'addinfo',
@@ -100,6 +102,15 @@ export default function App() {
               <Stack.Screen
                 name="Filter"
                 component={FilterScreen}
+                options={{
+                  headerShown: false,
+                  presentation: 'transparentModal',
+                  animation: 'slide_from_bottom',
+                }}
+              />
+              <Stack.Screen
+                name="Login"
+                component={LoginScreen}
                 options={{
                   headerShown: false,
                   presentation: 'transparentModal',

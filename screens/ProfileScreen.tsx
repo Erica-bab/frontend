@@ -1,10 +1,8 @@
-import { useState, useEffect } from 'react';
 import { View, Text, Pressable, ScrollView, Linking, Alert, ActivityIndicator } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import Icon from '@/components/Icon';
 import { useLogout, useCurrentUser } from '@/api/auth/useAuth';
 import { useAuth } from '@/api/auth/useAuth';
-import LoginPopup from '@/components/LoginPopup';
 
 const MENU_ITEMS = [
   // { icon: 'chat' as const, label: '쓴 댓글 보기', action: 'comments' },
@@ -20,7 +18,6 @@ export default function ProfileScreen() {
   const { isAuthenticated, refreshAuthState } = useAuth();
   const { mutate: logout, isPending: isLoggingOut } = useLogout();
   const { data: currentUser, isLoading: isLoadingUser } = useCurrentUser();
-  const [showLoginPopup, setShowLoginPopup] = useState(false);
 
   // 프로필 정보 동적 생성
   const getProfileInfo = () => {
@@ -80,12 +77,6 @@ export default function ProfileScreen() {
     );
   };
 
-  // 로그인 성공 시 팝업 자동 닫기
-  useEffect(() => {
-    if (isAuthenticated && showLoginPopup) {
-      setShowLoginPopup(false);
-    }
-  }, [isAuthenticated, showLoginPopup]);
 
   const handleMenuPress = async (action: string) => {
     switch (action) {
@@ -98,7 +89,7 @@ export default function ProfileScreen() {
         break;
       case 'contact':
         try {
-          const url = 'https://www.notion.so/2b5e2e83b8368078a7f4ed0f5347a31f';
+          const url = '/about/contact';
           const canOpen = await Linking.canOpenURL(url);
           if (canOpen) {
             await Linking.openURL(url);
@@ -111,7 +102,7 @@ export default function ProfileScreen() {
         break;
       case 'terms':
         try {
-          const url = 'https://www.notion.so/2b5e2e83b83680a4acb1eb3aadb6fd76';
+          const url = '/about/service';
           const canOpen = await Linking.canOpenURL(url);
           if (canOpen) {
             await Linking.openURL(url);
@@ -124,7 +115,7 @@ export default function ProfileScreen() {
         break;
       case 'privacy':
         try {
-          const url = 'https://www.notion.so/2b5e2e83b8368078a7f4ed0f5347a31f';
+          const url = '/about/privacy';
           const canOpen = await Linking.canOpenURL(url);
           if (canOpen) {
             await Linking.openURL(url);
@@ -137,7 +128,7 @@ export default function ProfileScreen() {
         break;
       case 'about':
         try {
-          const url = 'https://www.notion.so/2b5e2e83b83680f38589d9fb508c102f';
+          const url = '/about/developer';
           const canOpen = await Linking.canOpenURL(url);
           if (canOpen) {
             await Linking.openURL(url);
@@ -247,21 +238,13 @@ export default function ProfileScreen() {
           ) : (
             <Pressable
               className="bg-blue-500 p-3 rounded-lg"
-              onPress={() => setShowLoginPopup(true)}
+              onPress={() => (navigation.navigate as any)('Login', { onSuccess: refreshAuthState })}
             >
               <Text className="text-white text-center font-medium">로그인</Text>
             </Pressable>
           )}
         </View>
       </ScrollView>
-
-      <LoginPopup
-        visible={showLoginPopup}
-        onClose={() => setShowLoginPopup(false)}
-        onLoginSuccess={async () => {
-          await refreshAuthState();
-        }}
-      />
     </View>
   );
 }

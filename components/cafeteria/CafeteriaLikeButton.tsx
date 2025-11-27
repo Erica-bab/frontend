@@ -1,21 +1,18 @@
 import { View, Text, TouchableOpacity } from 'react-native';
 import Icon from '@/components/Icon';
 import React, { useState, useEffect } from 'react';
-import LoginPopup from '@/components/LoginPopup';
 
 import { CafeteriaLikeParams, } from '@/api/cafeteria/types';
 import { useCafeteriaLike, useToggleCafeteriaLike, } from '@/api/cafeteria/useCafeteria';
-import { useAuth } from '@/api/auth/useAuth';
 
 interface CafeteriaLikeProps {
   like: number,
   meal_id: number
   auth: boolean,
+  onShowLogin: () => void;
 }
 
-export default function CafeteriaLikeButton({ like, meal_id, auth, }: CafeteriaLikeProps) {
-  const [loginVisible, setLoginVisible] = useState(false);
-  const { refreshAuthState } = useAuth();
+export default function CafeteriaLikeButton({ like, meal_id, auth, onShowLogin }: CafeteriaLikeProps) {
   const { mutate: toggleLike, isPending } = useToggleCafeteriaLike();
   const [isLiked, setIsLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(like);
@@ -23,8 +20,8 @@ export default function CafeteriaLikeButton({ like, meal_id, auth, }: CafeteriaL
   const cafeteriaLikeParams: CafeteriaLikeParams = {
     meal_id: meal_id,
   };
-  
-  const { data, isLoading, error } = useCafeteriaLike(cafeteriaLikeParams);
+
+  const { data } = useCafeteriaLike(cafeteriaLikeParams);
 
   useEffect(() => {
     if (!data) return;
@@ -38,7 +35,7 @@ export default function CafeteriaLikeButton({ like, meal_id, auth, }: CafeteriaL
 
   const handlePress = () => {
     if (!auth) {
-      setLoginVisible(true);
+      onShowLogin();
       return;
     }
 
@@ -84,15 +81,6 @@ export default function CafeteriaLikeButton({ like, meal_id, auth, }: CafeteriaL
           </Text>
         </View>
       </TouchableOpacity>
-
-      <LoginPopup
-        visible={loginVisible}
-        onClose={() => setLoginVisible(false)}
-        onLoginSuccess={async () => {
-          await refreshAuthState();
-          setLoginVisible(false);
-        }}
-      />
     </View>
   );
 }

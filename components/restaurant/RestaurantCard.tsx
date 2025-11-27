@@ -4,18 +4,19 @@ import RestaurantStatusTag from '@/components/ui/RestaurantStatusTag';
 import Icon from '@/components/Icon';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { RestaurantOperatingStatus } from '@/api/restaurants/types';
 
 interface RestaurantCardProps {
   name: string;
   category: string;
-  status: '영업중' | '영업종료' | '브레이크타임';
+  operatingStatus?: RestaurantOperatingStatus | null;
   rating: number;
   comment?: string;
   restaurantId?: string;
   thumbnailUrls?: string[];
 }
 
-export default function RestaurantCard({ name, category, status, rating, comment, restaurantId, thumbnailUrls }: RestaurantCardProps) {
+export default function RestaurantCard({ name, category, operatingStatus, rating, comment, restaurantId, thumbnailUrls }: RestaurantCardProps) {
   const navigation = useNavigation<NativeStackNavigationProp<any>>();
   const displayComment = comment || null;
   const resolveImageUri = (uri?: string) => {
@@ -39,7 +40,7 @@ export default function RestaurantCard({ name, category, status, rating, comment
         <Text className="text-lg text-blue-500">{name}</Text>
         <Text className="ml-1">{category}</Text>
       </View>
-      <RestaurantStatusTag status={status} rating={rating} onRatingPress={handleRatingPress} />
+      <RestaurantStatusTag operatingStatus={operatingStatus} rating={rating} onRatingPress={handleRatingPress} />
       <View className="flex-row gap-2 h-[200px] bg-gray-100">
         {[0, 1, 2].map(index => {
           const url = displayThumbnails[index];

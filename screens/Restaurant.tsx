@@ -131,7 +131,7 @@ export default function RestuarantScreen() {
                         key={restaurant.id}
                         name={restaurant.name}
                         category={restaurant.category}
-                        status={restaurant.status as '영업중' | '영업종료' | '브레이크타임'}
+                        operatingStatus={restaurant.operating_status}
                         rating={restaurant.average_rating}
                         restaurantId={restaurant.id.toString()}
                         thumbnailUrls={restaurant.thumbnail_urls}

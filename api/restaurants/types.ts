@@ -136,6 +136,17 @@ export interface RestaurantMeta {
   version: number;
 }
 
+export interface RestaurantOperatingStatus {
+  current: {
+    type: 'open' | 'break_time' | 'order_end' | 'closed';
+    until: string | null;
+  };
+  next?: {
+    type: 'break_start' | 'break_end' | 'order_end' | 'closed' | 'open';
+    at: string | null;
+  } | null;
+}
+
 export interface PopularComment {
   id: number;
   user: {
@@ -161,6 +172,7 @@ export interface RestaurantListItem {
   average_price?: number | null;
   is_verified: boolean;
   status: string;
+  operating_status?: RestaurantOperatingStatus | null;
   popular_comment?: PopularComment | null;
 }
 
@@ -189,6 +201,7 @@ export interface RestaurantDetailResponse {
   meta: RestaurantMeta;
   is_verified: boolean;
   status: string;
+  operating_status?: RestaurantOperatingStatus | null;
 }
 
 export interface RestaurantListParams {

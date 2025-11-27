@@ -17,7 +17,8 @@ interface CafeteriaInfoProps {
 
   meal_id: number;
 
-  auth: boolean
+  auth: boolean;
+  onShowLogin: () => void;
 }
 
 export default function CafeteriaInfo({
@@ -31,6 +32,7 @@ export default function CafeteriaInfo({
   viewName,
   meal_id,
   auth,
+  onShowLogin,
 }: CafeteriaInfoProps) {
   const [visible, setVisible] = useState(false);
 
@@ -48,6 +50,7 @@ export default function CafeteriaInfo({
           like={like}
           meal_id={meal_id}
           auth={auth}
+          onShowLogin={onShowLogin}
         />
       </View>
 

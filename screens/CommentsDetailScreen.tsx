@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { View, Text, Pressable, ScrollView, KeyboardAvoidingView, Platform, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
@@ -8,7 +8,6 @@ import { useAuth } from '@/api/auth/useAuth';
 import { useLikedComments } from '@/api/user/useUserActivity';
 import { useLikedCommentIds } from '@/hooks/useLikedCommentIds';
 import Icon from '@/components/Icon';
-import LoginPopup from '@/components/LoginPopup';
 import CommentItem from '@/components/restaurant/CommentItem';
 import ReplyItem from '@/components/restaurant/ReplyItem';
 import CommentInput from '@/components/restaurant/CommentInput';
@@ -18,7 +17,6 @@ export default function CommentDetailScreen() {
   const route = useRoute();
   const { commentId, restaurantId } = route.params as { commentId?: number; restaurantId?: number };
   const [replyText, setReplyText] = useState('');
-  const [showLoginPopup, setShowLoginPopup] = useState(false);
 
   const { isAuthenticated, isLoading: isAuthLoading, refreshAuthState } = useAuth();
   
@@ -37,19 +35,16 @@ export default function CommentDetailScreen() {
   const { mutate: createComment, isPending: isCreatingReply } = useCreateComment(restaurantId || 0);
   const { mutate: deleteComment } = useDeleteComment(restaurantId || 0);
 
-  // 로그인 성공 시 팝업 자동 닫기
-  useEffect(() => {
-    if (isAuthenticated && showLoginPopup) {
-      setShowLoginPopup(false);
-    }
-  }, [isAuthenticated, showLoginPopup]);
+  const handleShowLogin = () => {
+    (navigation.navigate as any)('Login', { onSuccess: refreshAuthState });
+  };
 
   const handleSubmitReply = () => {
     if (!replyText.trim()) return;
-    
+
     // 로그인 확인
     if (!isAuthLoading && !isAuthenticated) {
-      setShowLoginPopup(true);
+      handleShowLogin();
       return;
     }
 
@@ -131,7 +126,7 @@ export default function CommentDetailScreen() {
                   onUpdateSuccess={refetchComments}
                   likedCommentIds={likedCommentIds}
                   onLikeToggle={refetchLikedComments}
-                  onShowLogin={() => setShowLoginPopup(true)}
+                  onShowLogin={handleShowLogin}
                 />
               )}
 
@@ -147,7 +142,7 @@ export default function CommentDetailScreen() {
                     onUpdateSuccess={refetchComments}
                     likedCommentIds={likedCommentIds}
                     onLikeToggle={refetchLikedComments}
-                    onShowLogin={() => setShowLoginPopup(true)}
+                    onShowLogin={handleShowLogin}
                   />
                 ))}
             </>
@@ -160,7 +155,7 @@ export default function CommentDetailScreen() {
           onChangeText={(text) => {
             // 인증 상태 로딩 중이면 팝업 표시하지 않음
             if (!isAuthLoading && !isAuthenticated && text.length > 0) {
-              setShowLoginPopup(true);
+              handleShowLogin();
               return;
             }
             setReplyText(text);
@@ -170,14 +165,6 @@ export default function CommentDetailScreen() {
           placeholder="답글을 입력하세요"
         />
       </KeyboardAvoidingView>
-
-      <LoginPopup
-        visible={showLoginPopup}
-        onClose={() => setShowLoginPopup(false)}
-        onLoginSuccess={() => {
-          refreshAuthState();
-        }}
-      />
     </SafeAreaView>
   );
 }

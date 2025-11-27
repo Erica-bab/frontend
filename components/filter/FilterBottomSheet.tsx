@@ -1,8 +1,7 @@
 import { useState, useCallback, useMemo } from 'react';
-import { View, Text, Pressable, StyleSheet } from 'react-native';
+import { View, Text, Pressable, ScrollView, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useNavigation, useRoute } from '@react-navigation/native';
-import BottomSheet, { BottomSheetScrollView } from '@gorhom/bottom-sheet';
+import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet';
 import { Dropdown } from '@/components/filter/Dropdown';
 import { OptionBtn } from '@/components/filter/OptionButton';
 import Button from '@/components/ui/Button';
@@ -17,13 +16,16 @@ const MIN = ['00','30'];
 const AFFILIATE =['공학대학','소프트웨어융합대학','약학대학','첨단융합대학','글로벌문화통상대학','커뮤니케이션&컬쳐대학','경상대학','디자인대학','예체능대학','LIONS칼리지'];
 const RESTAURANT_TYPE = ['개인식당','프랜차이즈']
 
-export default function FilterScreen() {
-  const navigation = useNavigation<any>();
-  const route = useRoute();
-  const insets = useSafeAreaInsets();
-  const { onApply } = route.params as { onApply?: (params: RestaurantListParams) => void } || {};
+interface FilterBottomSheetProps {
+  visible: boolean;
+  onClose: () => void;
+  onApply: (params: RestaurantListParams) => void;
+}
 
-  const snapPoints = useMemo(() => ['85%', '95%'], []);
+export default function FilterBottomSheet({ visible, onClose, onApply }: FilterBottomSheetProps) {
+  const insets = useSafeAreaInsets();
+  const snapPoints = useMemo(() => ['80%'], []);
+
   const [selectedDay, setSelectedDay] = useState<string>();
   const [selectedHour, setSelectedHour] = useState<string>();
   const [selectedMin, setSelectedMin] = useState<string>();
@@ -31,10 +33,6 @@ export default function FilterScreen() {
   const [selectedFoodTypes, setSelectedFoodTypes] = useState<string[]>([]);
   const [selectedAffiliates, setSelectedAffiliates] = useState<string[]>([]);
   const [selectedRestaurantTypes, setSelectedRestaurantTypes] = useState<string[]>([]);
-
-  const goBack = useCallback(() => {
-    navigation.goBack();
-  }, [navigation]);
 
   const handleReset = () => {
     setSelectedDay(undefined);
@@ -54,32 +52,34 @@ export default function FilterScreen() {
       affiliations: selectedAffiliates,
       subCategory: selectedRestaurantTypes[0],
     });
-    onApply?.(params);
-    goBack();
+    onApply(params);
+    onClose();
   };
+
+  if (!visible) return null;
 
   return (
     <BottomSheet
       snapPoints={snapPoints}
       enablePanDownToClose={true}
-      onClose={goBack}
+      onClose={onClose}
       backgroundStyle={styles.container}
-      handleIndicatorStyle={styles.handleIndicator}
-      enableDynamicSizing={false}
-      index={0}
+      handleIndicatorStyle={{ display: 'none' }}
+      style={{ zIndex: 1000 }}
     >
-      <View style={styles.modalContent}>
+      <BottomSheetView style={[styles.modalContent, { paddingBottom: insets.bottom }]}>
         {/* 헤더 */}
         <View style={styles.header}>
           <Text style={styles.title}>필터</Text>
-          <Pressable onPress={() => goBack()}>
+          <Pressable onPress={onClose}>
             <Icon name="cancel" />
           </Pressable>
         </View>
 
         {/* 스크롤 가능한 컨텐츠 */}
-        <BottomSheetScrollView
-          contentContainerStyle={[styles.scrollViewContent]}
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollViewContent}
           showsVerticalScrollIndicator={false}
         >
             <Text className="pt-4 text-xl font-bold mb-4">운영시간</Text>
@@ -178,40 +178,26 @@ export default function FilterScreen() {
                 />
               ))}
             </View>
+        </ScrollView>
 
-            {/* 하단 버튼 - 스크롤뷰 안에 포함 */}
-            <View style={[styles.buttonContainer, { paddingBottom: insets.bottom + 16 }]}>
-              <Button variant="secondary" onPress={handleReset} className="flex-1">
-                초기화
-              </Button>
-              <Button onPress={handleApply} className="flex-1">
-                적용
-              </Button>
-            </View>
-        </BottomSheetScrollView>
-      </View>
+        {/* 하단 버튼 */}
+        <View style={styles.buttonContainer}>
+          <Button variant="secondary" onPress={handleReset} className="flex-1">
+            초기화
+          </Button>
+          <Button onPress={handleApply} className="flex-1">
+            적용
+          </Button>
+        </View>
+      </BottomSheetView>
     </BottomSheet>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
+    flex: 1,
     backgroundColor: 'white',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: -3,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 5,
-  },
-  handleIndicator: {
-    backgroundColor: '#d1d5db',
-    width: 40,
-    height: 4,
   },
   modalContent: {
     flex: 1,
@@ -222,21 +208,27 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 20,
-    paddingBottom: 16,
-    paddingTop: 8,
+    paddingBottom: 20,
+    paddingTop: 16,
   },
   title: {
     fontSize: 24,
     fontWeight: 'bold',
   },
+  scrollView: {
+    flex: 1,
+  },
   scrollViewContent: {
     paddingHorizontal: 16,
-    paddingTop: 4,
+    paddingBottom: 20,
   },
   buttonContainer: {
     flexDirection: 'row',
     gap: 8,
-    paddingTop: 20,
-    marginTop: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+    backgroundColor: 'white',
+    borderTopWidth: 1,
+    borderTopColor: '#f3f4f6',
   },
 });

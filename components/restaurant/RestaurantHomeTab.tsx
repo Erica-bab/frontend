@@ -9,46 +9,30 @@ interface RestaurantHomeTabProps {
 
 type DayKey = '일' | '월' | '화' | '수' | '목' | '금' | '토';
 
-function getNextEvent(businessHours: BusinessHoursDay | null | undefined): string | null {
-  if (!businessHours) return null;
-  if (businessHours.is_closed) return '휴무일';
+// operating_status type에 따른 표시 텍스트
+const statusLabels = {
+  open: '영업중',
+  break_time: '브레이크타임',
+  order_end: '주문마감',
+  closed: '영업종료',
+};
 
-  const now = new Date();
-  const currentTime = now.getHours() * 60 + now.getMinutes();
+// next type에 따른 표시 텍스트
+const nextActionLabels = {
+  break_start: '브레이크 시작',
+  break_end: '브레이크 종료',
+  order_end: '주문 마감',
+  closed: '영업 종료',
+  open: '오픈',
+};
 
-  const timeToMinutes = (time: string): number => {
-    const [h, m] = time.split(':').map(Number);
-    return h * 60 + m;
-  };
-
-  const events: { label: string; time: number }[] = [];
-
-  if (businessHours.open_time) {
-    events.push({ label: '오픈', time: timeToMinutes(businessHours.open_time) });
-  }
-  if (businessHours.break_start) {
-    events.push({ label: '브레이크타임', time: timeToMinutes(businessHours.break_start) });
-  }
-  if (businessHours.break_end) {
-    events.push({ label: '브레이크타임 종료', time: timeToMinutes(businessHours.break_end) });
-  }
-  if (businessHours.last_order) {
-    events.push({ label: '라스트오더', time: timeToMinutes(businessHours.last_order) });
-  }
-  if (businessHours.close_time) {
-    events.push({ label: '마감', time: timeToMinutes(businessHours.close_time) });
-  }
-
-  const futureEvents = events.filter(e => e.time > currentTime);
-  if (futureEvents.length === 0) return null;
-
-  futureEvents.sort((a, b) => a.time - b.time);
-  const next = futureEvents[0];
-
-  const hours = Math.floor(next.time / 60).toString().padStart(2, '0');
-  const mins = (next.time % 60).toString().padStart(2, '0');
-
-  return `${hours}:${mins} ${next.label}`;
+// 시간 포맷 함수 (ISO 문자열 → "HH:MM")
+function formatTime(isoString: string | null): string {
+  if (!isoString) return '';
+  const date = new Date(isoString);
+  const hours = date.getHours().toString().padStart(2, '0');
+  const minutes = date.getMinutes().toString().padStart(2, '0');
+  return `${hours}:${minutes}`;
 }
 
 function formatDayHours(hours: BusinessHoursDay | null | undefined): string[] {
@@ -75,8 +59,16 @@ export default function RestaurantHomeTab({ restaurant }: RestaurantHomeTabProps
   const dayOrder: DayKey[] = ['월', '화', '수', '목', '금', '토', '일'];
   const dayMap: DayKey[] = ['일', '월', '화', '수', '목', '금', '토'];
   const today = dayMap[new Date().getDay()];
-  const todayHours = restaurant.business_hours[today];
-  const nextEvent = getNextEvent(todayHours);
+
+  // operating_status 사용
+  const operatingStatus = restaurant.operating_status;
+  const statusText = operatingStatus ? statusLabels[operatingStatus.current.type] : restaurant.status;
+
+  // next 액션 텍스트
+  const nextAction = operatingStatus?.next;
+  const nextActionTime = nextAction?.at ? formatTime(nextAction.at) : null;
+  const nextActionLabel = nextAction?.type ? nextActionLabels[nextAction.type] : null;
+  const nextEventText = nextActionTime && nextActionLabel ? `${nextActionTime} ${nextActionLabel}` : null;
 
   return (
     <View className="p-4 gap-2">
@@ -91,7 +83,7 @@ export default function RestaurantHomeTab({ restaurant }: RestaurantHomeTabProps
             className='flex-row items-center gap-1'
             onPress={() => setIsHoursExpanded(!isHoursExpanded)}
           >
-            <Text>{restaurant.status}{nextEvent ? ` · ${nextEvent}` : ''}</Text>
+            <Text>{statusText}{nextEventText ? ` · ${nextEventText}` : ''}</Text>
             <Icon width={12} name={isHoursExpanded ? 'upAngle' : 'downAngle'} />
           </Pressable>
 
@@ -119,10 +111,12 @@ export default function RestaurantHomeTab({ restaurant }: RestaurantHomeTabProps
           )}
         </View>
       </View>
-      <View className='flex-row gap-4 mb-4 items-center'>
-        <Icon width={20} name='telephone'/>
-        <Text>{restaurant.phone}</Text>
-      </View>
+      {restaurant.phone && (
+        <View className='flex-row gap-4 mb-4 items-center'>
+          <Icon width={20} name='telephone'/>
+          <Text>{restaurant.phone}</Text>
+        </View>
+      )}
       {restaurant.affiliations && restaurant.affiliations.length > 0 && (
         <View className='flex-row gap-4 mb-4 items-center'>
           <Icon name='pin'/>

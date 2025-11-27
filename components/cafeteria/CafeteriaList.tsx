@@ -17,6 +17,7 @@ interface CafeteriaListProps {
   meal_data?: CafeteriaResponse;
   isLoading: boolean;
   meal_error: Error | null;
+  onShowLogin: () => void;
 }
 
 // 시간대 순서 고정
@@ -44,6 +45,7 @@ export default function CafeteriaList({
   meal_data,
   isLoading,
   meal_error,
+  onShowLogin,
 }: CafeteriaListProps) {
    const {data, error} = useCurrentUser();
 
@@ -103,6 +105,7 @@ export default function CafeteriaList({
               longitude={Number(restaurant.longitude)}
               viewName={restaurant.restaurant_name}
               auth={data ? true : false}
+              onShowLogin={onShowLogin}
             />
           );
         })}
@@ -130,6 +133,7 @@ export default function CafeteriaList({
             longitude={Number(restaurant.longitude)}
             viewName={restaurant.restaurant_name}
             auth={data ? true : false}
+            onShowLogin={onShowLogin}
           />
         );
       })}

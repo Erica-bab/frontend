@@ -8,7 +8,6 @@ import { apiClient } from '@/api/client';
 import { useCreateComment } from '@/api/restaurants/useReviewComment';
 import { useAuth } from '@/api/auth/useAuth';
 import { toggleBookmark, checkIsBookmarked } from '@/services/bookmarkStoarge';
-import LoginPopup from '@/components/LoginPopup';
 import RestaurantStatusTag from '@/components/ui/RestaurantStatusTag';
 import TextIconButton from '@/components/ui/TextIconButton';
 import RestaurantHomeTab from '@/components/restaurant/RestaurantHomeTab';
@@ -26,7 +25,6 @@ export default function RestaurantDetailScreen() {
   const { restaurantId, initialTab } = route.params as { restaurantId?: string; initialTab?: RestaurantTabType };
   const [selectedTab, setSelectedTab] = useState<RestaurantTabType>(initialTab || 'home');
   const [commentText, setCommentText] = useState('');
-  const [showLoginPopup, setShowLoginPopup] = useState(false);
   const [isBookmarked, setIsBookmarked] = useState(false);
 
   const { isAuthenticated, isLoading: isAuthLoading, refreshAuthState } = useAuth();
@@ -150,7 +148,7 @@ export default function RestaurantDetailScreen() {
             </View>
             <View className='ml-4 mb-4'>
               <RestaurantStatusTag
-                status={restaurant.status as '영업중' | '영업종료' | '브레이크타임'}
+                operatingStatus={restaurant.operating_status}
                 rating={restaurant.rating.average}
                 onRatingPress={() => setSelectedTab('comments')}
               />
@@ -213,7 +211,12 @@ export default function RestaurantDetailScreen() {
           {/* 탭 콘텐츠 조건부 렌더링 */}
           {selectedTab === 'home' && <RestaurantHomeTab restaurant={restaurant} />}
           {selectedTab === 'menu' && <RestaurantMenuTab restaurant={restaurant} />}
-          {selectedTab === 'comments' && <RestaurantCommentsTab restaurant={restaurant} />}
+          {selectedTab === 'comments' && (
+            <RestaurantCommentsTab
+              restaurant={restaurant}
+              onShowLogin={() => (navigation.navigate as any)('Login', { onSuccess: refreshAuthState })}
+            />
+          )}
         </View>
       </ScrollView>
 
@@ -224,7 +227,7 @@ export default function RestaurantDetailScreen() {
           onChangeText={(text) => {
             // 인증 상태 로딩 중이면 팝업 표시하지 않음
             if (!isAuthLoading && !isAuthenticated && text.length > 0) {
-              setShowLoginPopup(true);
+              (navigation.navigate as any)('Login', { onSuccess: refreshAuthState });
               return;
             }
             setCommentText(text);
@@ -232,7 +235,7 @@ export default function RestaurantDetailScreen() {
           onSubmit={() => {
             // 인증 상태 로딩 중이면 팝업 표시하지 않음
             if (!isAuthLoading && !isAuthenticated) {
-              setShowLoginPopup(true);
+              (navigation.navigate as any)('Login', { onSuccess: refreshAuthState });
               return;
             }
             if (!commentText.trim()) return;
@@ -249,15 +252,6 @@ export default function RestaurantDetailScreen() {
         />
       )}
       </KeyboardAvoidingView>
-
-      <LoginPopup
-        visible={showLoginPopup}
-        onClose={() => setShowLoginPopup(false)}
-        onLoginSuccess={() => {
-          // 로그인 성공 후 인증 상태 갱신
-          refreshAuthState();
-        }}
-      />
     </SafeAreaView>
   );
 }

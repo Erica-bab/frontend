@@ -15,6 +15,7 @@ interface CafeteriaSectionProps {
   longitude: number;
   viewName?: string;
   auth: boolean;
+  onShowLogin: () => void;
 }
 
 // MealType(조/중/석) → open_times 키 매핑
@@ -40,6 +41,7 @@ export default function CafeteriaSection({
   longitude,
   viewName,
   auth,
+  onShowLogin,
 }: CafeteriaSectionProps) {
   const openKey = mealTypeToOpenKey[mealType];
   const openTime = restaurant.open_times[openKey];
@@ -85,9 +87,10 @@ export default function CafeteriaSection({
             latitude={latitude}
             longitude={longitude}
             viewName={viewName}
-            
+
             meal_id={menu.id}
             auth={auth}
+            onShowLogin={onShowLogin}
           />
         </View>
       ))}

@@ -1,7 +1,10 @@
 import React, { useState } from 'react';
 import { View } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import CafeteriaList from '@/components/cafeteria/CafeteriaList';
 import CafeteriaHeader from '@/components/cafeteria/CafeteriaHeader';
+import { useAuth } from '@/api/auth/useAuth';
 import {
   RestaurantCode,
   MealType,
@@ -12,6 +15,8 @@ import { useCafeteria } from '@/api/cafeteria/useCafeteria';
 type SortType = 'time' | 'location';
 
 export default function SchoolRestaurantScreen() {
+  const navigation = useNavigation<NativeStackNavigationProp<any>>();
+  const { refreshAuthState } = useAuth();
   const [sortModeType, setSortModeType] = useState<SortType>('time');
   const [selectedLocation, setSelectedLocation] = useState<RestaurantCode>('re12');
   const [selectedTime, setSelectedTime] = useState<MealType>('조식');
@@ -63,6 +68,7 @@ export default function SchoolRestaurantScreen() {
         meal_data={data}
         isLoading={isLoading}
         meal_error={error ?? null}
+        onShowLogin={() => (navigation.navigate as any)('Login', { onSuccess: refreshAuthState })}
       />
     </View>
   );

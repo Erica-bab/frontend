@@ -44,7 +44,7 @@ export default {
           apiKey: process.env.GOOGLE_MAPS_API_KEY
         }
       },
-      package: "com.anonymous.front"
+      package: "com.efoo.app"
     },
     web: {
       favicon: "./assets/app/adaptive-icon.png"
