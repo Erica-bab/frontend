@@ -5,6 +5,7 @@ import LoginPopup from '@/components/LoginPopup';
 
 import { CafeteriaLikeParams, } from '@/api/cafeteria/types';
 import { useCafeteriaLike, useToggleCafeteriaLike, } from '@/api/cafeteria/useCafeteria';
+import { useAuth } from '@/api/auth/useAuth';
 
 interface CafeteriaLikeProps {
   like: number,
@@ -14,6 +15,7 @@ interface CafeteriaLikeProps {
 
 export default function CafeteriaLikeButton({ like, meal_id, auth, }: CafeteriaLikeProps) {
   const [loginVisible, setLoginVisible] = useState(false);
+  const { refreshAuthState } = useAuth();
   const { mutate: toggleLike, isPending } = useToggleCafeteriaLike();
   const [isLiked, setIsLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(like);
@@ -83,7 +85,14 @@ export default function CafeteriaLikeButton({ like, meal_id, auth, }: CafeteriaL
         </View>
       </TouchableOpacity>
 
-      <LoginPopup visible={loginVisible} onClose={() => setLoginVisible(false)} />
+      <LoginPopup
+        visible={loginVisible}
+        onClose={() => setLoginVisible(false)}
+        onLoginSuccess={async () => {
+          await refreshAuthState();
+          setLoginVisible(false);
+        }}
+      />
     </View>
   );
 }
