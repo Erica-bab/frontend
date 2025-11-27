@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { View, Text, ActivityIndicator } from 'react-native';
 import { RestaurantDetailResponse } from '@/api/restaurants/types';
 import {
@@ -26,18 +27,39 @@ export default function RestaurantCommentsTab({ restaurant, onShowLogin }: Resta
   const { refetch: refetchMyReplies } = useMyReplies(1, 100, isAuthenticated === true);
   const likedCommentIds = useLikedCommentIds(isAuthenticated === true);
   const myCommentIds = useMyCommentIds(isAuthenticated === true);
-  const { myRating, refetchRatingStats } = useMyRating(restaurant.id, isAuthenticated === true);
+  const { myRating: myRatingFromServer, refetchRatingStats } = useMyRating(restaurant.id, isAuthenticated === true);
+
+  // 옵티미스틱 업데이트를 위한 로컬 상태
+  const [optimisticRating, setOptimisticRating] = useState<number>(0);
+
+  // 서버에서 받은 별점으로 로컬 상태 동기화
+  useEffect(() => {
+    setOptimisticRating(myRatingFromServer);
+  }, [myRatingFromServer]);
 
   const handleRating = (rating: number) => {
     if (!isAuthLoading && !isAuthenticated) {
       onShowLogin();
       return;
     }
+
+    // 이전 별점 저장 (롤백용)
+    const previousRating = optimisticRating;
+
+    // 옵티미스틱 업데이트: 즉시 UI 업데이트
+    setOptimisticRating(rating);
+
     createOrUpdateRating(
       { rating },
       {
         onSuccess: () => {
+          // 서버 데이터 새로고침
           refetchRatingStats();
+        },
+        onError: (error: any) => {
+          // 에러 시 이전 상태로 롤백
+          setOptimisticRating(previousRating);
+          console.error('별점 저장 실패:', error);
         },
       }
     );
@@ -49,12 +71,12 @@ export default function RestaurantCommentsTab({ restaurant, onShowLogin }: Resta
     <View className='flex-1'>
       {/* 별점 섹션 */}
       <View className="p-4 border-b border-gray-200 items-center">
-        <StarRating rating={myRating} onRate={handleRating} isLoading={isRatingLoading} />
+        <StarRating rating={optimisticRating} onRate={handleRating} isLoading={isRatingLoading} />
         <Text className="text-gray-500 mt-2">
           {isRatingLoading
             ? '별점 저장 중...'
-            : myRating > 0
-              ? `${myRating}점을 선택했어요`
+            : optimisticRating > 0
+              ? `${optimisticRating}점을 선택했어요`
               : '별점을 눌러주세요'}
         </Text>
       </View>

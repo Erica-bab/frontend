@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, Pressable, ActivityIndicator, KeyboardAvoidingView, Platform, Alert } from 'react-native';
+import { View, Text, ScrollView, Pressable, ActivityIndicator, KeyboardAvoidingView, Platform, Alert, Share } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -75,7 +75,24 @@ export default function RestaurantDetailScreen() {
   };
 
   // 공유 핸들러
-  const handleSharePress = () => {
+  const handleSharePress = async () => {
+    if (!restaurant) return;
+    try {
+      const shareUrl = `https://에리카밥.com/share/${restaurantId}`;
+      const shareMessage = `${restaurant.name} - ${restaurant.category}\n⭐ ${restaurant.rating.average.toFixed(1)}\n${restaurant.location.address || '위치 정보 없음'}\n\n${shareUrl}`;
+
+      await Share.share({
+        message: shareMessage,
+        title: restaurant.name,
+        url: shareUrl, // iOS에서 사용
+      });
+    } catch (error) {
+      console.error('Failed to share:', error);
+    }
+  };
+
+  // 수정 핸들러
+  const handleEditPress = () => {
     Alert.alert('알림', '준비중인 기능입니다.');
   };
 
@@ -159,7 +176,7 @@ export default function RestaurantDetailScreen() {
               <Icon width={15} name='share' />
               <Text>공유</Text>
             </Pressable>
-            <Pressable className='flex-1 items-center justify-center p-2 gap-1'>
+            <Pressable className='flex-1 items-center justify-center p-2 gap-1' onPress={handleEditPress}>
               <Icon width={15} name='edit' />
               <Text>수정</Text>
             </Pressable>
