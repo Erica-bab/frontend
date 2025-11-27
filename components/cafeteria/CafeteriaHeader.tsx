@@ -53,7 +53,7 @@ export default function CafeteriaHeader({
 
   return (
     <SafeAreaView className="w-full flex bg-white px-10 -mb-4">
-      {/* 정렬 버튼 */}
+      {/* sort */}
       <View className="flex-row justify-end -mr-4 mt-1">
         <ChangeSortButton
           sortModeType={sortModeType}
@@ -61,7 +61,7 @@ export default function CafeteriaHeader({
         />
       </View>
 
-      {/* 날짜 */}
+      {/* time */}
       <View className="flex-row items-center justify-center mb-4 gap-2">
         <TextIconButton
           isOn={false}
@@ -86,9 +86,9 @@ export default function CafeteriaHeader({
         />
       </View>
 
-      {/* 탭 */}
+      {/* tab */}
       {sortModeType === 'time' ? (
-        // 위치 탭
+        // location tab
         <View className="w-full flex-row justify-around">
           <TextIconButton
             isOn={selectedLocation === 're12'}
@@ -116,7 +116,7 @@ export default function CafeteriaHeader({
           />
         </View>
       ) : (
-        // 시간대 탭 (조/중/석)
+        // time tab
         <View className="w-full flex-row justify-around">
           <TextIconButton
             isOn={selectedTime === '조식'}
@@ -158,6 +158,8 @@ function ChangeSortButton({
       isOn={false}
       iconName={iconName}
       iconSize={20}
+      onIconColor="#000000"
+      offIconColor="#000000"
       onPress={() => onChangeSortModeType(nextMode)}
       baseBoxClass="px-2 py-1"
     />
