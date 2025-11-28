@@ -113,7 +113,7 @@ export default function RestuarantScreen() {
                     </Pressable>
                     {isSortOpen && (
                         <View
-                            className="absolute top-full right-0 mt-1 bg-white rounded-lg overflow-hidden"
+                            className="absolute top-full right-0 mt-1 bg-white rounded-lg overflow-hidden mr-2"
                             style={{
                                 borderWidth: 1,
                                 borderColor: 'rgba(226, 232, 240, 1)',

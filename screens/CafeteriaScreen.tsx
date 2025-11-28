@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import CafeteriaList from '@/components/cafeteria/CafeteriaList';
 import CafeteriaHeader from '@/components/cafeteria/CafeteriaHeader';
 import { useAuth } from '@/api/auth/useAuth';
@@ -21,6 +22,31 @@ export default function SchoolRestaurantScreen() {
   const [selectedLocation, setSelectedLocation] = useState<RestaurantCode>('re12');
   const [selectedTime, setSelectedTime] = useState<MealType>('조식');
   const [currentDate, setCurrentDate] = useState(new Date());
+
+  // 저장된 정렬 옵션 불러오기
+  useEffect(() => {
+    const loadSavedSortOption = async () => {
+      try {
+        const savedSort = await AsyncStorage.getItem('cafeteriaSortOption');
+        if (savedSort && (savedSort === 'time' || savedSort === 'location')) {
+          setSortModeType(savedSort as SortType);
+        }
+      } catch (error) {
+        console.error('Failed to load cafeteria sort option:', error);
+      }
+    };
+    loadSavedSortOption();
+  }, []);
+
+  // 정렬 옵션 변경 시 저장
+  const handleSortModeChange = async (sortMode: SortType) => {
+    setSortModeType(sortMode);
+    try {
+      await AsyncStorage.setItem('cafeteriaSortOption', sortMode);
+    } catch (error) {
+      console.error('Failed to save cafeteria sort option:', error);
+    }
+  };
 
   // switch day
   const goPrevDay = () => {
@@ -50,7 +76,7 @@ export default function SchoolRestaurantScreen() {
     <View className="flex-1 bg-white">
       <CafeteriaHeader
         sortModeType={sortModeType}
-        onChangeSortModeType={setSortModeType}
+        onChangeSortModeType={handleSortModeChange}
         selectedLocation={selectedLocation}
         onChangeLocation={setSelectedLocation}
         selectedTime={selectedTime}
