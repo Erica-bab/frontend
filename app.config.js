@@ -19,12 +19,14 @@ export default {
       backgroundColor: "#2563EB"
     },
     ios: {
-      supportsTablet: true,
+      supportsTablet: false,
+      UIDeviceFamily: [1],
       bundleIdentifier: "com.efoo.app",
-      buildNumber: "1",
+      buildNumber: "4",
       usesAppleSignIn: true,
       displayName: "에푸",
       infoPlist: {
+        ITSAppUsesNonExemptEncryption: false,
         NSLocationWhenInUseUsageDescription: "주변 맛집을 위치순으로 정렬하기 위해 위치 정보가 필요합니다.",
         NSPhotoLibraryUsageDescription: "식당 사진을 추가하기 위해 갤러리 접근 권한이 필요합니다.",
         NSCameraUsageDescription: "식당 사진을 촬영하기 위해 카메라 접근 권한이 필요합니다.",

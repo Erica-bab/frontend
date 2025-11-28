@@ -18,8 +18,8 @@ export default function LoginScreen() {
   const handleAuthSuccess = (user?: any) => {
     navigation.goBack();
 
-    // 사용자 정보가 없거나 requires_setup이 true이면 AddInfo 화면으로 이동
-    if (user && (user.requires_setup || !user.student_year || !user.college)) {
+    // requires_setup이 true이면 AddInfo 화면으로 이동
+    if (user?.requires_setup === true) {
       navigation.navigate('AddInfo' as never);
     }
 

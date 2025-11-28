@@ -188,8 +188,12 @@ export default function SearchScreen({ children, onFilterPress, isFilterApplied,
             onPress={() => setShowMapModal(true)}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           >
-            <Text className="text-md font-semibold text-neutral-900">
-              {locationText}
+            <Text 
+              className="text-md font-semibold text-neutral-900"
+              numberOfLines={1}
+              ellipsizeMode="tail"
+            >
+              {locationText.length > 40 ? `${locationText.substring(0, 40)}...` : locationText}
             </Text>
             <Icon name="dropdown" width={10} height={13} />
           </Pressable>

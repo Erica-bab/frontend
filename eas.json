@@ -10,9 +10,16 @@
     "preview": {
       "distribution": "internal"
     },
-    "production": {}
+        "production": {
+      "env": {
+        "EXPO_PUBLIC_API_BASE_URL": "https://xn--oy2b88bd4n32i.com/api/v1",
+        "EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID": "1041029378289-m6skrn7fc5d2gp3b7vi06rg82om46s9d.apps.googleusercontent.com",
+        "EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID": "1041029378289-vbb01mjh4fd9403g5ifde1nrnv51eng9.apps.googleusercontent.com",
+        "EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID": "1041029378289-puugfhcoucnpvmi8bk8k2a5uapiaak38.apps.googleusercontent.com"
+      }
+    }
   },
   "submit": {
-    "production": {}
+        "production": {}
   }
 }
