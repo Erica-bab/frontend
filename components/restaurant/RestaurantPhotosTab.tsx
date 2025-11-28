@@ -88,8 +88,25 @@ export default function RestaurantPhotosTab({ restaurant, onShowLogin, onAddPhot
 
   if (imageUrls.length === 0) {
     return (
-      <View className="flex-1 justify-center items-center py-20">
-        <Text className="text-gray-500 text-lg">등록된 사진이 없습니다</Text>
+      <View className="flex-1 bg-white">
+        {/* 사진 추가하기 버튼 */}
+        <Pressable
+          onPress={() => {
+            if (!isAuthenticated) {
+              onShowLogin?.();
+            } else {
+              onAddPhotoPress?.();
+            }
+          }}
+          className="flex-row items-center justify-center gap-2 py-3 px-4 bg-gray-100 mx-4 mt-4 mb-2 rounded-lg"
+        >
+          <Icon name="edit" width={16} height={16} />
+          <Text className="text-gray-700 text-sm font-medium">사진 추가하기</Text>
+        </Pressable>
+
+        <View className="flex-1 justify-center items-center py-20">
+          <Text className="text-gray-500 text-lg">등록된 사진이 없습니다</Text>
+        </View>
       </View>
     );
   }

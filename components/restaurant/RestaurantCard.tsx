@@ -41,10 +41,10 @@ export default function RestaurantCard({ name, category, operatingStatus, rating
     return shuffled.slice(0, count);
   };
 
-  const imageUrls = imagesData?.images?.map(img => resolveImageUri(img.image_url)).filter(Boolean) || [];
-  const displayThumbnails = imageUrls.length > 0 
+  const imageUrls = (imagesData?.images?.map(img => resolveImageUri(img.image_url)).filter((url): url is string => url !== null) || []);
+  const displayThumbnails = imageUrls.length > 0
     ? getRandomThumbnails(imageUrls, 3)
-    : getRandomThumbnails((thumbnailUrls || []).map(resolveImageUri).filter(Boolean) as string[], 3);
+    : getRandomThumbnails((thumbnailUrls || []).map(resolveImageUri).filter((url): url is string => url !== null), 3);
   
   // 전체 이미지 개수
   const totalImageCount = imagesData?.total_count || imageUrls.length || thumbnailUrls?.length || 0;

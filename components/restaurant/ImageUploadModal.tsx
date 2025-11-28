@@ -29,7 +29,7 @@ export default function ImageUploadModal({
   const { mutate: uploadImage, isPending: isUploading } = useUploadRestaurantImage(restaurantId);
 
   const snapPoints = useMemo(() => {
-    return selectedImage ? ['80%'] : ['45%'];
+    return selectedImage ? ['60%'] : ['30%'];
   }, [selectedImage]);
 
   const pickImage = async () => {
@@ -195,7 +195,7 @@ export default function ImageUploadModal({
                 <Image
                   source={{ uri: selectedImage }}
                   className="w-full h-64 rounded-lg"
-                  resizeMode="cover"
+                  resizeMode="contain"
                 />
                 <Pressable
                   className="mt-2 items-center"
