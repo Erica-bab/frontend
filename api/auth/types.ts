@@ -44,6 +44,12 @@ export interface AuthResponse {
   token_type: string;
   expires_in: number;
   user: User;
+  // 타입 명확을 위한 주석 필드 추가
+  /**
+   * 로그인 방식: 'google' | 'apple'
+   * token_type: 'google' | 'apple'
+   */
+  login_method?: 'google' | 'apple';
 }
 
 export interface TokenResponse {

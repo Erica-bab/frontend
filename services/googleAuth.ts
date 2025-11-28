@@ -10,19 +10,30 @@ import { useQueryClient } from '@tanstack/react-query';
 WebBrowser.maybeCompleteAuthSession();
 
 // 환경변수에서 클라이언트 ID 가져오기
+// 테스트 환경에서는 proxy 사용, 실제 운영에서는 사용 안 함
 const GOOGLE_WEB_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID;
 const GOOGLE_IOS_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID;
 const GOOGLE_ANDROID_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID;
+
+// 실제 운영 환경에서는 웹 OAuth 2.0을 사용하므로 proxy 불필요
+const useProxy = process.env.EXPO_PUBLIC_USE_PROXY === 'true' && (
+  process.env.NODE_ENV === 'development'
+);
 
 export const useGoogleSignIn = (onSuccess?: (user?: any) => void) => {
   const { mutate: googleLogin, isPending, isError, error } = useGoogleLogin();
   const queryClient = useQueryClient();
   const isProcessing = useRef(false);
 
-  // iOS는 iOS Client ID의 reversed scheme 사용
-  const redirectUri = makeRedirectUri({
-    scheme: 'com.googleusercontent.apps.1041029378289-puugfhcoucnpvmi8bk8k2a5uapiaak38',
-  });
+  // 플랫폼별 redirect URI 설정
+  const redirectUri = Platform.OS === 'web'
+    ? makeRedirectUri({
+        // 웹에서는 자동으로 현재 URL 사용
+      })
+    : makeRedirectUri({
+        // iOS/Android는 custom scheme 사용
+        scheme: 'com.googleusercontent.apps.1041029378289-puugfhcoucnpvmi8bk8k2a5uapiaak38',
+      });
 
   console.log('Google OAuth redirectUri:', redirectUri);
   console.log('Platform:', Platform.OS);
