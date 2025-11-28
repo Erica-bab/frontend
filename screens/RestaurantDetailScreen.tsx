@@ -6,7 +6,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useRestaurantDetail } from '@/api/restaurants/useRestaurant';
 import { useCreateComment } from '@/api/restaurants/useReviewComment';
 import { useAuth } from '@/api/auth/useAuth';
-import { useCheckBookmark, useToggleBookmark } from '@/api/user/useUserActivity';
+import { useCheckBookmark, useToggleBookmark, useMyComments, useMyReplies } from '@/api/user/useUserActivity';
 import { AxiosError } from 'axios';
 import RestaurantStatusTag from '@/components/ui/RestaurantStatusTag';
 import TextIconButton from '@/components/ui/TextIconButton';
@@ -30,6 +30,10 @@ export default function RestaurantDetailScreen() {
 
   const { data: restaurant, isLoading, error } = useRestaurantDetail(Number(restaurantId));
   const { mutate: createComment, isPending: isCommentLoading } = useCreateComment(Number(restaurantId));
+
+  // 유저 액티비티 refetch (댓글 작성 후 업데이트용)
+  const { refetch: refetchMyComments } = useMyComments(1, 100, isAuthenticated === true);
+  const { refetch: refetchMyReplies } = useMyReplies(1, 100, isAuthenticated === true);
 
   // 북마크 상태 확인 (로그인한 경우에만)
   const { data: isBookmarked = false, refetch: refetchBookmark } = useCheckBookmark(
@@ -237,6 +241,11 @@ export default function RestaurantDetailScreen() {
               {
                 onSuccess: () => {
                   setCommentText('');
+                  // 댓글 작성 후 유저 액티비티 새로고침 (자기 댓글 강조 및 수정 버튼 표시용)
+                  if (isAuthenticated) {
+                    refetchMyComments();
+                    refetchMyReplies();
+                  }
                 },
               }
             );

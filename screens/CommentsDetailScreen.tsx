@@ -63,6 +63,11 @@ export default function CommentDetailScreen() {
         onSuccess: () => {
           setReplyText('');
           refetchComments();
+          // 답글 작성 후 유저 액티비티 새로고침 (자기 댓글 강조 및 수정 버튼 표시용)
+          if (isAuthenticated) {
+            refetchMyComments();
+            refetchMyReplies();
+          }
         },
         onError: (error: any) => {
           Alert.alert('오류', error?.response?.data?.detail || '답글 작성에 실패했습니다.');
