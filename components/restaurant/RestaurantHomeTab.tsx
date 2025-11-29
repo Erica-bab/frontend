@@ -6,6 +6,7 @@ import { formatDistance } from '@/utils/formatDistance';
 
 interface RestaurantHomeTabProps {
   restaurant: RestaurantDetailResponse;
+  distance?: number | null;
 }
 
 type DayKey = '일' | '월' | '화' | '수' | '목' | '금' | '토';
@@ -65,7 +66,7 @@ function formatDayHours(hours: BusinessHoursDay | null | undefined): string[] {
   return lines.length > 0 ? lines : ['정보 없음'];
 }
 
-export default function RestaurantHomeTab({ restaurant }: RestaurantHomeTabProps) {
+export default function RestaurantHomeTab({ restaurant, distance }: RestaurantHomeTabProps) {
   const [isHoursExpanded, setIsHoursExpanded] = useState(false);
   const dayOrder: DayKey[] = ['월', '화', '수', '목', '금', '토', '일'];
   const dayMap: DayKey[] = ['일', '월', '화', '수', '목', '금', '토'];
@@ -88,9 +89,9 @@ export default function RestaurantHomeTab({ restaurant }: RestaurantHomeTabProps
           <Icon width={20} name='location' color="rgba(107, 114, 128, 1)"/>
           <Text className="flex-1">{restaurant.location.address}</Text>
         </View>
-        {restaurant.location.distance !== null && restaurant.location.distance !== undefined && (
+        {distance !== null && distance !== undefined && (
           <Text className="text-sm text-gray-500">
-            {formatDistance(restaurant.location.distance)}
+            {formatDistance(distance)}
           </Text>
         )}
       </View>

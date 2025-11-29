@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -23,30 +23,89 @@ export default function SchoolRestaurantScreen() {
   const [selectedTime, setSelectedTime] = useState<MealType>('조식');
   const [currentDate, setCurrentDate] = useState(new Date());
 
-  // 저장된 정렬 옵션 불러오기
+  // 저장된 필터 설정 불러오기
   useEffect(() => {
-    const loadSavedSortOption = async () => {
+    const loadSavedFilterSettings = async () => {
       try {
-        const savedSort = await AsyncStorage.getItem('cafeteriaSortOption');
-        if (savedSort && (savedSort === 'time' || savedSort === 'location')) {
-          setSortModeType(savedSort as SortType);
+        const savedSettings = await AsyncStorage.getItem('cafeteriaFilterSettings');
+        if (savedSettings) {
+          const settings = JSON.parse(savedSettings);
+          
+          // 정렬 모드 불러오기
+          if (settings.sortModeType && (settings.sortModeType === 'time' || settings.sortModeType === 'location')) {
+            setSortModeType(settings.sortModeType as SortType);
+          }
+          
+          // 식당 선택 불러오기 (항상 불러오되, 정렬 모드가 'time'일 때만 사용)
+          if (settings.selectedLocation) {
+            setSelectedLocation(settings.selectedLocation as RestaurantCode);
+          }
+          
+          // 시간대 선택 불러오기 (항상 불러오되, 정렬 모드가 'location'일 때만 사용)
+          if (settings.selectedTime) {
+            setSelectedTime(settings.selectedTime as MealType);
+          }
+        } else {
+          // 저장된 설정이 없으면 기존 방식으로 정렬 옵션만 불러오기 (하위 호환성)
+          const savedSort = await AsyncStorage.getItem('cafeteriaSortOption');
+          if (savedSort && (savedSort === 'time' || savedSort === 'location')) {
+            setSortModeType(savedSort as SortType);
+          }
         }
       } catch (error) {
-        console.error('Failed to load cafeteria sort option:', error);
+        console.error('Failed to load cafeteria filter settings:', error);
       }
     };
-    loadSavedSortOption();
+    loadSavedFilterSettings();
+  }, []);
+
+  // 필터 설정 저장
+  const saveFilterSettings = useCallback(async (settings: {
+    sortModeType: SortType;
+    selectedLocation?: RestaurantCode;
+    selectedTime?: MealType;
+  }) => {
+    try {
+      await AsyncStorage.setItem('cafeteriaFilterSettings', JSON.stringify(settings));
+      // 하위 호환성을 위해 정렬 옵션도 별도로 저장
+      await AsyncStorage.setItem('cafeteriaSortOption', settings.sortModeType);
+    } catch (error) {
+      console.error('Failed to save cafeteria filter settings:', error);
+    }
   }, []);
 
   // 정렬 옵션 변경 시 저장
   const handleSortModeChange = async (sortMode: SortType) => {
     setSortModeType(sortMode);
-    try {
-      await AsyncStorage.setItem('cafeteriaSortOption', sortMode);
-    } catch (error) {
-      console.error('Failed to save cafeteria sort option:', error);
-    }
+    // 정렬 모드 변경 시에도 현재 선택된 모든 필터 설정 저장
+    await saveFilterSettings({
+      sortModeType: sortMode,
+      selectedLocation: selectedLocation,
+      selectedTime: selectedTime,
+    });
   };
+
+  // 식당 선택 변경 시 저장
+  const handleLocationChange = useCallback(async (location: RestaurantCode) => {
+    setSelectedLocation(location);
+    // 식당 선택 변경 시에도 모든 필터 설정 저장
+    await saveFilterSettings({
+      sortModeType: sortModeType,
+      selectedLocation: location,
+      selectedTime: selectedTime,
+    });
+  }, [sortModeType, selectedTime, saveFilterSettings]);
+
+  // 시간대 선택 변경 시 저장
+  const handleTimeChange = useCallback(async (time: MealType) => {
+    setSelectedTime(time);
+    // 시간대 선택 변경 시에도 모든 필터 설정 저장
+    await saveFilterSettings({
+      sortModeType: sortModeType,
+      selectedLocation: selectedLocation,
+      selectedTime: time,
+    });
+  }, [sortModeType, selectedLocation, saveFilterSettings]);
 
   // switch day
   const goPrevDay = () => {
@@ -70,7 +129,17 @@ export default function SchoolRestaurantScreen() {
     day: currentDate.getDate(),
     cafeteria_details: true,
   };
-  const { data, isLoading, error } = useCafeteria(cafeteriaParams);
+  const { data, isLoading, error, refetch } = useCafeteria(cafeteriaParams);
+
+  // 오늘 날짜로 이동
+  const goToToday = useCallback(() => {
+    setCurrentDate(new Date());
+  }, []);
+
+  // 데이터만 새로고침 (Pull-to-refresh용)
+  const handleRefresh = useCallback(async () => {
+    await refetch();
+  }, [refetch]);
 
   return (
     <View className="flex-1 bg-white">
@@ -78,12 +147,13 @@ export default function SchoolRestaurantScreen() {
         sortModeType={sortModeType}
         onChangeSortModeType={handleSortModeChange}
         selectedLocation={selectedLocation}
-        onChangeLocation={setSelectedLocation}
+        onChangeLocation={handleLocationChange}
         selectedTime={selectedTime}
-        onChangeTime={setSelectedTime}
+        onChangeTime={handleTimeChange}
         currentDate={currentDate}
         onPrevDate={goPrevDay}
         onNextDate={goNextDay}
+        onGoToToday={goToToday}
       />
 
       <CafeteriaList
@@ -95,6 +165,7 @@ export default function SchoolRestaurantScreen() {
         isLoading={isLoading}
         meal_error={error ?? null}
         onShowLogin={() => (navigation.navigate as any)('Login', { onSuccess: refreshAuthState })}
+        onRefresh={handleRefresh}
       />
     </View>
   );

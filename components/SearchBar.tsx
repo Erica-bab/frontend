@@ -1,5 +1,5 @@
-import { View, Text, TextInput, Pressable, Animated, ActivityIndicator } from 'react-native';
-import { useState, useCallback, useEffect } from 'react';
+import { View, Text, TextInput, Pressable, Animated, ActivityIndicator, RefreshControl } from 'react-native';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import * as Location from 'expo-location';
@@ -13,6 +13,8 @@ interface SearchScreenProps {
   onFilterPress?: () => void;
   isFilterApplied?: boolean;
   filterResultCount?: number;
+  onLocationUpdate?: (coords: { lat: number; lng: number }) => void;
+  onRefresh?: () => void;
 }
 
 // 검색 결과 아이템 컴포넌트
@@ -85,7 +87,7 @@ function SearchResultCard({ item }: { item: SearchResultItem }) {
   return null;
 }
 
-export default function SearchScreen({ children, onFilterPress, isFilterApplied, filterResultCount }: SearchScreenProps) {
+export default function SearchScreen({ children, onFilterPress, isFilterApplied, filterResultCount, onLocationUpdate, onRefresh }: SearchScreenProps) {
   const navigation = useNavigation<NativeStackNavigationProp<any>>();
   const [scrollY] = useState(new Animated.Value(0));
   const [searchText, setSearchText] = useState('');
@@ -93,6 +95,8 @@ export default function SearchScreen({ children, onFilterPress, isFilterApplied,
   const [locationText, setLocationText] = useState('현재위치');
   const [showMapModal, setShowMapModal] = useState(false);
   const [currentLocation, setCurrentLocation] = useState({ latitude: 0, longitude: 0 });
+  const [refreshing, setRefreshing] = useState(false);
+  const locationUpdateIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const STICKY_THRESHOLD = 30;
 
   const { data: searchData, isLoading: isSearching } = useRestaurantSearch({
@@ -100,44 +104,74 @@ export default function SearchScreen({ children, onFilterPress, isFilterApplied,
     limit: 20,
   });
 
-  useEffect(() => {
-    let mounted = true;
+  const refreshLocation = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status === 'granted') {
+        const location = await Location.getCurrentPositionAsync({});
+        const coords = {
+          latitude: location.coords.latitude,
+          longitude: location.coords.longitude,
+        };
+        setCurrentLocation(coords);
 
-    (async () => {
-      try {
-        const { status } = await Location.requestForegroundPermissionsAsync();
-        if (status === 'granted' && mounted) {
-          const location = await Location.getCurrentPositionAsync({});
-          if (!mounted) return;
+        const [address] = await Location.reverseGeocodeAsync({
+          latitude: coords.latitude,
+          longitude: coords.longitude,
+        });
 
-          setCurrentLocation({
-            latitude: location.coords.latitude,
-            longitude: location.coords.longitude,
-          });
-
-          const [address] = await Location.reverseGeocodeAsync({
-            latitude: location.coords.latitude,
-            longitude: location.coords.longitude,
-          });
-
-          if (address && mounted) {
-            // 주소를 그대로 표시
-            const addressText = address.formattedAddress ||
-              [address.region, address.city, address.district,'|', address.subregion, address.street, address.streetNumber]
-                .filter(Boolean)
-                .join(' ');
-            setLocationText(addressText || '현재위치');
+        if (address) {
+          // 주소를 상세하게 표시 (| 구분자 제거)
+          const addressParts = [
+            address.region,
+            address.city,
+            address.district,
+            address.subregion,
+            address.street,
+            address.streetNumber
+          ].filter(Boolean);
+          
+          let addressText = address.formattedAddress || addressParts.join(' ');
+          
+          // 30글자 넘어가면 ... 으로 잘라서 표시
+          if (addressText.length > 30) {
+            addressText = addressText.substring(0, 30) + '...';
           }
+          
+          setLocationText(addressText || '현재위치');
         }
-      } catch (error) {
-        console.error('Failed to get location:', error);
+        
+        // 부모 컴포넌트에 위치 업데이트 알림
+        onLocationUpdate?.({ lat: coords.latitude, lng: coords.longitude });
       }
-    })();
+    } catch (error) {
+      console.error('Failed to get location:', error);
+    } finally {
+      setRefreshing(false);
+    }
+  }, [onLocationUpdate]);
+
+  useEffect(() => {
+    // 초기 위치 가져오기
+    refreshLocation();
+
+    // 5분마다 주기적으로 위치 업데이트
+    locationUpdateIntervalRef.current = setInterval(() => {
+      refreshLocation();
+    }, 5 * 60 * 1000); // 5분
 
     return () => {
-      mounted = false;
+      if (locationUpdateIntervalRef.current) {
+        clearInterval(locationUpdateIntervalRef.current);
+      }
     };
-  }, []);
+  }, [refreshLocation]);
+
+  const handleRefresh = useCallback(async () => {
+    await refreshLocation();
+    onRefresh?.();
+  }, [refreshLocation, onRefresh]);
 
   const handleSearch = useCallback(() => {
     if (searchText.trim()) {
@@ -166,6 +200,14 @@ export default function SearchScreen({ children, onFilterPress, isFilterApplied,
       bouncesZoom={false}
       alwaysBounceVertical={false}
       keyboardShouldPersistTaps="handled"
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={handleRefresh}
+          tintColor="#3B82F6"
+          colors={['#3B82F6']}
+        />
+      }
     >
       <Animated.View
         className='w-full px-5 py-1 bg-white'

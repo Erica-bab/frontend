@@ -1,4 +1,5 @@
-import { View, Text, ScrollView } from 'react-native';
+import { View, Text, ScrollView, RefreshControl } from 'react-native';
+import { useState } from 'react';
 import CafeteriaSection from '@/components/cafeteria/CafeteriaSection';
 import {
   CafeteriaResponse,
@@ -18,6 +19,7 @@ interface CafeteriaListProps {
   isLoading: boolean;
   meal_error: Error | null;
   onShowLogin: () => void;
+  onRefresh?: () => void;
 }
 
 // 시간대 순서 고정
@@ -46,9 +48,22 @@ export default function CafeteriaList({
   isLoading,
   meal_error,
   onShowLogin,
+  onRefresh,
 }: CafeteriaListProps) {
    const {data, error} = useCurrentUser();
    const {isAuthenticated} = useAuth();
+   const [refreshing, setRefreshing] = useState(false);
+
+   const handleRefresh = async () => {
+     setRefreshing(true);
+     if (onRefresh) {
+       await onRefresh();
+     }
+     // Simulate a network request or a delay for the refresh indicator
+     setTimeout(() => {
+       setRefreshing(false);
+     }, 500);
+   };
 
   if (isLoading) {
     return (
@@ -83,14 +98,61 @@ export default function CafeteriaList({
 
     if (!restaurant) {
       return (
-        <View className="flex-1 items-center justify-center bg-[#F8FAFC]">
-          <Text>해당 식당의 메뉴가 없습니다.</Text>
-        </View>
+        <ScrollView 
+          className="flex-1 px-10 py-4 bg-[#F8FAFC]"
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={handleRefresh}
+              tintColor="#3B82F6"
+              colors={['#3B82F6']}
+            />
+          }
+        >
+          <View className="flex-1 items-center justify-center py-20">
+            <Text className="text-gray-500 text-lg">데이터가 없습니다</Text>
+          </View>
+        </ScrollView>
+      );
+    }
+
+    const hasAnyMenu = MEAL_TYPES.some(mealType => {
+      const menus = getMenusByMealType(restaurant, mealType);
+      return menus && menus.length > 0;
+    });
+
+    if (!hasAnyMenu) {
+      return (
+        <ScrollView 
+          className="flex-1 px-10 py-4 bg-[#F8FAFC]"
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={handleRefresh}
+              tintColor="#3B82F6"
+              colors={['#3B82F6']}
+            />
+          }
+        >
+          <View className="flex-1 items-center justify-center py-20">
+            <Text className="text-gray-500 text-lg">데이터가 없습니다</Text>
+          </View>
+        </ScrollView>
       );
     }
 
     return (
-      <ScrollView className="flex-1 px-10 py-4 bg-[#F8FAFC]">
+      <ScrollView 
+        className="flex-1 px-10 py-4 bg-[#F8FAFC]"
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={handleRefresh}
+            tintColor="#3B82F6"
+            colors={['#3B82F6']}
+          />
+        }
+      >
         {MEAL_TYPES.map(mealType => {
           const menus = getMenusByMealType(restaurant, mealType);
           if (!menus || menus.length === 0) return null;
@@ -117,8 +179,43 @@ export default function CafeteriaList({
   // 장소 
   const targetMealType = selectedTime;
 
+  const hasAnyMenu = meal_data.restaurants.some(restaurant => {
+    const menus = getMenusByMealType(restaurant, targetMealType);
+    return menus && menus.length > 0;
+  });
+
+  if (!hasAnyMenu) {
+    return (
+      <ScrollView 
+        className="flex-1 px-10 py-4 bg-[#F8FAFC]"
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={handleRefresh}
+            tintColor="#3B82F6"
+            colors={['#3B82F6']}
+          />
+        }
+      >
+        <View className="flex-1 items-center justify-center py-20">
+          <Text className="text-gray-500 text-lg">데이터가 없습니다</Text>
+        </View>
+      </ScrollView>
+    );
+  }
+
   return (
-    <ScrollView className="flex-1 px-10 py-4 bg-[#F8FAFC]">
+    <ScrollView 
+      className="flex-1 px-10 py-4 bg-[#F8FAFC]"
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={handleRefresh}
+          tintColor="#3B82F6"
+          colors={['#3B82F6']}
+        />
+      }
+    >
       {meal_data.restaurants.map(restaurant => {
         const menus = getMenusByMealType(restaurant, targetMealType);
         if (!menus || menus.length === 0) return null;

@@ -89,7 +89,7 @@ export default function FilterScreen() {
     navigation.goBack();
   }, [navigation]);
 
-  const handleReset = () => {
+  const handleReset = async () => {
     setOperatingTimeMode('none');
     setSelectedDay(undefined);
     setSelectedHour(undefined);
@@ -97,6 +97,13 @@ export default function FilterScreen() {
     setSelectedFoodTypes([]);
     setSelectedAffiliates([]);
     setSelectedRestaurantTypes([]);
+    
+    // 저장된 필터도 삭제
+    try {
+      await AsyncStorage.removeItem('restaurantFilter');
+    } catch (error) {
+      console.error('Failed to remove filter:', error);
+    }
   };
 
   // 운영중 버튼 클릭 시 현재 시간으로 설정 (토글)
