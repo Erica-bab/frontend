@@ -19,10 +19,12 @@ export const useGoogleSignIn = (onSuccess?: (user?: any) => void) => {
   const queryClient = useQueryClient();
   const isProcessing = useRef(false);
 
-  // iOS는 iOS Client ID의 reversed scheme 사용
-  const redirectUri = makeRedirectUri({
-    scheme: 'com.googleusercontent.apps.1041029378289-puugfhcoucnpvmi8bk8k2a5uapiaak38',
-  });
+  // 플랫폼별 scheme 사용
+  const redirectUri = Platform.OS === 'ios'
+    ? makeRedirectUri({
+        scheme: 'com.googleusercontent.apps.1041029378289-puugfhcoucnpvmi8bk8k2a5uapiaak38',
+      })
+    : undefined; // Android는 자동으로 package name 사용
 
   console.log('Google OAuth redirectUri:', redirectUri);
   console.log('Platform:', Platform.OS);
