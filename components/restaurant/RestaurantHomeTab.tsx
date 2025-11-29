@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { View, Text, Pressable } from 'react-native';
 import { RestaurantDetailResponse, BusinessHoursDay } from '@/api/restaurants/types';
 import Icon from '@/components/Icon';
+import { formatDistance } from '@/utils/formatDistance';
 
 interface RestaurantHomeTabProps {
   restaurant: RestaurantDetailResponse;
@@ -82,9 +83,16 @@ export default function RestaurantHomeTab({ restaurant }: RestaurantHomeTabProps
 
   return (
     <View className="p-4 gap-2">
-      <View className='flex-row gap-4 mb-4 items-center'>
-        <Icon name='location' color="rgba(107, 114, 128, 1)"/>
-        <Text>{restaurant.location.address}</Text>
+      <View className='flex-row gap-4 mb-4 items-center justify-between'>
+        <View className='flex-row gap-4 items-center flex-1'>
+          <Icon name='location' color="rgba(107, 114, 128, 1)"/>
+          <Text className="flex-1">{restaurant.location.address}</Text>
+        </View>
+        {restaurant.location.distance !== null && restaurant.location.distance !== undefined && (
+          <Text className="text-sm text-gray-500">
+            {formatDistance(restaurant.location.distance)}
+          </Text>
+        )}
       </View>
       <View className='flex-row gap-4 mb-4'>
         <Icon width={20} name='clock' color="rgba(107, 114, 128, 1)"/>

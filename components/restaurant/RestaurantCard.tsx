@@ -6,6 +6,7 @@ import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RestaurantOperatingStatus } from '@/api/restaurants/types';
 import { useRestaurantImages } from '@/api/restaurants/useRestaurantImage';
+import { formatDistance } from '@/utils/formatDistance';
 
 interface RestaurantCardProps {
   name: string;
@@ -15,9 +16,10 @@ interface RestaurantCardProps {
   comment?: string;
   restaurantId?: string;
   thumbnailUrls?: string[];
+  distance?: number | null;
 }
 
-export default function RestaurantCard({ name, category, operatingStatus, rating, comment, restaurantId, thumbnailUrls }: RestaurantCardProps) {
+export default function RestaurantCard({ name, category, operatingStatus, rating, comment, restaurantId, thumbnailUrls, distance }: RestaurantCardProps) {
   const navigation = useNavigation<NativeStackNavigationProp<any>>();
   const displayComment = comment || null;
   
@@ -58,9 +60,16 @@ export default function RestaurantCard({ name, category, operatingStatus, rating
 
   return (
     <Card className='bg-white border border-gray-100'>
-      <View className="flex-row items-center">
-        <Text className="text-lg text-blue-500">{name}</Text>
-        <Text className="ml-1">{category}</Text>
+      <View className="flex-row items-center justify-between">
+        <View className="flex-row items-center">
+          <Text className="text-lg text-blue-500">{name}</Text>
+          <Text className="ml-1">{category}</Text>
+        </View>
+        {distance !== null && distance !== undefined && (
+          <Text className="text-sm text-gray-500">
+            {formatDistance(distance)}
+          </Text>
+        )}
       </View>
       <RestaurantStatusTag operatingStatus={operatingStatus} rating={rating} onRatingPress={handleRatingPress} />
       

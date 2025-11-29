@@ -62,6 +62,10 @@ export const filterToParams = (filter: FilterState): RestaurantListParams => {
       .filter(Boolean);
     if (categoryIds.length > 0) {
       params.categories = categoryIds.join(',');
+      // 디버깅: 카테고리 변환 확인
+      console.log('Filter categories:', filter.categories);
+      console.log('Category IDs:', categoryIds);
+      console.log('Final categories param:', params.categories);
     }
   }
 
@@ -96,17 +100,22 @@ export const useRestaurantList = (params?: RestaurantListParams) => {
   return useQuery({
     queryKey: ['restaurants', params],
     queryFn: async () => {
+      // 디버깅: 필터 파라미터 확인
+      console.log('RestaurantList params:', params);
       const { data } = await apiClient.get<RestaurantListResponse>('/restaurants', { params });
+      console.log('RestaurantList response:', data);
       return data;
     },
   });
 };
 
-export const useRestaurantDetail = (restaurantId: number) => {
+export const useRestaurantDetail = (restaurantId: number, params?: { lat?: number; lng?: number }) => {
   return useQuery({
-    queryKey: ['restaurant', restaurantId],
+    queryKey: ['restaurant', restaurantId, params],
     queryFn: async () => {
-      const { data } = await apiClient.get<RestaurantDetailResponse>(`/restaurants/${restaurantId}`);
+      const { data } = await apiClient.get<RestaurantDetailResponse>(`/restaurants/${restaurantId}`, {
+        params: params?.lat && params?.lng ? { lat: params.lat, lng: params.lng } : undefined,
+      });
       return data;
     },
     enabled: !!restaurantId,

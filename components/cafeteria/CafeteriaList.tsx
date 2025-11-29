@@ -1,4 +1,5 @@
-import { View, Text, ScrollView } from 'react-native';
+import { View, Text, ScrollView, RefreshControl } from 'react-native';
+import { useState } from 'react';
 import CafeteriaSection from '@/components/cafeteria/CafeteriaSection';
 import {
   CafeteriaResponse,
@@ -18,6 +19,7 @@ interface CafeteriaListProps {
   isLoading: boolean;
   meal_error: Error | null;
   onShowLogin: () => void;
+  onRefresh?: () => void;
 }
 
 // 시간대 순서 고정
@@ -46,9 +48,22 @@ export default function CafeteriaList({
   isLoading,
   meal_error,
   onShowLogin,
+  onRefresh,
 }: CafeteriaListProps) {
    const {data, error} = useCurrentUser();
    const {isAuthenticated} = useAuth();
+   const [refreshing, setRefreshing] = useState(false);
+
+   const handleRefresh = async () => {
+     setRefreshing(true);
+     if (onRefresh) {
+       onRefresh();
+     }
+     // 약간의 딜레이 후 새로고침 상태 해제
+     setTimeout(() => {
+       setRefreshing(false);
+     }, 500);
+   };
 
   if (isLoading) {
     return (
@@ -90,7 +105,17 @@ export default function CafeteriaList({
     }
 
     return (
-      <ScrollView className="flex-1 px-10 py-4 bg-[#F8FAFC]">
+      <ScrollView 
+        className="flex-1 px-10 py-4 bg-[#F8FAFC]"
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={handleRefresh}
+            tintColor="#3B82F6"
+            colors={['#3B82F6']}
+          />
+        }
+      >
         {MEAL_TYPES.map(mealType => {
           const menus = getMenusByMealType(restaurant, mealType);
           if (!menus || menus.length === 0) return null;
@@ -118,7 +143,17 @@ export default function CafeteriaList({
   const targetMealType = selectedTime;
 
   return (
-    <ScrollView className="flex-1 px-10 py-4 bg-[#F8FAFC]">
+    <ScrollView 
+      className="flex-1 px-10 py-4 bg-[#F8FAFC]"
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={handleRefresh}
+          tintColor="#3B82F6"
+          colors={['#3B82F6']}
+        />
+      }
+    >
       {meal_data.restaurants.map(restaurant => {
         const menus = getMenusByMealType(restaurant, targetMealType);
         if (!menus || menus.length === 0) return null;

@@ -10,7 +10,7 @@ import { filterToParams } from '@/api/restaurants/useRestaurant';
 import { RestaurantListParams } from '@/api/restaurants/types';
 
 const DAYS = ['월요일', '화요일', '수요일', '목요일', '금요일', '토요일', '일요일'];
-const FOOD_TYPES = ['전체','한식','중식','일식','양식','아시안','분식','패스트푸드']
+const FOOD_TYPES = ['전체','한식','중식','일식','양식','아시안','분식','패스트푸드','고기']
 const HOUR = Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, '0'));
 const MIN = ['00','30'];
 const AFFILIATE =['공학대학','소프트웨어융합대학','약학대학','첨단융합대학','글로벌문화통상대학','커뮤니케이션&컬쳐대학','경상대학','디자인대학','예체능대학','LIONS칼리지'];

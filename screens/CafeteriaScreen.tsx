@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -64,13 +64,20 @@ export default function SchoolRestaurantScreen() {
     });
   };
 
+  // 오늘 날짜로 되돌리기 (Pull-to-refresh용)
+  const handleRefresh = useCallback(async () => {
+    setCurrentDate(new Date());
+    // 날짜 변경 후 데이터도 새로고침
+    await refetch();
+  }, [refetch]);
+
   const cafeteriaParams: CafeteriaParams = {
     year: currentDate.getFullYear(),
     month: currentDate.getMonth() + 1,
     day: currentDate.getDate(),
     cafeteria_details: true,
   };
-  const { data, isLoading, error } = useCafeteria(cafeteriaParams);
+  const { data, isLoading, error, refetch } = useCafeteria(cafeteriaParams);
 
   return (
     <View className="flex-1 bg-white">
@@ -95,6 +102,7 @@ export default function SchoolRestaurantScreen() {
         isLoading={isLoading}
         meal_error={error ?? null}
         onShowLogin={() => (navigation.navigate as any)('Login', { onSuccess: refreshAuthState })}
+        onRefresh={handleRefresh}
       />
     </View>
   );

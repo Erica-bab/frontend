@@ -238,6 +238,8 @@ export interface SearchParams {
   q: string;
   page?: number;
   limit?: number;
+  lat?: number;
+  lng?: number;
 }
 
 export interface SearchResultItem {

@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { View, Text, Pressable, ScrollView, Alert } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -36,10 +36,36 @@ export default function RestuarantScreen() {
                 lng: location.coords.longitude,
             };
             setUserLocation(coords);
+            
+            // 위치순 정렬일 때 필터 파라미터 업데이트
+            if (sortOption === '위치순') {
+                setFilterParams(prev => ({
+                    ...prev,
+                    sort: 'distance',
+                    lat: coords.lat,
+                    lng: coords.lng,
+                }));
+            }
+            
             return coords;
         }
         return null;
     };
+
+    // SearchBar에서 위치 업데이트 콜백
+    const handleLocationUpdate = useCallback((coords: { lat: number; lng: number }) => {
+        setUserLocation(coords);
+        
+        // 위치순 정렬일 때 필터 파라미터 업데이트
+        if (sortOption === '위치순') {
+            setFilterParams(prev => ({
+                ...prev,
+                sort: 'distance',
+                lat: coords.lat,
+                lng: coords.lng,
+            }));
+        }
+    }, [sortOption]);
 
     useEffect(() => {
         (async () => {
@@ -82,7 +108,11 @@ export default function RestuarantScreen() {
     const handleFilterPress = () => {
         navigation.navigate('Filter', {
             onApply: (params: RestaurantListParams) => {
-                setFilterParams(params);
+                // 기존 파라미터(sort, lat, lng)를 유지하면서 필터 파라미터 병합
+                setFilterParams(prev => ({
+                    ...prev,
+                    ...params,
+                }));
             },
         });
     };
@@ -101,6 +131,7 @@ export default function RestuarantScreen() {
                 onFilterPress={handleFilterPress}
                 isFilterApplied={isFilterApplied}
                 filterResultCount={data?.restaurants.length}
+                onLocationUpdate={handleLocationUpdate}
             >
                 <AdBanner />
                 <View className='self-end relative'>
@@ -188,6 +219,7 @@ export default function RestuarantScreen() {
                         restaurantId={restaurant.id.toString()}
                         thumbnailUrls={restaurant.thumbnail_urls}
                         comment={restaurant.popular_comment?.content}
+                        distance={restaurant.location.distance}
                     />
                 ))}
             </SearchBar>
