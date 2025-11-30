@@ -72,7 +72,7 @@ export default function RestaurantCard({ name, category, operatingStatus, rating
     <Card className='bg-white border border-gray-100'>
       {/* 식당 이름과 카테고리 영역 - 자세히보기로 이동 */}
       <Pressable onPress={handleCardPress}>
-        <View className="flex-row items-center justify-between pt-4">
+        <View className="flex-row items-center justify-between">
           <View className="flex-row items-center">
             <Text className="text-lg text-blue-500">{name}</Text>
             <Text className="ml-1">{category}</Text>
