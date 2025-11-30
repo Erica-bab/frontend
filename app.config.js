@@ -26,7 +26,7 @@ export default {
       supportsTablet: false,
       UIDeviceFamily: [1],
       bundleIdentifier: "com.efoo.app",
-      buildNumber: "6",
+      buildNumber: "9",
       usesAppleSignIn: true,
       displayName: "에푸",
       infoPlist: {
@@ -46,7 +46,7 @@ export default {
         backgroundColor: "#3072F0"
       },
       label: "에푸",
-      versionCode: 2,
+      versionCode: 3,
       edgeToEdgeEnabled: true,
       predictiveBackGestureEnabled: false,
       config: {

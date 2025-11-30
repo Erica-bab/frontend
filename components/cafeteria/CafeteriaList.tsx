@@ -57,9 +57,9 @@ export default function CafeteriaList({
    const handleRefresh = async () => {
      setRefreshing(true);
      if (onRefresh) {
-       onRefresh();
+       await onRefresh();
      }
-     // 약간의 딜레이 후 새로고침 상태 해제
+     // Simulate a network request or a delay for the refresh indicator
      setTimeout(() => {
        setRefreshing(false);
      }, 500);
@@ -98,9 +98,46 @@ export default function CafeteriaList({
 
     if (!restaurant) {
       return (
-        <View className="flex-1 items-center justify-center bg-[#F8FAFC]">
-          <Text>해당 식당의 메뉴가 없습니다.</Text>
-        </View>
+        <ScrollView 
+          className="flex-1 px-10 py-4 bg-[#F8FAFC]"
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={handleRefresh}
+              tintColor="#3B82F6"
+              colors={['#3B82F6']}
+            />
+          }
+        >
+          <View className="flex-1 items-center justify-center py-20">
+            <Text className="text-gray-500 text-lg">데이터가 없습니다</Text>
+          </View>
+        </ScrollView>
+      );
+    }
+
+    const hasAnyMenu = MEAL_TYPES.some(mealType => {
+      const menus = getMenusByMealType(restaurant, mealType);
+      return menus && menus.length > 0;
+    });
+
+    if (!hasAnyMenu) {
+      return (
+        <ScrollView 
+          className="flex-1 px-10 py-4 bg-[#F8FAFC]"
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={handleRefresh}
+              tintColor="#3B82F6"
+              colors={['#3B82F6']}
+            />
+          }
+        >
+          <View className="flex-1 items-center justify-center py-20">
+            <Text className="text-gray-500 text-lg">데이터가 없습니다</Text>
+          </View>
+        </ScrollView>
       );
     }
 
@@ -141,6 +178,31 @@ export default function CafeteriaList({
 
   // 장소 
   const targetMealType = selectedTime;
+
+  const hasAnyMenu = meal_data.restaurants.some(restaurant => {
+    const menus = getMenusByMealType(restaurant, targetMealType);
+    return menus && menus.length > 0;
+  });
+
+  if (!hasAnyMenu) {
+    return (
+      <ScrollView 
+        className="flex-1 px-10 py-4 bg-[#F8FAFC]"
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={handleRefresh}
+            tintColor="#3B82F6"
+            colors={['#3B82F6']}
+          />
+        }
+      >
+        <View className="flex-1 items-center justify-center py-20">
+          <Text className="text-gray-500 text-lg">데이터가 없습니다</Text>
+        </View>
+      </ScrollView>
+    );
+  }
 
   return (
     <ScrollView 

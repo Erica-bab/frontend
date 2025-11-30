@@ -15,6 +15,7 @@ interface SearchScreenProps {
   isFilterApplied?: boolean;
   filterResultCount?: number;
   onLocationUpdate?: (coords: { lat: number; lng: number }) => void;
+  onRefresh?: () => void;
 }
 
 // 검색 결과 아이템 컴포넌트
@@ -23,6 +24,18 @@ function SearchResultCard({ item }: { item: SearchResultItem }) {
 
   if (item.type === 'restaurant' && item.restaurant) {
     const restaurant = item.restaurant;
+    
+    // 운영 상태 레이블
+    const statusLabels = {
+      open: '영업중',
+      break_time: '브레이크타임',
+      order_end: '주문마감',
+      closed: '영업종료',
+    };
+    const statusText = restaurant.operating_status 
+      ? statusLabels[restaurant.operating_status.current.type] 
+      : null;
+
     return (
       <Pressable
         className="p-4 border-b border-gray-100 bg-white"
@@ -38,23 +51,21 @@ function SearchResultCard({ item }: { item: SearchResultItem }) {
               {restaurant.location.address}
             </Text>
             <View className="flex-row items-center gap-2 mt-1">
+              {statusText && (
+                <Text className="text-sm text-gray-600">{statusText}</Text>
+              )}
               <Text className="text-sm text-blue-500">
                 ★ {restaurant.average_rating.toFixed(1)}
               </Text>
               <Text className="text-sm text-gray-400">
                 ({restaurant.rating_count})
               </Text>
-              {restaurant.location.distance !== null && restaurant.location.distance !== undefined && (
-                <Text className="text-sm text-gray-500">
-                  {formatDistance(restaurant.location.distance)}
-                </Text>
-              )}
-              {restaurant.average_price && (
-                <Text className="text-sm text-gray-500">
-                  평균 {Math.round(restaurant.average_price).toLocaleString()}원
-                </Text>
-              )}
             </View>
+            {restaurant.average_price && (
+              <Text className="text-sm text-gray-500 mt-1">
+                평균 {Math.round(restaurant.average_price).toLocaleString()}원
+              </Text>
+            )}
           </View>
           <Icon name="rightAngle" size={16} color="#9CA3AF" />
         </View>
@@ -63,10 +74,23 @@ function SearchResultCard({ item }: { item: SearchResultItem }) {
   }
 
   if (item.type === 'menu' && item.menu && item.restaurant) {
+    const restaurant = item.restaurant;
+    
+    // 운영 상태 레이블
+    const statusLabels = {
+      open: '영업중',
+      break_time: '브레이크타임',
+      order_end: '주문마감',
+      closed: '영업종료',
+    };
+    const statusText = restaurant.operating_status 
+      ? statusLabels[restaurant.operating_status.current.type] 
+      : null;
+
     return (
       <Pressable
         className="p-4 border-b border-gray-100 bg-white"
-        onPress={() => navigation.navigate('RestaurantDetail', { restaurantId: item.restaurant!.id })}
+        onPress={() => navigation.navigate('RestaurantDetail', { restaurantId: restaurant.id })}
       >
         <View className="flex-row items-center">
           <View className="flex-1">
@@ -75,13 +99,24 @@ function SearchResultCard({ item }: { item: SearchResultItem }) {
               <Text className="text-base font-semibold">{item.menu.name}</Text>
             </View>
             <Text className="text-sm text-gray-500 mt-1">
-              {item.restaurant.name}
+              {restaurant.name}
             </Text>
             {item.menu.price && (
               <Text className="text-sm text-gray-600 mt-1">
                 {item.menu.price.toLocaleString()}원
               </Text>
             )}
+            <View className="flex-row items-center gap-2 mt-1">
+              {statusText && (
+                <Text className="text-sm text-gray-600">{statusText}</Text>
+              )}
+              <Text className="text-sm text-blue-500">
+                ★ {restaurant.average_rating.toFixed(1)}
+              </Text>
+              <Text className="text-sm text-gray-400">
+                ({restaurant.rating_count})
+              </Text>
+            </View>
           </View>
           <Icon name="rightAngle" size={16} color="#9CA3AF" />
         </View>
@@ -92,7 +127,8 @@ function SearchResultCard({ item }: { item: SearchResultItem }) {
   return null;
 }
 
-export default function SearchScreen({ children, onFilterPress, isFilterApplied, filterResultCount, onLocationUpdate }: SearchScreenProps) {
+
+export default function SearchScreen({ children, onFilterPress, isFilterApplied, filterResultCount, onLocationUpdate, onRefresh }: SearchScreenProps) {
   const navigation = useNavigation<NativeStackNavigationProp<any>>();
   const [scrollY] = useState(new Animated.Value(0));
   const [searchText, setSearchText] = useState('');
@@ -111,27 +147,18 @@ export default function SearchScreen({ children, onFilterPress, isFilterApplied,
     lng: currentLocation.longitude !== 0 ? currentLocation.longitude : undefined,
   });
 
-  // 위치 새로고침 함수
+
   const refreshLocation = useCallback(async () => {
+    setRefreshing(true);
     try {
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status === 'granted') {
         const location = await Location.getCurrentPositionAsync({});
-        
         const coords = {
           latitude: location.coords.latitude,
           longitude: location.coords.longitude,
         };
-        
         setCurrentLocation(coords);
-
-        // 부모 컴포넌트에 위치 업데이트 알림
-        if (onLocationUpdate) {
-          onLocationUpdate({
-            lat: coords.latitude,
-            lng: coords.longitude,
-          });
-        }
 
         const [address] = await Location.reverseGeocodeAsync({
           latitude: coords.latitude,
@@ -139,48 +166,61 @@ export default function SearchScreen({ children, onFilterPress, isFilterApplied,
         });
 
         if (address) {
-          // 주소를 그대로 표시
-          const addressText = address.formattedAddress ||
-            [address.region, address.city, address.district,'|', address.subregion, address.street, address.streetNumber]
-              .filter(Boolean)
-              .join(' ');
+          // 주소를 상세하게 표시 (| 구분자 제거)
+          const addressParts = [
+            address.region,
+            address.city,
+            address.district,
+            address.subregion,
+            address.street,
+            address.streetNumber
+          ].filter(Boolean);
+          
+          let addressText = address.formattedAddress || addressParts.join(' ');
+          
+          // 30글자 넘어가면 ... 으로 잘라서 표시
+          if (addressText.length > 30) {
+            addressText = addressText.substring(0, 30) + '...';
+          }
+          
           setLocationText(addressText || '현재위치');
         }
+        
+        // 부모 컴포넌트에 위치 업데이트 알림
+        onLocationUpdate?.({ lat: coords.latitude, lng: coords.longitude });
       }
     } catch (error) {
       console.error('Failed to get location:', error);
+    } finally {
+      setRefreshing(false);
     }
   }, [onLocationUpdate]);
 
-  // 초기 위치 로드 및 주기적 새로고침 설정
   useEffect(() => {
-    let mounted = true;
+    // 초기 위치 가져오기
+    refreshLocation();
 
-    (async () => {
-      await refreshLocation();
-    })();
+    // 5분마다 주기적으로 위치 업데이트
+    locationUpdateIntervalRef.current = setInterval(() => {
+      refreshLocation();
+    }, 5 * 60 * 1000); // 5분
 
     // 5분마다 위치 자동 새로고침
     locationUpdateIntervalRef.current = setInterval(() => {
-      if (mounted) {
-        refreshLocation();
-      }
+      refreshLocation();
     }, 5 * 60 * 1000); // 5분 = 5 * 60 * 1000ms
 
     return () => {
-      mounted = false;
       if (locationUpdateIntervalRef.current) {
         clearInterval(locationUpdateIntervalRef.current);
       }
     };
   }, [refreshLocation]);
 
-  // Pull-to-refresh 핸들러
-  const onRefresh = useCallback(async () => {
-    setRefreshing(true);
+  const handleRefresh = useCallback(async () => {
     await refreshLocation();
-    setRefreshing(false);
-  }, [refreshLocation]);
+    onRefresh?.();
+  }, [refreshLocation, onRefresh]);
 
   const handleSearch = useCallback(() => {
     if (searchText.trim()) {
@@ -212,7 +252,7 @@ export default function SearchScreen({ children, onFilterPress, isFilterApplied,
       refreshControl={
         <RefreshControl
           refreshing={refreshing}
-          onRefresh={onRefresh}
+          onRefresh={handleRefresh}
           tintColor="#3B82F6"
           colors={['#3B82F6']}
         />

@@ -58,22 +58,44 @@ export default function RestaurantCard({ name, category, operatingStatus, rating
     }
   };
 
+  const handleStatusPress = () => {
+    if (restaurantId) {
+      navigation.navigate('RestaurantDetail', { restaurantId, initialTab: 'home' });
+    }
+  };
+
+  const handleCardPress = () => {
+    navigation.navigate('RestaurantDetail', { restaurantId });
+  };
+
   return (
     <Card className='bg-white border border-gray-100'>
-      <View className="flex-row items-center justify-between">
-        <View className="flex-row items-center">
-          <Text className="text-lg text-blue-500">{name}</Text>
-          <Text className="ml-1">{category}</Text>
+      {/* 식당 이름과 카테고리 영역 - 자세히보기로 이동 */}
+      <Pressable onPress={handleCardPress}>
+        <View className="flex-row items-center justify-between">
+          <View className="flex-row items-center">
+            <Text className="text-lg text-blue-500">{name}</Text>
+            <Text className="ml-1">{category}</Text>
+          </View>
+          {distance !== null && distance !== undefined && (
+            <Text className="text-sm text-gray-500">
+              {formatDistance(distance)}
+            </Text>
+          )}
         </View>
-        {distance !== null && distance !== undefined && (
-          <Text className="text-sm text-gray-500">
-            {formatDistance(distance)}
-          </Text>
-        )}
-      </View>
-      <RestaurantStatusTag operatingStatus={operatingStatus} rating={rating} onRatingPress={handleRatingPress} />
+      </Pressable>
       
-      {/* 썸네일 표시 */}
+      {/* 상태 태그 영역 - 상태 태그는 홈 탭으로, 별점은 댓글 탭으로 이동 */}
+      <View className="pb-2">
+        <RestaurantStatusTag 
+          operatingStatus={operatingStatus} 
+          rating={rating} 
+          onRatingPress={handleRatingPress}
+          onStatusPress={handleStatusPress}
+        />
+      </View>
+      
+      {/* 썸네일 표시 - 이미지 영역만 사진 탭으로 이동 */}
       <Pressable
         onPress={() => navigation.navigate('RestaurantDetail', { restaurantId, initialTab: 'photos' })}
       >
@@ -115,7 +137,7 @@ export default function RestaurantCard({ name, category, operatingStatus, rating
         </Pressable>
       )}
       <Pressable
-        onPress={() => navigation.navigate('RestaurantDetail', { restaurantId })}
+        onPress={handleCardPress}
         className='w-full justify-center items-center bg-blue-500 p-1 rounded-lg'
       >
         <Text className='text-white font-bold p-1'>자세히보기</Text>

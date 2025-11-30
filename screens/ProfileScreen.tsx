@@ -3,6 +3,7 @@ import { useNavigation } from '@react-navigation/native';
 import Icon from '@/components/Icon';
 import { useLogout, useCurrentUser } from '@/api/auth/useAuth';
 import { useAuth } from '@/api/auth/useAuth';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const MENU_ITEMS = [
   // { icon: 'chat' as const, label: '쓴 댓글 보기', action: 'comments' },
@@ -142,8 +143,9 @@ export default function ProfileScreen() {
     }
   };
   return (
-    <View className="flex-1 bg-white">
-      <ScrollView className="flex-1 p-4">
+    <View className="flex-1">
+      <ScrollView className="flex-1 p-4"
+      contentContainerStyle={{ paddingBottom: 50 }}>
         <View className="items-center pt-10 pb-4">
           <Text className="text-xl font-bold">오늘도 한 끼 행복하게</Text>
           <Text className="text-xl font-bold">

@@ -89,7 +89,7 @@ export default function FilterScreen() {
     navigation.goBack();
   }, [navigation]);
 
-  const handleReset = () => {
+  const handleReset = async () => {
     setOperatingTimeMode('none');
     setSelectedDay(undefined);
     setSelectedHour(undefined);
@@ -97,23 +97,48 @@ export default function FilterScreen() {
     setSelectedFoodTypes([]);
     setSelectedAffiliates([]);
     setSelectedRestaurantTypes([]);
+    
+    // 저장된 필터도 삭제
+    try {
+      await AsyncStorage.removeItem('restaurantFilter');
+    } catch (error) {
+      console.error('Failed to remove filter:', error);
+    }
   };
 
-  // 운영중 버튼 클릭 시 현재 시간으로 설정
+  // 운영중 버튼 클릭 시 현재 시간으로 설정 (토글)
   const handleOperatingNow = () => {
-    const currentTime = getCurrentTime();
-    setOperatingTimeMode('operating');
-    setSelectedDay(currentTime.day);
-    setSelectedHour(currentTime.hour);
-    setSelectedMin(currentTime.minute);
+    if (operatingTimeMode === 'operating') {
+      // 이미 선택되어 있으면 취소
+      setOperatingTimeMode('none');
+      setSelectedDay(undefined);
+      setSelectedHour(undefined);
+      setSelectedMin(undefined);
+    } else {
+      // 선택되지 않았으면 현재 시간으로 설정
+      const currentTime = getCurrentTime();
+      setOperatingTimeMode('operating');
+      setSelectedDay(currentTime.day);
+      setSelectedHour(currentTime.hour);
+      setSelectedMin(currentTime.minute);
+    }
   };
 
-  // 운영시간 수동선택 버튼 클릭 시
+  // 운영시간 수동선택 버튼 클릭 시 (토글)
   const handleManualSelect = () => {
-    setOperatingTimeMode('manual');
-    setSelectedDay(undefined);
-    setSelectedHour(undefined);
-    setSelectedMin(undefined);
+    if (operatingTimeMode === 'manual') {
+      // 이미 선택되어 있으면 취소
+      setOperatingTimeMode('none');
+      setSelectedDay(undefined);
+      setSelectedHour(undefined);
+      setSelectedMin(undefined);
+    } else {
+      // 선택되지 않았으면 수동선택 모드로
+      setOperatingTimeMode('manual');
+      setSelectedDay(undefined);
+      setSelectedHour(undefined);
+      setSelectedMin(undefined);
+    }
   };
 
   const handleApply = async () => {

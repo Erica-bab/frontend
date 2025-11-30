@@ -28,7 +28,6 @@ export const useGoogleSignIn = (onSuccess?: (user?: any) => void) => {
 
   const [request, response, promptAsync] = Google.useAuthRequest({
     iosClientId: GOOGLE_IOS_CLIENT_ID,
-    androidClientId: GOOGLE_ANDROID_CLIENT_ID,
     webClientId: GOOGLE_WEB_CLIENT_ID,
     redirectUri, 
     scopes: ['openid', 'profile', 'email'],
@@ -51,16 +50,51 @@ export const useGoogleSignIn = (onSuccess?: (user?: any) => void) => {
       isProcessing.current = true;
       const { id_token } = response.params;
 
+      console.log('=== Google OAuth Debug ===');
+      console.log('Platform:', Platform.OS);
+      console.log('id_token exists:', !!id_token);
+      console.log('id_token (first 50 chars):', id_token?.substring(0, 50));
+      console.log('Android Client ID:', GOOGLE_ANDROID_CLIENT_ID);
+      console.log('Web Client ID:', GOOGLE_WEB_CLIENT_ID);
+      console.log('redirectUri:', redirectUri);
+
+      // id_token 디코딩해서 aud 확인
+      if (id_token) {
+        try {
+          const base64Payload = id_token.split('.')[1];
+          const payload = JSON.parse(atob(base64Payload.replace(/-/g, '+').replace(/_/g, '/')));
+          console.log('🔍 id_token payload:');
+          console.log('  - aud (audience):', payload.aud);
+          console.log('  - iss (issuer):', payload.iss);
+          console.log('  - email:', payload.email);
+        } catch (e) {
+          console.error('Failed to decode id_token:', e);
+        }
+      }
+
+      console.log('========================');
+
       if (id_token) {
         googleLogin(
           { id_token },
           {
             onSuccess: (data) => {
+              console.log('✅ Backend login success');
               onSuccess?.(data.user);
               isProcessing.current = false;
             },
             onError: (error: any) => {
-              console.error('Backend login failed:', error);
+              console.error('❌ Backend login failed');
+              console.error('Error message:', error?.message);
+              console.error('Error response:', error?.response?.data);
+              console.error('Error status:', error?.response?.status);
+              console.error('Request URL:', error?.config?.url);
+              console.error('Request data:', error?.config?.data);
+
+              if (error?.response?.data) {
+                console.error('Backend error details:', JSON.stringify(error.response.data, null, 2));
+              }
+
               isProcessing.current = false;
             },
           }

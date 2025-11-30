@@ -37,7 +37,7 @@ export default function CafeteriaInfo({
   const [visible, setVisible] = useState(false);
 
   return (
-    <View className="flex flex-col border border-[#E5E5EC] rounded-xl w-full min-w-[40vh] px-[35px] py-[20px] bg-white">
+    <View className="flex flex-col border border-[#E5E5EC] rounded-xl px-[35px] py-[20px] bg-white">
       <View className="flex flex-row justify-between">
         <View className="flex flex-row items-center mt-2">
           <Text className="text-[#3B82F6] font-semibold text-xl mr-[5px]">

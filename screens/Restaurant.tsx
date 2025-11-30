@@ -11,6 +11,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRestaurantList } from '@/api/restaurants/useRestaurant';
 import { RestaurantListParams } from '@/api/restaurants/types';
 import Icon from '@/components/Icon';
+import { calculateDistance } from '@/utils/calculateDistance';
 
 const SORT_OPTIONS = ['위치순', '별점순', '가격순'];
 const SORT_MAP: Record<string, 'distance' | 'rating' | 'price'> = {
@@ -25,7 +26,7 @@ export default function RestuarantScreen() {
     const [sortOption, setSortOption] = useState<string>('위치순');
     const [isSortOpen, setIsSortOpen] = useState(false);
     const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
-    const { data, isLoading, error } = useRestaurantList(filterParams);
+    const { data, isLoading, error, refetch } = useRestaurantList(filterParams);
 
     const requestLocationAndUpdate = async () => {
         const { status } = await Location.requestForegroundPermissionsAsync();
@@ -37,7 +38,8 @@ export default function RestuarantScreen() {
             };
             setUserLocation(coords);
             
-            // 위치순 정렬일 때 필터 파라미터 업데이트
+
+            // 위치순 정렬일 때 필터 파라미터 업데이트 (정렬만 서버에 요청, 거리는 클라이언트에서 계산)
             if (sortOption === '위치순') {
                 setFilterParams(prev => ({
                     ...prev,
@@ -56,7 +58,8 @@ export default function RestuarantScreen() {
     const handleLocationUpdate = useCallback((coords: { lat: number; lng: number }) => {
         setUserLocation(coords);
         
-        // 위치순 정렬일 때 필터 파라미터 업데이트
+
+        // 위치순 정렬일 때 필터 파라미터 업데이트 (정렬만 서버에 요청, 거리는 클라이언트에서 계산)
         if (sortOption === '위치순') {
             setFilterParams(prev => ({
                 ...prev,
@@ -109,20 +112,34 @@ export default function RestuarantScreen() {
         navigation.navigate('Filter', {
             onApply: (params: RestaurantListParams) => {
                 // 기존 파라미터(sort, lat, lng)를 유지하면서 필터 파라미터 병합
-                setFilterParams(prev => ({
-                    ...prev,
-                    ...params,
-                }));
+                // 빈 필터인 경우 sort, lat, lng만 유지
+                const hasFilterConditions = Object.keys(params).some(key =>
+                    key !== 'sort' && key !== 'lat' && key !== 'lng'
+                );
+                
+                if (hasFilterConditions) {
+                    // 필터 조건이 있으면 병합
+                    setFilterParams(prev => ({
+                        ...prev,
+                        ...params,
+                    }));
+                } else {
+                    // 필터 조건이 없으면 sort, lat, lng만 유지
+                    setFilterParams(prev => ({
+                        sort: prev.sort,
+                        lat: prev.lat,
+                        lng: prev.lng,
+                    }));
+                }
             },
         });
     };
 
-    // 필터가 적용되었는지 확인
+    // 필터가 적용되었는지 확인 (sort, lat, lng 제외)
     const isFilterApplied = useMemo(() => {
-        return Object.keys(filterParams).length > 0 &&
-               Object.keys(filterParams).some(key =>
-                   key !== 'sort' && key !== 'lat' && key !== 'lng'
-               );
+        return Object.keys(filterParams).some(key =>
+            key !== 'sort' && key !== 'lat' && key !== 'lng'
+        );
     }, [filterParams]);
 
     return (
@@ -132,6 +149,7 @@ export default function RestuarantScreen() {
                 isFilterApplied={isFilterApplied}
                 filterResultCount={data?.restaurants.length}
                 onLocationUpdate={handleLocationUpdate}
+                onRefresh={refetch}
             >
                 <AdBanner />
                 <View className='self-end relative'>
@@ -209,19 +227,32 @@ export default function RestuarantScreen() {
                     </View>
                 )}
 
-                {data?.restaurants.map((restaurant) => (
-                    <RestaurantCard
-                        key={restaurant.id}
-                        name={restaurant.name}
-                        category={restaurant.category}
-                        operatingStatus={restaurant.operating_status}
-                        rating={restaurant.average_rating}
-                        restaurantId={restaurant.id.toString()}
-                        thumbnailUrls={restaurant.thumbnail_urls}
-                        comment={restaurant.popular_comment?.content}
-                        distance={restaurant.location.distance}
-                    />
-                ))}
+
+                {data?.restaurants.map((restaurant) => {
+                    // 클라이언트에서 거리 계산
+                    const distance = userLocation && restaurant.location.latitude && restaurant.location.longitude
+                        ? calculateDistance(
+                            userLocation.lat,
+                            userLocation.lng,
+                            restaurant.location.latitude,
+                            restaurant.location.longitude
+                        )
+                        : null;
+
+                    return (
+                        <RestaurantCard
+                            key={restaurant.id}
+                            name={restaurant.name}
+                            category={restaurant.category}
+                            operatingStatus={restaurant.operating_status}
+                            rating={restaurant.average_rating}
+                            restaurantId={restaurant.id.toString()}
+                            thumbnailUrls={restaurant.thumbnail_urls}
+                            comment={restaurant.popular_comment?.content}
+                            distance={distance}
+                        />
+                    );
+                })}
             </SearchBar>
         </SafeAreaView>
     );

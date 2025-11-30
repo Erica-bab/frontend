@@ -1,4 +1,4 @@
-import { View, Text } from 'react-native';
+import { View, Text, Pressable, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { RestaurantCode, MealType } from '@/api/cafeteria/types';
 import TextIconButton from '@/components/ui/TextIconButton';
@@ -18,6 +18,7 @@ interface CafeteriaHeaderProps {
   currentDate: Date;
   onPrevDate: () => void;
   onNextDate: () => void;
+  onGoToToday: () => void;
 }
 
 function formatDate(date: Date) {
@@ -43,12 +44,41 @@ export default function CafeteriaHeader({
   currentDate,
   onPrevDate,
   onNextDate,
+  onGoToToday,
 }: CafeteriaHeaderProps) {
+  // 오늘 날짜인지 확인
+  const isToday = () => {
+    const today = new Date();
+    return (
+      currentDate.getFullYear() === today.getFullYear() &&
+      currentDate.getMonth() === today.getMonth() &&
+      currentDate.getDate() === today.getDate()
+    );
+  };
   const TabClasses = {
     baseBoxClass: '-pb-4',
     offTextClass: 'text-[#000000] font-medium text-xl',
     onTextClass: 'text-[#2563EB] font-medium text-xl',
     onBoxClass: 'border-b-2 border-[#2563EB] -pb-2',
+  };
+
+  const handleDatePress = () => {
+    if (!isToday()) {
+      Alert.alert(
+        '오늘로 이동',
+        '오늘로 이동할까요?',
+        [
+          {
+            text: '취소',
+            style: 'cancel',
+          },
+          {
+            text: '확인',
+            onPress: onGoToToday,
+          },
+        ]
+      );
+    }
   };
 
   return (
@@ -71,12 +101,16 @@ export default function CafeteriaHeader({
           onPress={onPrevDate}
           baseBoxClass="px-0 py-0"
         />
-        <Text className="font-bold text-4xl mt-1">
-          {formatDate(currentDate)}
-        </Text>
-        <Text className="font-medium text-xl mt-3 text-[#6B7280] mr-2">
-          {formatDay(currentDate)}
-        </Text>
+        <Pressable onPress={handleDatePress}>
+          <View className="flex-row items-center gap-2">
+            <Text className="font-bold text-4xl mt-1">
+              {formatDate(currentDate)}
+            </Text>
+            <Text className="font-medium text-xl mt-3 text-[#6B7280] mr-2">
+              {formatDay(currentDate)}
+            </Text>
+          </View>
+        </Pressable>
         <TextIconButton
           isOn={false}
           iconName="rightAngle"

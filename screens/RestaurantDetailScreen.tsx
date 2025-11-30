@@ -20,6 +20,7 @@ import ImageUploadModal from '@/components/restaurant/ImageUploadModal';
 import NaverMapWebView from '@/components/NaverMapWebView';
 import Icon from '@/components/Icon';
 import { useRestaurantImages } from '@/api/restaurants/useRestaurantImage';
+import { calculateDistance } from '@/utils/calculateDistance';
 
 type RestaurantTabType = 'home' | 'menu' | 'comments' | 'photos';
 
@@ -58,6 +59,24 @@ export default function RestaurantDetailScreen() {
   const { mutate: createComment, isPending: isCommentLoading } = useCreateComment(Number(restaurantId));
   const { refetch: refetchRestaurantImages } = useRestaurantImages(restaurant?.id || 0);
   const [showImageUploadModal, setShowImageUploadModal] = useState(false);
+
+  // 현재 위치 가져오기
+  useEffect(() => {
+    (async () => {
+      try {
+        const { status } = await Location.requestForegroundPermissionsAsync();
+        if (status === 'granted') {
+          const location = await Location.getCurrentPositionAsync({});
+          setUserLocation({
+            lat: location.coords.latitude,
+            lng: location.coords.longitude,
+          });
+        }
+      } catch (error) {
+        console.error('Failed to get location:', error);
+      }
+    })();
+  }, []);
 
   // 유저 액티비티 refetch (댓글 작성 후 업데이트용)
   const { refetch: refetchMyComments } = useMyComments(1, 100, isAuthenticated === true);
@@ -243,7 +262,19 @@ export default function RestaurantDetailScreen() {
           </View>
 
           {/* 탭 콘텐츠 조건부 렌더링 */}
-          {selectedTab === 'home' && <RestaurantHomeTab restaurant={restaurant} />}
+          {selectedTab === 'home' && (() => {
+            // 클라이언트에서 거리 계산
+            const distance = userLocation && restaurant.location.latitude && restaurant.location.longitude
+              ? calculateDistance(
+                  userLocation.lat,
+                  userLocation.lng,
+                  restaurant.location.latitude,
+                  restaurant.location.longitude
+                )
+              : null;
+
+            return <RestaurantHomeTab restaurant={restaurant} distance={distance} />;
+          })()}
           {selectedTab === 'menu' && <RestaurantMenuTab restaurant={restaurant} />}
           {selectedTab === 'comments' && (
             <RestaurantCommentsTab
