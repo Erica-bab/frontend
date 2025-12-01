@@ -92,12 +92,27 @@ export default function RestuarantScreen() {
     const handleFilterPress = () => {
         navigation.navigate('Filter', {
             onApply: (params: RestaurantListParams) => {
-                // sort, lat, lng 제거하고 필터 파라미터만 병합
+                // sort, lat, lng 제거하고 필터 파라미터만 추출
                 const { sort, lat, lng, ...filterOnly } = params;
-                setFilterParams(prev => ({
-                    ...prev,
-                    ...filterOnly,
-                }));
+                
+                // 필터가 비어있는지 확인 (모든 값이 없거나 빈 배열/문자열인지)
+                const hasFilter = Object.keys(filterOnly).length > 0 && 
+                    Object.values(filterOnly).some(value => {
+                        if (Array.isArray(value)) return value.length > 0;
+                        if (typeof value === 'string') return value.length > 0;
+                        return value !== undefined && value !== null;
+                    });
+                
+                if (hasFilter) {
+                    // 필터가 있으면 병합
+                    setFilterParams(prev => ({
+                        ...prev,
+                        ...filterOnly,
+                    }));
+                } else {
+                    // 필터가 없으면 완전히 초기화
+                    setFilterParams({});
+                }
             },
         });
     };

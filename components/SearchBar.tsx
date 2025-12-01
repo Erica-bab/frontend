@@ -144,8 +144,11 @@ export default function SearchScreen({ children, onFilterPress, isFilterApplied,
     limit: 20,
   });
 
-  const refreshLocation = useCallback(async () => {
-    setRefreshing(true);
+  // 위치 업데이트 로직 (RefreshControl 트리거 없음)
+  const updateLocation = useCallback(async (showRefreshIndicator = false) => {
+    if (showRefreshIndicator) {
+      setRefreshing(true);
+    }
     try {
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status === 'granted') {
@@ -220,17 +223,24 @@ export default function SearchScreen({ children, onFilterPress, isFilterApplied,
     } catch (error) {
       console.error('Failed to get location:', error);
     } finally {
-      setRefreshing(false);
+      if (showRefreshIndicator) {
+        setRefreshing(false);
+      }
     }
   }, [onLocationUpdate]);
 
-  useEffect(() => {
-    // 초기 위치 가져오기
-    refreshLocation();
+  // Pull-to-refresh용 위치 새로고침 (RefreshControl 트리거)
+  const refreshLocation = useCallback(async () => {
+    await updateLocation(true);
+  }, [updateLocation]);
 
-    // 1분마다 주기적으로 위치 업데이트
+  useEffect(() => {
+    // 초기 위치 가져오기 (RefreshControl 트리거 없음)
+    updateLocation(false);
+
+    // 1분마다 주기적으로 위치 업데이트 (RefreshControl 트리거 없음)
     locationUpdateIntervalRef.current = setInterval(() => {
-      refreshLocation();
+      updateLocation(false);
     }, 60 * 1000); // 1분
 
     return () => {
@@ -238,17 +248,17 @@ export default function SearchScreen({ children, onFilterPress, isFilterApplied,
         clearInterval(locationUpdateIntervalRef.current);
       }
     };
-  }, [refreshLocation]);
+  }, [updateLocation]);
 
-  // 앱이 포그라운드로 돌아올 때 위치 새로고침
+  // 앱이 포그라운드로 돌아올 때 위치 새로고침 (RefreshControl 트리거 없음)
   useEffect(() => {
     const subscription = AppState.addEventListener('change', (nextAppState: AppStateStatus) => {
       if (
         appState.current.match(/inactive|background/) &&
         nextAppState === 'active'
       ) {
-        // 앱이 포그라운드로 돌아올 때 위치 새로고침
-        refreshLocation();
+        // 앱이 포그라운드로 돌아올 때 위치 새로고침 (RefreshControl 트리거 없음)
+        updateLocation(false);
       }
       appState.current = nextAppState;
     });
@@ -256,7 +266,7 @@ export default function SearchScreen({ children, onFilterPress, isFilterApplied,
     return () => {
       subscription.remove();
     };
-  }, [refreshLocation]);
+  }, [updateLocation]);
 
   const handleRefresh = useCallback(async () => {
     await refreshLocation();
@@ -396,10 +406,10 @@ export default function SearchScreen({ children, onFilterPress, isFilterApplied,
       ) : (
         // 검색 모드가 아닐 때 기존 children 표시
         <>
-          {isFilterApplied && filterResultCount !== undefined && (
+          {filterResultCount !== undefined && (
             <View className="px-4 py-3 bg-gray-50">
               <Text className="text-sm text-gray-600">
-                필터 적용 결과 {filterResultCount}개
+                {isFilterApplied ? `필터 적용 결과 ${filterResultCount}개` : `식당 ${filterResultCount}개`}
               </Text>
             </View>
           )}

@@ -69,7 +69,7 @@ export const filterToParams = (filter: FilterState): RestaurantListParams => {
     params.affiliations = filter.affiliations.join(',');
   }
 
-  if (filter.subCategory) {
+  if (filter.subCategory && filter.subCategory.trim() !== '') {
     params.sub_category = String(SUB_CATEGORY_MAP[filter.subCategory] || filter.subCategory);
   }
 

@@ -60,10 +60,21 @@ export default function FilterScreen() {
         const savedFilter = await AsyncStorage.getItem('restaurantFilter');
         if (savedFilter) {
           const filter = JSON.parse(savedFilter);
-          setOperatingTimeMode(filter.operatingTimeMode || 'none');
-          setSelectedDay(filter.selectedDay);
-          setSelectedHour(filter.selectedHour);
-          setSelectedMin(filter.selectedMin);
+          const savedMode = filter.operatingTimeMode || 'none';
+          
+          // operatingTimeMode가 'operating'인데 시간 정보가 없으면 'none'으로 초기화
+          if (savedMode === 'operating' && (!filter.selectedDay || !filter.selectedHour || !filter.selectedMin)) {
+            setOperatingTimeMode('none');
+            setSelectedDay(undefined);
+            setSelectedHour(undefined);
+            setSelectedMin(undefined);
+          } else {
+            setOperatingTimeMode(savedMode);
+            setSelectedDay(filter.selectedDay || undefined);
+            setSelectedHour(filter.selectedHour || undefined);
+            setSelectedMin(filter.selectedMin || undefined);
+          }
+          
           setSelectedFoodTypes(filter.selectedFoodTypes || []);
           setSelectedAffiliates(filter.selectedAffiliates || []);
           setSelectedRestaurantTypes(filter.selectedRestaurantTypes || []);
@@ -152,6 +163,11 @@ export default function FilterScreen() {
       finalDay = currentTime.day;
       finalHour = currentTime.hour;
       finalMin = currentTime.minute;
+    } else if (operatingTimeMode === 'none') {
+      // 초기화 상태일 때는 시간 파라미터를 undefined로 설정
+      finalDay = undefined;
+      finalHour = undefined;
+      finalMin = undefined;
     }
 
     // 필터 저장
