@@ -18,10 +18,7 @@ export const useGoogleSignIn = (onSuccess?: (user?: any) => void) => {
   const isProcessing = useRef(false);
 
   const redirectUri = makeRedirectUri({
-    scheme:
-      Platform.OS === 'ios'
-        ? `com.googleusercontent.apps.${GOOGLE_IOS_CLIENT_ID?.split('.apps.googleusercontent.com')[0]}`
-        : `com.googleusercontent.apps.${GOOGLE_ANDROID_CLIENT_ID?.split('.apps.googleusercontent.com')[0]}`,
+    scheme: "com.efoo.app"
   });
 
   console.log('Google OAuth redirectUri:', redirectUri);
@@ -29,6 +26,7 @@ export const useGoogleSignIn = (onSuccess?: (user?: any) => void) => {
   const [request, response, promptAsync] = Google.useAuthRequest({
     iosClientId: GOOGLE_IOS_CLIENT_ID,
     webClientId: GOOGLE_WEB_CLIENT_ID,
+    androidClientId: GOOGLE_ANDROID_CLIENT_ID,
     redirectUri, 
     scopes: ['openid', 'profile', 'email'],
   });

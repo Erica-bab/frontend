@@ -3,26 +3,23 @@ export default {
     name: "에푸",
     slug: "efoo",
     version: "1.0.0",
-    scheme: [
-      "efoo",
-      "com.googleusercontent.apps.1041029378289-puugfhcoucnpvmi8bk8k2a5uapiaak38", // iOS
-      "com.googleusercontent.apps.1041029378289-g90tmeqbnd3gr7t8k5318t0cs2gbi6vh"  // Android
-    ],
+    scheme: "com.efoo.app",
     extra: {
       "eas": {
         "projectId": "b0ac8133-210a-4ac9-8d22-eede5468405b"
       }
     },
     orientation: "portrait",
-    icon: "./assets/app/adaptive-icon.png",
+    icon: "./assets/app/ios-icon.png",
     userInterfaceStyle: "light",
     newArchEnabled: true,
     splash: {
-      image: "./assets/app/adaptive-icon.png",
+      image: "./assets/app/splash.png",
       resizeMode: "contain",
       backgroundColor: "#2563EB"
     },
     ios: {
+      icon: "./assets/app/ios-icon.png",
       supportsTablet: false,
       UIDeviceFamily: [1],
       bundleIdentifier: "com.efoo.app",
@@ -42,11 +39,12 @@ export default {
     },
     android: {
       adaptiveIcon: {
-        foregroundImage: "./assets/app/adaptive-icon.png",
-        backgroundColor: "#3072F0"
+        foregroundImage: "./assets/app/android-icon.png",
+        backgroundColor: "#FFFFFF"
       },
+      softwareKeyboardLayoutMode: "pan",
       label: "에푸",
-      versionCode: 3,
+      versionCode: 5,
       edgeToEdgeEnabled: true,
       predictiveBackGestureEnabled: false,
       config: {
@@ -57,7 +55,7 @@ export default {
       package: "com.efoo.app"
     },
     web: {
-      favicon: "./assets/app/adaptive-icon.png"
+      favicon: "./assets/app/ios-icon.png"
     },
     plugins: [
       "expo-router",
