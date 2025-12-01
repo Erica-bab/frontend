@@ -8,6 +8,7 @@ import { RestaurantDetailResponse, BusinessHoursDay, MenuItem } from '@/api/rest
 import Icon from '@/components/Icon';
 import { useAuth } from '@/api/auth/useAuth';
 import { AxiosError } from 'axios';
+import { getSafeErrorMessage } from '@/utils/errorHandler';
 
 type EditTabType = 'phone' | 'hours' | 'menu';
 
@@ -100,8 +101,7 @@ export default function RestaurantEditScreen() {
           refetch();
         },
         onError: (error) => {
-          const axiosError = error as AxiosError<{ detail?: string; message?: string }>;
-          const message = axiosError.response?.data?.detail || axiosError.response?.data?.message || '전화번호 수정에 실패했습니다.';
+          const message = getSafeErrorMessage(error, '전화번호 수정에 실패했습니다.');
           Alert.alert('오류', message);
         },
       }
@@ -146,8 +146,7 @@ export default function RestaurantEditScreen() {
           refetch();
         },
         onError: (error) => {
-          const axiosError = error as AxiosError<{ detail?: string; message?: string }>;
-          const message = axiosError.response?.data?.detail || axiosError.response?.data?.message || '운영시간 수정에 실패했습니다.';
+          const message = getSafeErrorMessage(error, '운영시간 수정에 실패했습니다.');
           Alert.alert('오류', message);
         },
       }
@@ -212,8 +211,7 @@ export default function RestaurantEditScreen() {
             refetch();
           },
           onError: (error) => {
-            const axiosError = error as AxiosError<{ detail?: string; message?: string }>;
-            const message = axiosError.response?.data?.detail || axiosError.response?.data?.message || '메뉴 수정에 실패했습니다.';
+            const message = getSafeErrorMessage(error, '메뉴 수정에 실패했습니다.');
             Alert.alert('오류', message);
           },
         }
@@ -237,8 +235,7 @@ export default function RestaurantEditScreen() {
             refetch();
           },
           onError: (error) => {
-            const axiosError = error as AxiosError<{ detail?: string; message?: string }>;
-            const message = axiosError.response?.data?.detail || axiosError.response?.data?.message || '메뉴 추가에 실패했습니다.';
+            const message = getSafeErrorMessage(error, '메뉴 추가에 실패했습니다.');
             Alert.alert('오류', message);
           },
         }
@@ -260,8 +257,7 @@ export default function RestaurantEditScreen() {
               refetch();
             },
             onError: (error) => {
-              const axiosError = error as AxiosError<{ detail?: string; message?: string }>;
-              const message = axiosError.response?.data?.detail || axiosError.response?.data?.message || '메뉴 삭제에 실패했습니다.';
+              const message = getSafeErrorMessage(error, '메뉴 삭제에 실패했습니다.');
               Alert.alert('오류', message);
             },
           });

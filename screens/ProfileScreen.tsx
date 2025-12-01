@@ -1,8 +1,9 @@
 import { View, Text, Pressable, ScrollView, Linking, Alert, ActivityIndicator } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import Icon from '@/components/Icon';
-import { useLogout, useCurrentUser } from '@/api/auth/useAuth';
+import { useLogout, useCurrentUser, useDeleteAccount } from '@/api/auth/useAuth';
 import { useAuth } from '@/api/auth/useAuth';
+import { getSafeErrorMessage } from '@/utils/errorHandler';
 
 const MENU_ITEMS = [
   // { icon: 'chat' as const, label: '쓴 댓글 보기', action: 'comments' },
@@ -17,6 +18,7 @@ export default function ProfileScreen() {
   const navigation = useNavigation();
   const { isAuthenticated, refreshAuthState } = useAuth();
   const { mutate: logout, isPending: isLoggingOut } = useLogout();
+  const { mutate: deleteAccount, isPending: isDeletingAccount } = useDeleteAccount();
   const { data: currentUser, isLoading: isLoadingUser } = useCurrentUser();
 
   // 프로필 정보 동적 생성
@@ -77,6 +79,36 @@ export default function ProfileScreen() {
     );
   };
 
+
+  const handleDeleteAccount = () => {
+    Alert.alert(
+      '계정 삭제',
+      '정말 계정을 삭제하시겠습니까? 삭제된 계정은 복구할 수 없으며, 모든 데이터가 삭제됩니다.',
+      [
+        {
+          text: '취소',
+          style: 'cancel',
+        },
+        {
+          text: '삭제',
+          style: 'destructive',
+          onPress: () => {
+            deleteAccount(undefined, {
+              onSuccess: () => {
+                refreshAuthState();
+                Alert.alert('계정 삭제 완료', '계정이 삭제되었습니다.');
+              },
+              onError: (error) => {
+                console.error('계정 삭제 에러:', error);
+                const message = getSafeErrorMessage(error, '계정 삭제에 실패했습니다. 다시 시도해주세요.');
+                Alert.alert('오류', message);
+              },
+            });
+          },
+        },
+      ]
+    );
+  };
 
   const handleMenuPress = async (action: string) => {
     switch (action) {
@@ -224,17 +256,28 @@ export default function ProfileScreen() {
         {/* 로그인/로그아웃 버튼 */}
         <View className="mt-4">
           {isAuthenticated ? (
-            <Pressable
-              className="bg-blue-500 p-3 rounded-lg"
-              onPress={handleLogout}
-              disabled={isLoggingOut}
-            >
-              {isLoggingOut ? (
-                <ActivityIndicator size="small" color="#FFFFFF" />
-              ) : (
-                <Text className="text-white text-center font-medium">로그아웃</Text>
-              )}
-            </Pressable>
+            <>
+              <Pressable
+                className="bg-blue-500 p-3 rounded-lg"
+                onPress={handleLogout}
+                disabled={isLoggingOut}
+              >
+                {isLoggingOut ? (
+                  <ActivityIndicator size="small" color="#FFFFFF" />
+                ) : (
+                  <Text className="text-white text-center font-medium">로그아웃</Text>
+                )}
+              </Pressable>
+              <Pressable
+                className="mt-2 items-center"
+                onPress={handleDeleteAccount}
+                disabled={isDeletingAccount}
+              >
+                <Text className={`text-xs ${isDeletingAccount ? 'text-gray-300' : 'text-gray-400'}`}>
+                  계정 삭제
+                </Text>
+              </Pressable>
+            </>
           ) : (
             <Pressable
               className="bg-blue-500 p-3 rounded-lg"

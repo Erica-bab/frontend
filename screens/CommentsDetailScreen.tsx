@@ -12,6 +12,7 @@ import Icon from '@/components/Icon';
 import CommentItem from '@/components/restaurant/CommentItem';
 import ReplyItem from '@/components/restaurant/ReplyItem';
 import CommentInput from '@/components/restaurant/CommentInput';
+import { getSafeErrorMessage } from '@/utils/errorHandler';
 
 export default function CommentDetailScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<any>>();
@@ -70,7 +71,8 @@ export default function CommentDetailScreen() {
           }
         },
         onError: (error: any) => {
-          Alert.alert('오류', error?.response?.data?.detail || '답글 작성에 실패했습니다.');
+          const message = getSafeErrorMessage(error, '답글 작성에 실패했습니다.');
+          Alert.alert('오류', message);
         },
       }
     );
@@ -94,7 +96,8 @@ export default function CommentDetailScreen() {
         }
       },
       onError: (error: any) => {
-        Alert.alert('오류', error?.response?.data?.detail || '댓글 삭제에 실패했습니다.');
+        const message = getSafeErrorMessage(error, '댓글 삭제에 실패했습니다.');
+        Alert.alert('오류', message);
       },
     });
   };

@@ -9,6 +9,7 @@ import {
   TokenResponse,
   User,
   UpdateUserRequest,
+  DeleteAccountResponse,
 } from './types';
 
 // 전역 상태 변경 알림을 위한 간단한 구현
@@ -190,6 +191,25 @@ export const useRefreshToken = () => {
     },
     onSuccess: async (data) => {
       await AsyncStorage.setItem('accessToken', data.access_token);
+    },
+  });
+};
+
+// 계정 삭제
+export const useDeleteAccount = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async () => {
+      const { data } = await apiClient.delete<DeleteAccountResponse>('/auth/me');
+      return data;
+    },
+    onSuccess: async () => {
+      // 토큰 삭제 및 캐시 초기화
+      await AsyncStorage.multiRemove(['accessToken', 'refreshToken']);
+      queryClient.clear();
+      // 모든 useAuth 훅에 알림
+      notifyAuthStateChange();
     },
   });
 };

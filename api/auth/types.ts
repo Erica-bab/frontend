@@ -58,3 +58,7 @@ export interface UpdateUserRequest {
   college_id?: number;
   student_type?: 'student' | 'other';
 }
+
+export interface DeleteAccountResponse {
+  message: string;
+}

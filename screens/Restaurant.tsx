@@ -161,10 +161,12 @@ export default function RestuarantScreen() {
         } else if (sortOption === '가격순') {
             // 가격순 정렬 (오름차순, 가격이 없는 경우 맨 뒤)
             return restaurants.sort((a, b) => {
-                if (a.average_price === null && b.average_price === null) return 0;
-                if (a.average_price === null) return 1;
-                if (b.average_price === null) return -1;
-                return a.average_price - b.average_price;
+                const aPrice = a.average_price ?? null;
+                const bPrice = b.average_price ?? null;
+                if (aPrice === null && bPrice === null) return 0;
+                if (aPrice === null) return 1;
+                if (bPrice === null) return -1;
+                return aPrice - bPrice;
             });
         }
         
