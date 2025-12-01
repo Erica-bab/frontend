@@ -102,6 +102,17 @@ export const useRestaurantList = (params?: RestaurantListParams) => {
   });
 };
 
+// 클라이언트 정렬용 새로운 엔드포인트
+export const useRestaurantListV2 = (params?: Omit<RestaurantListParams, 'sort'>) => {
+  return useQuery({
+    queryKey: ['restaurants-v2', params],
+    queryFn: async () => {
+      const { data } = await apiClient.get<RestaurantListResponse>('/restaurants/v2', { params });
+      return data;
+    },
+  });
+};
+
 export const useRestaurantDetail = (restaurantId: number) => {
   return useQuery({
     queryKey: ['restaurant', restaurantId],

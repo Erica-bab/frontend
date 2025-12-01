@@ -1,4 +1,4 @@
-import { View, Text, TextInput, Pressable, Animated, ActivityIndicator, RefreshControl } from 'react-native';
+import { View, Text, TextInput, Pressable, Animated, ActivityIndicator, RefreshControl, AppState, AppStateStatus } from 'react-native';
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -136,6 +136,7 @@ export default function SearchScreen({ children, onFilterPress, isFilterApplied,
   const [currentLocation, setCurrentLocation] = useState({ latitude: 0, longitude: 0 });
   const [refreshing, setRefreshing] = useState(false);
   const locationUpdateIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const appState = useRef(AppState.currentState);
   const STICKY_THRESHOLD = 30;
 
   const { data: searchData, isLoading: isSearching } = useRestaurantSearch({
@@ -195,15 +196,33 @@ export default function SearchScreen({ children, onFilterPress, isFilterApplied,
     // 초기 위치 가져오기
     refreshLocation();
 
-    // 5분마다 주기적으로 위치 업데이트
+    // 1분마다 주기적으로 위치 업데이트
     locationUpdateIntervalRef.current = setInterval(() => {
       refreshLocation();
-    }, 5 * 60 * 1000); // 5분
+    }, 60 * 1000); // 1분
 
     return () => {
       if (locationUpdateIntervalRef.current) {
         clearInterval(locationUpdateIntervalRef.current);
       }
+    };
+  }, [refreshLocation]);
+
+  // 앱이 포그라운드로 돌아올 때 위치 새로고침
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', (nextAppState: AppStateStatus) => {
+      if (
+        appState.current.match(/inactive|background/) &&
+        nextAppState === 'active'
+      ) {
+        // 앱이 포그라운드로 돌아올 때 위치 새로고침
+        refreshLocation();
+      }
+      appState.current = nextAppState;
+    });
+
+    return () => {
+      subscription.remove();
     };
   }, [refreshLocation]);
 

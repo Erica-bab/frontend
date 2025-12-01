@@ -1,5 +1,5 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
-import { View, Text, Pressable, ScrollView, Alert } from 'react-native';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import { View, Text, Pressable, ScrollView, Alert, AppState, AppStateStatus } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import * as Location from 'expo-location';
@@ -8,25 +8,21 @@ import SearchBar from '@/components/SearchBar';
 import AdBanner from '@/components/ui/AdBanner';
 import RestaurantCard from '@/components/restaurant/RestaurantCard';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRestaurantList } from '@/api/restaurants/useRestaurant';
+import { useRestaurantListV2 } from '@/api/restaurants/useRestaurant';
 import { RestaurantListParams } from '@/api/restaurants/types';
 import Icon from '@/components/Icon';
 import { calculateDistance } from '@/utils/calculateDistance';
 
 const SORT_OPTIONS = ['위치순', '별점순', '가격순'];
-const SORT_MAP: Record<string, 'distance' | 'rating' | 'price'> = {
-    '위치순': 'distance',
-    '별점순': 'rating',
-    '가격순': 'price',
-};
 
 export default function RestuarantScreen() {
     const navigation = useNavigation<NativeStackNavigationProp<any>>();
-    const [filterParams, setFilterParams] = useState<RestaurantListParams>({});
+    const [filterParams, setFilterParams] = useState<Omit<RestaurantListParams, 'sort'>>({});
     const [sortOption, setSortOption] = useState<string>('위치순');
     const [isSortOpen, setIsSortOpen] = useState(false);
     const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
-    const { data, isLoading, error, refetch } = useRestaurantList(filterParams);
+    const { data, isLoading, error, refetch } = useRestaurantListV2(filterParams);
+    const appState = useRef(AppState.currentState);
 
     const requestLocationAndUpdate = async () => {
         const { status } = await Location.requestForegroundPermissionsAsync();
@@ -37,17 +33,6 @@ export default function RestuarantScreen() {
                 lng: location.coords.longitude,
             };
             setUserLocation(coords);
-            
-            // 위치순 정렬일 때 필터 파라미터 업데이트 (정렬만 서버에 요청, 거리는 클라이언트에서 계산)
-            if (sortOption === '위치순') {
-                setFilterParams(prev => ({
-                    ...prev,
-                    sort: 'distance',
-                    lat: coords.lat,
-                    lng: coords.lng,
-                }));
-            }
-            
             return coords;
         }
         return null;
@@ -56,17 +41,8 @@ export default function RestuarantScreen() {
     // SearchBar에서 위치 업데이트 콜백
     const handleLocationUpdate = useCallback((coords: { lat: number; lng: number }) => {
         setUserLocation(coords);
-        
-        // 위치순 정렬일 때 필터 파라미터 업데이트 (정렬만 서버에 요청, 거리는 클라이언트에서 계산)
-        if (sortOption === '위치순') {
-            setFilterParams(prev => ({
-                ...prev,
-                sort: 'distance',
-                lat: coords.lat,
-                lng: coords.lng,
-            }));
-        }
-    }, [sortOption]);
+        // 위치순 정렬은 클라이언트에서 처리하므로 API 호출 불필요
+    }, []);
 
     useEffect(() => {
         (async () => {
@@ -84,68 +60,109 @@ export default function RestuarantScreen() {
 
             const coords = await requestLocationAndUpdate();
 
-            // 저장된 정렬 옵션에 따라 필터 적용
-            if (currentSort === '위치순') {
-                if (coords) {
-                    setFilterParams(prev => ({
-                        ...prev,
-                        sort: 'distance',
-                        lat: coords.lat,
-                        lng: coords.lng
-                    }));
-                } else {
-                    // 위치 권한 없으면 별점순으로 변경
-                    setSortOption('별점순');
-                    await AsyncStorage.setItem('restaurantSortOption', '별점순');
-                    setFilterParams(prev => ({ ...prev, sort: 'rating' }));
-                }
-            } else {
-                // 위치순이 아닌 경우 (별점순, 가격순)
-                setFilterParams(prev => ({ ...prev, sort: SORT_MAP[currentSort] }));
+            // 모든 정렬은 클라이언트에서 처리하므로 서버에 sort 파라미터 전송 안함
+            // 위치순은 좌표가 필요하지만, 서버에는 전송하지 않음 (클라이언트에서 계산)
+            if (currentSort === '위치순' && !coords) {
+                // 위치 권한 없으면 별점순으로 변경
+                setSortOption('별점순');
+                await AsyncStorage.setItem('restaurantSortOption', '별점순');
             }
         })();
     }, []);
 
+    // 앱이 포그라운드로 돌아올 때 새로고침
+    useEffect(() => {
+        const subscription = AppState.addEventListener('change', async (nextAppState: AppStateStatus) => {
+            if (
+                appState.current.match(/inactive|background/) &&
+                nextAppState === 'active'
+            ) {
+                // 앱이 포그라운드로 돌아올 때 위치 새로고침 + 식당 정보 새로고침
+                await requestLocationAndUpdate();
+                refetch();
+            }
+            appState.current = nextAppState;
+        });
+
+        return () => {
+            subscription.remove();
+        };
+    }, [refetch]);
+
     const handleFilterPress = () => {
         navigation.navigate('Filter', {
             onApply: (params: RestaurantListParams) => {
-                // 기존 파라미터(sort, lat, lng)를 유지하면서 필터 파라미터 병합
-                // 빈 필터인 경우 sort, lat, lng만 유지
-                const hasFilterConditions = Object.keys(params).some(key =>
-                    key !== 'sort' && key !== 'lat' && key !== 'lng'
-                );
-                
-                if (hasFilterConditions) {
-                    // 필터 조건이 있으면 병합
-                    setFilterParams(prev => ({
-                        ...prev,
-                        ...params,
-                    }));
-                } else {
-                    // 필터 조건이 없으면 sort, lat, lng만 유지
-                    setFilterParams(prev => ({
-                        sort: prev.sort,
-                        lat: prev.lat,
-                        lng: prev.lng,
-                    }));
-                }
+                // sort, lat, lng 제거하고 필터 파라미터만 병합
+                const { sort, lat, lng, ...filterOnly } = params;
+                setFilterParams(prev => ({
+                    ...prev,
+                    ...filterOnly,
+                }));
             },
         });
     };
 
-    // 필터가 적용되었는지 확인 (sort, lat, lng 제외)
+    // 필터가 적용되었는지 확인 (sort 제외)
     const isFilterApplied = useMemo(() => {
-        return Object.keys(filterParams).some(key =>
-            key !== 'sort' && key !== 'lat' && key !== 'lng'
-        );
+        return Object.keys(filterParams).some(key => key !== 'sort');
     }, [filterParams]);
+
+    // 클라이언트에서 정렬된 식당 리스트
+    const sortedRestaurants = useMemo(() => {
+        if (!data?.restaurants) return [];
+        
+        const restaurants = [...data.restaurants];
+        
+        if (sortOption === '위치순' && userLocation) {
+            // 거리순 정렬 (클라이언트에서 계산)
+            return restaurants.sort((a, b) => {
+                const aDistance = a.location.latitude && a.location.longitude
+                    ? calculateDistance(
+                        userLocation.lat,
+                        userLocation.lng,
+                        a.location.latitude,
+                        a.location.longitude
+                    )
+                    : Infinity;
+                const bDistance = b.location.latitude && b.location.longitude
+                    ? calculateDistance(
+                        userLocation.lat,
+                        userLocation.lng,
+                        b.location.latitude,
+                        b.location.longitude
+                    )
+                    : Infinity;
+                return aDistance - bDistance;
+            });
+        } else if (sortOption === '별점순') {
+            // 별점순 정렬 (내림차순)
+            return restaurants.sort((a, b) => {
+                if (a.average_rating === b.average_rating) {
+                    // 별점이 같으면 리뷰 수로 정렬 (내림차순)
+                    return b.rating_count - a.rating_count;
+                }
+                return b.average_rating - a.average_rating;
+            });
+        } else if (sortOption === '가격순') {
+            // 가격순 정렬 (오름차순, 가격이 없는 경우 맨 뒤)
+            return restaurants.sort((a, b) => {
+                if (a.average_price === null && b.average_price === null) return 0;
+                if (a.average_price === null) return 1;
+                if (b.average_price === null) return -1;
+                return a.average_price - b.average_price;
+            });
+        }
+        
+        // 기본 정렬 (ID 내림차순)
+        return restaurants;
+    }, [data?.restaurants, sortOption, userLocation]);
 
     return (
         <SafeAreaView edges={['top']} className="flex-1 bg-white">
             <SearchBar
                 onFilterPress={handleFilterPress}
                 isFilterApplied={isFilterApplied}
-                filterResultCount={data?.restaurants.length}
+                filterResultCount={sortedRestaurants.length}
                 onLocationUpdate={handleLocationUpdate}
                 onRefresh={refetch}
             >
@@ -187,22 +204,13 @@ export default function RestuarantScreen() {
                                                 if (!coords) {
                                                     coords = await requestLocationAndUpdate();
                                                 }
-                                                if (coords) {
-                                                    setFilterParams(prev => ({
-                                                        ...prev,
-                                                        sort: SORT_MAP[option],
-                                                        lat: coords.lat,
-                                                        lng: coords.lng,
-                                                    }));
-                                                } else {
+                                                if (!coords) {
                                                     Alert.alert('위치 권한 필요', '위치순 정렬을 사용하려면 위치 권한이 필요합니다.');
                                                     setSortOption('별점순');
                                                     await AsyncStorage.setItem('restaurantSortOption', '별점순');
-                                                    setFilterParams(prev => ({ ...prev, sort: 'rating' }));
                                                 }
-                                            } else {
-                                                setFilterParams(prev => ({ ...prev, sort: SORT_MAP[option] }));
                                             }
+                                            // 모든 정렬은 클라이언트에서 처리하므로 서버 파라미터 변경 불필요
                                         }}
                                         className="px-4 py-3 border-b border-gray-100"
                                     >
@@ -219,13 +227,13 @@ export default function RestuarantScreen() {
                 {isLoading && <Text className="p-4">로딩중...</Text>}
                 {error && <Text className="p-4 text-red-500">에러 발생</Text>}
 
-                {!isLoading && !error && data?.restaurants.length === 0 && (
+                {!isLoading && !error && sortedRestaurants.length === 0 && (
                     <View className="flex-1 items-center justify-center p-8">
                         <Text className="text-gray-400 text-lg">검색 결과가 없습니다</Text>
                     </View>
                 )}
 
-                {data?.restaurants.map((restaurant) => {
+                {sortedRestaurants.map((restaurant) => {
                     // 클라이언트에서 거리 계산
                     const distance = userLocation && restaurant.location.latitude && restaurant.location.longitude
                         ? calculateDistance(
