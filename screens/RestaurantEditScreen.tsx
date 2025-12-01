@@ -38,6 +38,11 @@ export default function RestaurantEditScreen() {
   
   // 메뉴 수정 상태
   const [editingMenu, setEditingMenu] = useState<MenuItem | null | undefined>(undefined);
+  
+  // editingMenu 상태 변경 추적
+  useEffect(() => {
+    console.log('editingMenu changed:', editingMenu);
+  }, [editingMenu]);
   const [menuName, setMenuName] = useState('');
   const [menuPrice, setMenuPrice] = useState('');
   const [menuDescription, setMenuDescription] = useState('');
@@ -151,7 +156,9 @@ export default function RestaurantEditScreen() {
   
   // 메뉴 추가/수정 모달 열기
   const handleOpenMenuEdit = (menu?: MenuItem) => {
+    console.log('handleOpenMenuEdit called with menu:', menu);
     if (menu) {
+      console.log('Setting editing menu:', menu);
       setEditingMenu(menu);
       setMenuName(menu.name);
       setMenuPrice(menu.price?.toString() || '');
@@ -161,6 +168,7 @@ export default function RestaurantEditScreen() {
       setMenuIsAvailable(menu.is_available);
       setMenuDisplayOrder(menu.display_order);
     } else {
+      console.log('Setting editing menu to null (new menu)');
       setEditingMenu(null);
       setMenuName('');
       setMenuPrice('');
@@ -174,12 +182,14 @@ export default function RestaurantEditScreen() {
   
   // 메뉴 저장
   const handleSaveMenu = () => {
+    console.log('handleSaveMenu called, editingMenu:', editingMenu);
     if (!menuName.trim()) {
       Alert.alert('오류', '메뉴명을 입력해주세요.');
       return;
     }
     
     if (editingMenu) {
+      console.log('Updating menu:', editingMenu.id, 'version:', editingMenu.meta?.version);
       // 메뉴 수정
       updateMenu(
         {
@@ -192,7 +202,7 @@ export default function RestaurantEditScreen() {
             is_popular: menuIsPopular,
             is_available: menuIsAvailable,
             display_order: menuDisplayOrder,
-            version: editingMenu.meta.version,
+            version: editingMenu.meta?.version || 1,
           },
         },
         {
@@ -483,7 +493,10 @@ export default function RestaurantEditScreen() {
                   <View className="flex-row gap-2">
                     <Pressable
                       className="bg-blue-500 rounded px-3 py-1"
-                      onPress={() => handleOpenMenuEdit(menu)}
+                      onPress={() => {
+                        console.log('Menu edit button pressed for menu:', menu.id);
+                        handleOpenMenuEdit(menu);
+                      }}
                       disabled={isPending}
                     >
                       <Text className="text-white text-sm">수정</Text>

@@ -21,15 +21,14 @@ export default {
     ios: {
       supportsTablet: true,
       bundleIdentifier: "com.efoo.app",
-      buildNumber: "9",
+      buildNumber: "13",
       usesAppleSignIn: true,
       displayName: "에푸",
       infoPlist: {
         NSLocationWhenInUseUsageDescription: "주변 맛집을 위치순으로 정렬하기 위해 위치 정보가 필요합니다.",
         NSPhotoLibraryUsageDescription: "식당 사진을 추가하기 위해 갤러리 접근 권한이 필요합니다.",
         NSCameraUsageDescription: "식당 사진을 촬영하기 위해 카메라 접근 권한이 필요합니다.",
-        CFBundleDisplayName: "에푸",
-        ITSAppUsesNonExemptEncryption: true
+        CFBundleDisplayName: "에푸"
       },
       config: {
         googleMapsApiKey: process.env.GOOGLE_MAPS_API_KEY
