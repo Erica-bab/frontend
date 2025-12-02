@@ -7,6 +7,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RestaurantOperatingStatus } from '@/api/restaurants/types';
 import { useRestaurantImages } from '@/api/restaurants/useRestaurantImage';
 import { formatDistance } from '@/utils/formatDistance';
+import { formatCategory } from '@/utils/formatCategory';
 
 interface RestaurantCardProps {
   name: string;
@@ -75,7 +76,7 @@ export default function RestaurantCard({ name, category, operatingStatus, rating
         <View className="flex-row items-center justify-between">
           <View className="flex-row items-center">
             <Text className="text-lg text-blue-500">{name}</Text>
-            <Text className="ml-1">{category}</Text>
+            <Text className="ml-1">{formatCategory(category)}</Text>
           </View>
           {distance !== null && distance !== undefined && (
             <Text className="text-sm text-gray-500">

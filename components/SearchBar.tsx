@@ -7,6 +7,7 @@ import Icon from '@/components/Icon';
 import { useRestaurantSearch } from '@/api/restaurants/useRestaurant';
 import { SearchResultItem } from '@/api/restaurants/types';
 import MapModal from '@/components/cafeteria/MapModal';
+import { formatCategory } from '@/utils/formatCategory';
 
 interface SearchScreenProps {
   children?: React.ReactNode;
@@ -44,7 +45,7 @@ function SearchResultCard({ item }: { item: SearchResultItem }) {
           <View className="flex-1">
             <View className="flex-row items-center gap-2">
               <Text className="text-base font-semibold">{restaurant.name}</Text>
-              <Text className="text-xs text-gray-500">{restaurant.category}</Text>
+              <Text className="text-xs text-gray-500">{formatCategory(restaurant.category)}</Text>
             </View>
             <Text className="text-sm text-gray-500 mt-1">
               {restaurant.location.address}
