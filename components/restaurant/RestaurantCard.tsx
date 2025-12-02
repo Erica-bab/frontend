@@ -11,7 +11,7 @@ import { formatCategory } from '@/utils/formatCategory';
 
 interface RestaurantCardProps {
   name: string;
-  category: string;
+  category: string | string[];
   operatingStatus?: RestaurantOperatingStatus | null; // 서버에서 받은 운영 상태 (선택적)
   businessHours?: BusinessHours | null; // 운영시간 정보 (클라이언트 계산용)
   rating: number;
@@ -25,6 +25,8 @@ interface RestaurantCardProps {
 export default function RestaurantCard({ name, category, operatingStatus, businessHours, rating, comment, restaurantId, thumbnailUrls, distance, onStatusExpired }: RestaurantCardProps) {
   const navigation = useNavigation<NativeStackNavigationProp<any>>();
   const displayComment = comment || null;
+  
+  const formattedCategory = category ? formatCategory(category) : '';
   
   // 식당 이미지 조회 (restaurantId가 있을 때만)
   const { data: imagesData } = useRestaurantImages(
@@ -76,9 +78,11 @@ export default function RestaurantCard({ name, category, operatingStatus, busine
       {/* 식당 이름과 카테고리 영역 - 자세히보기로 이동 */}
       <Pressable onPress={handleCardPress}>
         <View className="flex-row items-center justify-between">
-      <View className="flex-row items-center">
-        <Text className="text-lg text-blue-500">{name}</Text>
-            <Text className="ml-1">{formatCategory(category)}</Text>
+          <View className="flex-row items-center">
+            <Text className="text-lg text-blue-500">{name}</Text>
+            {formattedCategory && (
+              <Text className="ml-1 text-gray-600">{formattedCategory}</Text>
+            )}
           </View>
           {distance !== null && distance !== undefined && (
             <Text className="text-sm text-gray-500">

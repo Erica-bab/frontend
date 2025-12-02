@@ -115,7 +115,10 @@ export default function RestaurantHomeTab({ restaurant, distance }: RestaurantHo
       <View className='flex-row gap-4 mb-4 items-center justify-between'>
         <View className='flex-row gap-4 items-center flex-1'>
           <Icon width={20} name='location' color="rgba(107, 114, 128, 1)"/>
-          <Text className="flex-1">{restaurant.location.address}</Text>
+          <Text className="flex-1">
+            {restaurant.location.address}
+            {restaurant.location.detail_address && ` ${restaurant.location.detail_address}`}
+          </Text>
         </View>
         {distance !== null && distance !== undefined && (
           <Text className="text-sm text-gray-500">

@@ -5,6 +5,7 @@ export interface UserInfo {
 
 export interface LocationInfo {
   address?: string | null;
+  detail_address?: string | null;
   latitude?: number | null;
   longitude?: number | null;
   distance?: number | null;

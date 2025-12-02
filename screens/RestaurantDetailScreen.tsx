@@ -21,6 +21,7 @@ import NaverMapWebView from '@/components/NaverMapWebView';
 import Icon from '@/components/Icon';
 import { useRestaurantImages } from '@/api/restaurants/useRestaurantImage';
 import { calculateDistance } from '@/utils/calculateDistance';
+import { formatCategory } from '@/utils/formatCategory';
 
 type RestaurantTabType = 'home' | 'menu' | 'comments' | 'photos';
 
@@ -98,7 +99,8 @@ export default function RestaurantDetailScreen() {
     if (!restaurant) return;
     try {
       const shareUrl = `https://에리카밥.com/share/${restaurantId}`;
-      const shareMessage = `${restaurant.name} - ${restaurant.category}\n⭐ ${restaurant.rating.average.toFixed(1)}\n${restaurant.location.address || '위치 정보 없음'}\n\n${shareUrl}`;
+      const categoryText = restaurant.category ? formatCategory(restaurant.category) : '';
+      const shareMessage = `${restaurant.name}${categoryText ? ` - ${categoryText}` : ''}\n⭐ ${restaurant.rating.average.toFixed(1)}\n${restaurant.location.address || '위치 정보 없음'}\n\n${shareUrl}`;
 
       await Share.share({
         message: shareMessage,
@@ -172,7 +174,9 @@ export default function RestaurantDetailScreen() {
           <View>
             <View className="flex-row items-center m-4">
               <Text className="text-xl text-blue-500">{restaurant.name}</Text>
-              <Text className="text-lg ml-1">{restaurant.category}</Text>
+              {restaurant.category && formatCategory(restaurant.category) && (
+                <Text className="text-lg ml-1 text-gray-600">{formatCategory(restaurant.category)}</Text>
+              )}
             </View>
             <View className='ml-4 mb-4'>
               <RestaurantStatusTag

@@ -1,9 +1,18 @@
 /**
- * 카테고리 문자열을 중간점(·)으로 구분된 형식으로 변환
+ * 카테고리 문자열 또는 배열을 중간점(·)으로 구분된 형식으로 변환
  * 예: "패스트푸드중식" -> "패스트푸드 · 중식"
+ * 예: ["패스트푸드", "중식"] -> "패스트푸드 · 중식"
  */
-export function formatCategory(category: string | null | undefined): string {
-  if (!category || typeof category !== 'string') return '';
+export function formatCategory(category: string | string[] | null | undefined): string {
+  if (!category) return '';
+  
+  // 배열인 경우 직접 join
+  if (Array.isArray(category)) {
+    return category.filter(Boolean).join(' · ');
+  }
+  
+  // 문자열인 경우 기존 로직 사용
+  if (typeof category !== 'string') return '';
   
   // 알려진 카테고리 목록 (우선순위 순서대로)
   const categories = [
