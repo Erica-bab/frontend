@@ -251,16 +251,25 @@ export default function RestaurantDetailScreen() {
         </View>
 
         {/* 탭 콘텐츠 조건부 렌더링 */}
-        {selectedTab === 'comments' ? (
-          // 댓글 탭은 자체 ScrollView를 가지고 있으므로 부모 ScrollView 없이 렌더링
+        {selectedTab === 'comments' || selectedTab === 'photos' ? (
+          // 댓글 탭과 사진 탭은 자체 ScrollView를 가지고 있으므로 부모 ScrollView 없이 렌더링
           <View className="flex-1">
-            <RestaurantCommentsTab
-              restaurant={restaurant}
-              onShowLogin={() => (navigation.navigate as any)('Login', { onSuccess: refreshAuthState })}
-            />
+            {selectedTab === 'comments' && (
+              <RestaurantCommentsTab
+                restaurant={restaurant}
+                onShowLogin={() => (navigation.navigate as any)('Login', { onSuccess: refreshAuthState })}
+              />
+            )}
+            {selectedTab === 'photos' && (
+              <RestaurantPhotosTab
+                restaurant={restaurant}
+                onShowLogin={() => (navigation.navigate as any)('Login', { onSuccess: refreshAuthState })}
+                onAddPhotoPress={() => setShowImageUploadModal(true)}
+              />
+            )}
           </View>
         ) : (
-          // 다른 탭들은 ScrollView로 감싸서 스크롤 가능하게 함
+          // 홈 탭과 메뉴 탭은 ScrollView로 감싸서 스크롤 가능하게 함
           <ScrollView className="flex-1">
             {selectedTab === 'home' && (() => {
               // 클라이언트에서 거리 계산
@@ -276,13 +285,6 @@ export default function RestaurantDetailScreen() {
               return <RestaurantHomeTab restaurant={restaurant} distance={distance} />;
             })()}
             {selectedTab === 'menu' && <RestaurantMenuTab restaurant={restaurant} />}
-            {selectedTab === 'photos' && (
-              <RestaurantPhotosTab
-                restaurant={restaurant}
-                onShowLogin={() => (navigation.navigate as any)('Login', { onSuccess: refreshAuthState })}
-                onAddPhotoPress={() => setShowImageUploadModal(true)}
-              />
-            )}
           </ScrollView>
         )}
 

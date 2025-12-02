@@ -29,6 +29,7 @@ import PinIcon from '@/assets/icon/pin.svg';
 import ReplyIcon from '@/assets/icon/reply.svg';
 import RicericaIcon from '@/assets/icon/ricerica.svg';
 import RightAngleIcon from '@/assets/icon/right_angle.svg';
+import RouletteIcon from '@/assets/icon/roulette.svg';
 import SchoolIcon from '@/assets/icon/school.svg';
 import SearchIcon from '@/assets/icon/search.svg';
 import SendIcon from '@/assets/icon/send.svg';
@@ -69,6 +70,7 @@ const icons = {
   reply: ReplyIcon,
   ricerica: RicericaIcon,
   rightAngle: RightAngleIcon,
+  roulette: RouletteIcon,
   school: SchoolIcon,
   search: SearchIcon,
   send: SendIcon,

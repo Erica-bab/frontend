@@ -181,7 +181,7 @@ export default function RestaurantStatusTag({ operatingStatus, businessHours, ra
             <View className="flex-row items-center" style={{ gap: 8 }}>
                 <Pressable onPress={onRatingPress}>
                     <Tag className="bg-transparent border-gray-400">
-                        <View className="flex-row items-center" style={{ gap: 4 }}>
+                        <View className="flex-row items-center" style={{ gap: 2 }}>
                             <StarIcon width={16} height={16} color={getColor('gray-400')} />
                             <Text className="text-sm font-bold text-gray-400">
                                 {rating.toFixed(1)}
@@ -301,7 +301,7 @@ export default function RestaurantStatusTag({ operatingStatus, businessHours, ra
             {/* 별점 태그 */}
             <Pressable onPress={onRatingPress}>
                 <Tag className={styles.outlined}>
-                    <View className="flex-row items-center" style={{ gap: 4 }}>
+                    <View className="flex-row items-center" style={{ gap: 2 }}>
                         <StarIcon width={16} height={16} color={styles.tintColor} />
                         <Text className={`text-sm font-bold ${styles.textColor}`}>
                             {rating.toFixed(1)}
