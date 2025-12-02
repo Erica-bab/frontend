@@ -160,15 +160,15 @@ export default function RestaurantDetailScreen() {
           <Icon name='leftAngle' size={20} />
         </Pressable>
 
-        <ScrollView>
-        <View className='h-64'>
-          <NaverMapWebView
-            latitude={restaurant.location.latitude ?? 0}
-            longitude={restaurant.location.longitude ?? 0}
-            name={restaurant.name}
-          />
-        </View>
-        <View className="flex-1">
+        {/* 공통 헤더 부분 */}
+        <View>
+          <View className='h-64'>
+            <NaverMapWebView
+              latitude={restaurant.location.latitude ?? 0}
+              longitude={restaurant.location.longitude ?? 0}
+              name={restaurant.name}
+            />
+          </View>
           <View>
             <View className="flex-row items-center m-4">
               <Text className="text-xl text-blue-500">{restaurant.name}</Text>
@@ -248,37 +248,43 @@ export default function RestaurantDetailScreen() {
               />
             </View>
           </View>
+        </View>
 
-          {/* 탭 콘텐츠 조건부 렌더링 */}
-          {selectedTab === 'home' && (() => {
-            // 클라이언트에서 거리 계산
-            const distance = userLocation && restaurant.location.latitude && restaurant.location.longitude
-              ? calculateDistance(
-                  userLocation.lat,
-                  userLocation.lng,
-                  restaurant.location.latitude,
-                  restaurant.location.longitude
-                )
-              : null;
-
-            return <RestaurantHomeTab restaurant={restaurant} distance={distance} />;
-          })()}
-          {selectedTab === 'menu' && <RestaurantMenuTab restaurant={restaurant} />}
-          {selectedTab === 'comments' && (
+        {/* 탭 콘텐츠 조건부 렌더링 */}
+        {selectedTab === 'comments' ? (
+          // 댓글 탭은 자체 ScrollView를 가지고 있으므로 부모 ScrollView 없이 렌더링
+          <View className="flex-1">
             <RestaurantCommentsTab
               restaurant={restaurant}
               onShowLogin={() => (navigation.navigate as any)('Login', { onSuccess: refreshAuthState })}
             />
-          )}
-          {selectedTab === 'photos' && (
-            <RestaurantPhotosTab
-              restaurant={restaurant}
-              onShowLogin={() => (navigation.navigate as any)('Login', { onSuccess: refreshAuthState })}
-              onAddPhotoPress={() => setShowImageUploadModal(true)}
-            />
-          )}
-        </View>
-      </ScrollView>
+          </View>
+        ) : (
+          // 다른 탭들은 ScrollView로 감싸서 스크롤 가능하게 함
+          <ScrollView className="flex-1">
+            {selectedTab === 'home' && (() => {
+              // 클라이언트에서 거리 계산
+              const distance = userLocation && restaurant.location.latitude && restaurant.location.longitude
+                ? calculateDistance(
+                    userLocation.lat,
+                    userLocation.lng,
+                    restaurant.location.latitude,
+                    restaurant.location.longitude
+                  )
+                : null;
+
+              return <RestaurantHomeTab restaurant={restaurant} distance={distance} />;
+            })()}
+            {selectedTab === 'menu' && <RestaurantMenuTab restaurant={restaurant} />}
+            {selectedTab === 'photos' && (
+              <RestaurantPhotosTab
+                restaurant={restaurant}
+                onShowLogin={() => (navigation.navigate as any)('Login', { onSuccess: refreshAuthState })}
+                onAddPhotoPress={() => setShowImageUploadModal(true)}
+              />
+            )}
+          </ScrollView>
+        )}
 
       {/* 댓글 입력창 - 하단 고정 */}
       {selectedTab === 'comments' && (
