@@ -11,8 +11,7 @@ import { BusinessHours, BusinessHoursDay, RestaurantOperatingStatus } from '../a
 
 const DAY_ORDER = ["월", "화", "수", "목", "금", "토", "일"];
 
-const STATUS_AFTER_EVENT: Record<string | null, 'open' | 'break_time' | 'order_end' | 'closed'> = {
-  null: "closed",
+const STATUS_AFTER_EVENT: Record<string, 'open' | 'break_time' | 'order_end' | 'closed'> = {
   "open": "open",
   "break_start": "break_time",
   "break_end": "open",
@@ -133,7 +132,8 @@ function buildEventsForEntry(
  * 이벤트 타입으로부터 상태 반환
  */
 function statusFromEvent(eventType: EventType | null): 'open' | 'break_time' | 'order_end' | 'closed' {
-  return STATUS_AFTER_EVENT[eventType || null] || "closed";
+  if (!eventType) return "closed";
+  return STATUS_AFTER_EVENT[eventType] || "closed";
 }
 
 /**

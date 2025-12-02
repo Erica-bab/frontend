@@ -21,7 +21,6 @@ import NaverMapWebView from '@/components/NaverMapWebView';
 import Icon from '@/components/Icon';
 import { useRestaurantImages } from '@/api/restaurants/useRestaurantImage';
 import { calculateDistance } from '@/utils/calculateDistance';
-import { calculateOperatingStatus } from '@/utils/operatingStatus';
 
 type RestaurantTabType = 'home' | 'menu' | 'comments' | 'photos';
 
@@ -177,7 +176,7 @@ export default function RestaurantDetailScreen() {
             </View>
             <View className='ml-4 mb-4'>
               <RestaurantStatusTag
-                operatingStatus={calculateOperatingStatus(restaurant.business_hours)}
+                businessHours={restaurant.business_hours}
                 rating={restaurant.rating.average}
                 onRatingPress={() => setSelectedTab('comments')}
                 onStatusExpired={() => {

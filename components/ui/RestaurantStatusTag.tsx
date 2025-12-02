@@ -1,12 +1,14 @@
 import { View, Text, Pressable, Animated } from "react-native";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import Tag from "./Tag";
 import { getColor } from "../../utils/colors";
 import StarIcon from "../../assets/icon/star.svg";
-import { RestaurantOperatingStatus } from "@/api/restaurants/types";
+import { RestaurantOperatingStatus, BusinessHours } from "@/api/restaurants/types";
+import { calculateOperatingStatus } from "@/utils/operatingStatus";
 
 interface RestaurantStatusTagProps {
-    operatingStatus?: RestaurantOperatingStatus | null;
+    operatingStatus?: RestaurantOperatingStatus | null; // 서버에서 받은 운영 상태 (선택적)
+    businessHours?: BusinessHours | null; // 운영시간 정보 (클라이언트 계산용)
     rating: number;
     restaurantId?: string;
     onRatingPress?: () => void;
@@ -156,7 +158,7 @@ function getNextEventText(operatingStatus: RestaurantOperatingStatus, currentTim
     return null;
 }
 
-export default function RestaurantStatusTag({ operatingStatus, rating = 0, onRatingPress, onStatusPress, onStatusExpired }: RestaurantStatusTagProps) {
+export default function RestaurantStatusTag({ operatingStatus, businessHours, rating = 0, onRatingPress, onStatusPress, onStatusExpired }: RestaurantStatusTagProps) {
     const [showNextEvent, setShowNextEvent] = useState(false);
     const fadeAnim = useRef(new Animated.Value(1)).current;
     const showNextEventRef = useRef(false);
@@ -164,8 +166,17 @@ export default function RestaurantStatusTag({ operatingStatus, rating = 0, onRat
     // 현재 시간을 state로 관리하여 동적으로 업데이트
     const [currentTime, setCurrentTime] = useState(new Date());
     
+    // 운영 상태를 현재 시간 기준으로 동적으로 계산
+    const computedOperatingStatus = useMemo(() => {
+        // businessHours가 있으면 클라이언트에서 계산, 없으면 서버에서 받은 operatingStatus 사용
+        if (businessHours) {
+            return calculateOperatingStatus(businessHours, currentTime);
+        }
+        return operatingStatus;
+    }, [businessHours, operatingStatus, currentTime]);
+    
     // operating_status가 없으면 기본값 사용
-    if (!operatingStatus) {
+    if (!computedOperatingStatus) {
         return (
             <View className="flex-row items-center" style={{ gap: 8 }}>
                 <Pressable onPress={onRatingPress}>
@@ -182,12 +193,12 @@ export default function RestaurantStatusTag({ operatingStatus, rating = 0, onRat
         );
     }
 
-    const currentType = operatingStatus.current.type;
+    const currentType = computedOperatingStatus.current.type;
     const styles = statusStyles[currentType];
     const statusLabel = statusLabels[currentType];
     
     // 현재 시간을 기준으로 동적으로 다음 이벤트 텍스트 계산
-    const nextEventText = getNextEventText(operatingStatus, currentTime);
+    const nextEventText = getNextEventText(computedOperatingStatus, currentTime);
     
     // 현재 시간을 주기적으로 업데이트 (1분마다)
     useEffect(() => {
@@ -196,23 +207,25 @@ export default function RestaurantStatusTag({ operatingStatus, rating = 0, onRat
         
         // 1분마다 현재 시간 업데이트
         const interval = setInterval(() => {
-            const now = new Date();
-            setCurrentTime(now);
-            
-            // 다음 이벤트 시간이 지났는지 확인
-            if (operatingStatus?.next?.at) {
-                const nextDate = new Date(operatingStatus.next.at);
-                const minutesUntil = Math.floor((nextDate.getTime() - now.getTime()) / (1000 * 60));
-                
-                // 시간이 지나갔으면 부모 컴포넌트에 알려서 데이터 새로고침
-                if (minutesUntil < 0 && onStatusExpired) {
-                    onStatusExpired();
-                }
-            }
+            setCurrentTime(new Date());
         }, 60000); // 1분마다
         
         return () => clearInterval(interval);
-    }, [operatingStatus, onStatusExpired]);
+    }, []); // 마운트 시 한 번만 실행
+    
+    // 서버 데이터를 사용하는 경우에만 만료 체크 (클라이언트 계산은 자동 업데이트되므로 불필요)
+    useEffect(() => {
+        if (!businessHours && operatingStatus?.next?.at && onStatusExpired) {
+            const nextDate = new Date(operatingStatus.next.at);
+            const now = new Date();
+            const minutesUntil = Math.floor((nextDate.getTime() - now.getTime()) / (1000 * 60));
+            
+            // 시간이 지나갔으면 부모 컴포넌트에 알려서 데이터 새로고침
+            if (minutesUntil < 0) {
+                onStatusExpired();
+            }
+        }
+    }, [businessHours, operatingStatus, onStatusExpired]);
 
     // 운영시간 토글: 상태 레이블 3초, 다음 이벤트 5초
     useEffect(() => {

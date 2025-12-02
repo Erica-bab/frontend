@@ -4,7 +4,7 @@ import RestaurantStatusTag from '@/components/ui/RestaurantStatusTag';
 import Icon from '@/components/Icon';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { RestaurantOperatingStatus } from '@/api/restaurants/types';
+import { RestaurantOperatingStatus, BusinessHours } from '@/api/restaurants/types';
 import { useRestaurantImages } from '@/api/restaurants/useRestaurantImage';
 import { formatDistance } from '@/utils/formatDistance';
 import { formatCategory } from '@/utils/formatCategory';
@@ -12,7 +12,8 @@ import { formatCategory } from '@/utils/formatCategory';
 interface RestaurantCardProps {
   name: string;
   category: string;
-  operatingStatus?: RestaurantOperatingStatus | null;
+  operatingStatus?: RestaurantOperatingStatus | null; // 서버에서 받은 운영 상태 (선택적)
+  businessHours?: BusinessHours | null; // 운영시간 정보 (클라이언트 계산용)
   rating: number;
   comment?: string;
   restaurantId?: string;
@@ -21,7 +22,7 @@ interface RestaurantCardProps {
   onStatusExpired?: () => void; // 상태가 만료되었을 때 호출되는 콜백
 }
 
-export default function RestaurantCard({ name, category, operatingStatus, rating, comment, restaurantId, thumbnailUrls, distance, onStatusExpired }: RestaurantCardProps) {
+export default function RestaurantCard({ name, category, operatingStatus, businessHours, rating, comment, restaurantId, thumbnailUrls, distance, onStatusExpired }: RestaurantCardProps) {
   const navigation = useNavigation<NativeStackNavigationProp<any>>();
   const displayComment = comment || null;
   
@@ -90,7 +91,8 @@ export default function RestaurantCard({ name, category, operatingStatus, rating
       {/* 상태 태그 영역 - 상태 태그는 홈 탭으로, 별점은 댓글 탭으로 이동 */}
       <View className="pb-2">
         <RestaurantStatusTag 
-          operatingStatus={operatingStatus} 
+          operatingStatus={operatingStatus}
+          businessHours={businessHours}
           rating={rating} 
           onRatingPress={handleRatingPress}
           onStatusPress={handleStatusPress}

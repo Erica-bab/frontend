@@ -12,7 +12,6 @@ import { useRestaurantListV2, useUpdateRestaurantOperatingStatus } from '@/api/r
 import { RestaurantListParams } from '@/api/restaurants/types';
 import Icon from '@/components/Icon';
 import { calculateDistance } from '@/utils/calculateDistance';
-import { calculateOperatingStatus } from '@/utils/operatingStatus';
 
 const SORT_OPTIONS = ['위치순', '별점순', '가격순'];
 
@@ -263,15 +262,12 @@ export default function RestuarantScreen() {
                           )
                         : null;
 
-                    // 클라이언트에서 운영 상태 계산
-                    const operatingStatus = calculateOperatingStatus(restaurant.business_hours);
-
                     return (
                         <RestaurantCard
                             key={restaurant.id}
                             name={restaurant.name}
                             category={restaurant.category}
-                            operatingStatus={operatingStatus}
+                            businessHours={restaurant.business_hours}
                             rating={restaurant.average_rating}
                             onStatusExpired={() => {
                                 // 운영 상태는 클라이언트에서 계산하므로 새로고침 불필요
