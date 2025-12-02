@@ -140,7 +140,6 @@ export default function SearchScreen({ children, onFilterPress, isFilterApplied,
   const locationUpdateIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const appState = useRef(AppState.currentState);
   const STICKY_THRESHOLD = 30;
-  const locationUpdateIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   const { data: searchData, isLoading: isSearching } = useRestaurantSearch({
     q: searchQuery,
