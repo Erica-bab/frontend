@@ -136,7 +136,7 @@ export default function CafeteriaList({
         >
           <View className="flex-1 items-center justify-center py-20">
             <Text className="text-gray-500 text-lg">데이터가 없습니다</Text>
-          </View>
+        </View>
         </ScrollView>
       );
     }

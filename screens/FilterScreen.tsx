@@ -209,15 +209,15 @@ export default function FilterScreen() {
       index={0}
     >
       <View style={styles.modalContent}>
-        {/* 헤더 */}
+          {/* 헤더 */}
         <View style={styles.header}>
           <Text style={styles.title}>필터</Text>
           <Pressable onPress={() => goBack()}>
-            <Icon name="cancel" />
-          </Pressable>
-        </View>
+              <Icon name="cancel" />
+            </Pressable>
+          </View>
 
-        {/* 스크롤 가능한 컨텐츠 */}
+          {/* 스크롤 가능한 컨텐츠 */}
         <BottomSheetScrollView
           contentContainerStyle={[styles.scrollViewContent]}
           showsVerticalScrollIndicator={false}
@@ -250,37 +250,37 @@ export default function FilterScreen() {
             {/* 수동선택 모드일 때만 요일/시간/분 선택 UI 표시 */}
             {operatingTimeMode === 'manual' && (
               <View className='flex-row gap-2 flex-wrap mb-4'>
-                <Dropdown
-                  label="요일"
-                  options={DAYS}
-                  selectedValue={selectedDay}
-                  onSelect={setSelectedDay}
-                  placeholder="요일"
-                  isOpen={activeDropdown === 'day'}
-                  onToggle={() => setActiveDropdown(activeDropdown === 'day' ? null : 'day')}
-                />
-                <Dropdown
-                  label="시간"
-                  options={HOUR}
+              <Dropdown
+                label="요일"
+                options={DAYS}
+                selectedValue={selectedDay}
+                onSelect={setSelectedDay}
+                placeholder="요일"
+                isOpen={activeDropdown === 'day'}
+                onToggle={() => setActiveDropdown(activeDropdown === 'day' ? null : 'day')}
+              />
+              <Dropdown
+                label="시간"
+                options={HOUR}
                   selectedValue={selectedHour ? selectedHour + "시" : selectedHour}
-                  onSelect={setSelectedHour}
-                  placeholder="시간"
-                  isOpen={activeDropdown === 'hour'}
-                  onToggle={() => setActiveDropdown(activeDropdown === 'hour' ? null : 'hour')}
-                />
+                onSelect={setSelectedHour}
+                placeholder="시간"
+                isOpen={activeDropdown === 'hour'}
+                onToggle={() => setActiveDropdown(activeDropdown === 'hour' ? null : 'hour')}
+              />
                 {/* 시간이 선택되었을 때만 분 드롭다운 표시 */}
                 {selectedHour && (
-                  <Dropdown
-                    label="분"
-                    options={MIN}
+              <Dropdown
+                label="분"
+                options={MIN}
                     selectedValue={selectedMin ? selectedMin + "분" : selectedMin}
-                    onSelect={setSelectedMin}
-                    placeholder="분"
-                    isOpen={activeDropdown === 'min'}
-                    onToggle={() => setActiveDropdown(activeDropdown === 'min' ? null : 'min')}
-                  />
+                onSelect={setSelectedMin}
+                placeholder="분"
+                isOpen={activeDropdown === 'min'}
+                onToggle={() => setActiveDropdown(activeDropdown === 'min' ? null : 'min')}
+              />
                 )}
-              </View>
+            </View>
             )}
 
             <View className="h-px w-full bg-gray-100 my-4" />
@@ -351,15 +351,15 @@ export default function FilterScreen() {
 
             {/* 하단 버튼 - 스크롤뷰 안에 포함 */}
             <View style={[styles.buttonContainer, { paddingBottom: insets.bottom + 16 }]}>
-              <Button variant="secondary" onPress={handleReset} className="flex-1">
-                초기화
-              </Button>
-              <Button onPress={handleApply} className="flex-1">
-                적용
-              </Button>
-            </View>
+            <Button variant="secondary" onPress={handleReset} className="flex-1">
+              초기화
+            </Button>
+            <Button onPress={handleApply} className="flex-1">
+              적용
+            </Button>
+          </View>
         </BottomSheetScrollView>
-      </View>
+    </View>
     </BottomSheet>
   );
 }

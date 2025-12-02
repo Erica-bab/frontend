@@ -76,8 +76,8 @@ export default function RestaurantCard({ name, category, operatingStatus, busine
       {/* 식당 이름과 카테고리 영역 - 자세히보기로 이동 */}
       <Pressable onPress={handleCardPress}>
         <View className="flex-row items-center justify-between">
-          <View className="flex-row items-center">
-            <Text className="text-lg text-blue-500">{name}</Text>
+      <View className="flex-row items-center">
+        <Text className="text-lg text-blue-500">{name}</Text>
             <Text className="ml-1">{formatCategory(category)}</Text>
           </View>
           {distance !== null && distance !== undefined && (
@@ -105,28 +105,28 @@ export default function RestaurantCard({ name, category, operatingStatus, busine
         onPress={() => navigation.navigate('RestaurantDetail', { restaurantId, initialTab: 'photos' })}
       >
         <View className="flex-row gap-2 h-[200px] bg-gray-100 mb-2">
-          {[0, 1, 2].map(index => {
-            const url = displayThumbnails[index];
-            return url ? (
+        {[0, 1, 2].map(index => {
+          const url = displayThumbnails[index];
+          return url ? (
               <View key={index} className="flex-1 h-full rounded-lg overflow-hidden relative">
-                <Image
-                  source={{ uri: url }}
-                  className="w-full h-full"
-                  resizeMode="cover"
-                />
+              <Image
+                source={{ uri: url }}
+                className="w-full h-full"
+                resizeMode="cover"
+              />
                 {/* 마지막 썸네일이고 더 많은 사진이 있을 때 "더보기" 오버레이 */}
                 {index === 2 && hasMoreImages && (
                   <View className="absolute inset-0 bg-black/40 items-center justify-center">
                     <Text className="text-white font-bold text-sm">+{totalImageCount - 3}</Text>
                   </View>
                 )}
-              </View>
-            ) : (
-              <View key={index} className="flex-1 h-full rounded-lg bg-gray-200 items-center justify-center">
-                <Text className="text-gray-500 text-xs">이미지가 없습니다</Text>
-              </View>
-            );
-          })}
+            </View>
+          ) : (
+            <View key={index} className="flex-1 h-full rounded-lg bg-gray-200 items-center justify-center">
+              <Text className="text-gray-500 text-xs">이미지가 없습니다</Text>
+            </View>
+          );
+        })}
         </View>
       </Pressable>
 

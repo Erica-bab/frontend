@@ -21,6 +21,7 @@ import {
   UpdateMenuRequest,
   UpdateMenuResponse,
   DeleteMenuResponse,
+  RandomMenuResponse,
 } from './types';
 
 // 카테고리 매핑
@@ -333,5 +334,17 @@ export const useDeleteMenu = (restaurantId: number) => {
       queryClient.invalidateQueries({ queryKey: ['restaurant', restaurantId, 'menus'] });
       queryClient.invalidateQueries({ queryKey: ['restaurant', restaurantId] });
     },
+  });
+};
+
+// 랜덤 메뉴 조회
+export const useRandomMenu = () => {
+  return useQuery({
+    queryKey: ['restaurants', 'menus', 'random'],
+    queryFn: async () => {
+      const { data } = await apiClient.get<RandomMenuResponse>('/restaurants/menus/random');
+      return data;
+    },
+    enabled: false, // 수동으로만 호출
   });
 };

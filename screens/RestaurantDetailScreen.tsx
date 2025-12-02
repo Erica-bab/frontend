@@ -162,13 +162,13 @@ export default function RestaurantDetailScreen() {
 
         {/* 공통 헤더 부분 */}
         <View>
-          <View className='h-64'>
-            <NaverMapWebView
-              latitude={restaurant.location.latitude ?? 0}
-              longitude={restaurant.location.longitude ?? 0}
-              name={restaurant.name}
-            />
-          </View>
+        <View className='h-64'>
+          <NaverMapWebView
+            latitude={restaurant.location.latitude ?? 0}
+            longitude={restaurant.location.longitude ?? 0}
+            name={restaurant.name}
+          />
+        </View>
           <View>
             <View className="flex-row items-center m-4">
               <Text className="text-xl text-blue-500">{restaurant.name}</Text>
@@ -247,19 +247,19 @@ export default function RestaurantDetailScreen() {
                 onBoxClass="border-b-2 border-[#2563EB] -pb-2"
               />
             </View>
+            </View>
           </View>
-        </View>
 
-        {/* 탭 콘텐츠 조건부 렌더링 */}
+          {/* 탭 콘텐츠 조건부 렌더링 */}
         {selectedTab === 'comments' || selectedTab === 'photos' ? (
           // 댓글 탭과 사진 탭은 자체 ScrollView를 가지고 있으므로 부모 ScrollView 없이 렌더링
           <View className="flex-1">
-            {selectedTab === 'comments' && (
-              <RestaurantCommentsTab
-                restaurant={restaurant}
-                onShowLogin={() => (navigation.navigate as any)('Login', { onSuccess: refreshAuthState })}
-              />
-            )}
+          {selectedTab === 'comments' && (
+            <RestaurantCommentsTab
+              restaurant={restaurant}
+              onShowLogin={() => (navigation.navigate as any)('Login', { onSuccess: refreshAuthState })}
+            />
+          )}
             {selectedTab === 'photos' && (
               <RestaurantPhotosTab
                 restaurant={restaurant}
@@ -267,7 +267,7 @@ export default function RestaurantDetailScreen() {
                 onAddPhotoPress={() => setShowImageUploadModal(true)}
               />
             )}
-          </View>
+        </View>
         ) : (
           // 홈 탭과 메뉴 탭은 ScrollView로 감싸서 스크롤 가능하게 함
           <ScrollView className="flex-1">
@@ -285,7 +285,7 @@ export default function RestaurantDetailScreen() {
               return <RestaurantHomeTab restaurant={restaurant} distance={distance} />;
             })()}
             {selectedTab === 'menu' && <RestaurantMenuTab restaurant={restaurant} />}
-          </ScrollView>
+      </ScrollView>
         )}
 
       {/* 댓글 입력창 - 하단 고정 */}

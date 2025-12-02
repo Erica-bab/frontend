@@ -354,3 +354,9 @@ export interface DeleteMenuResponse {
   deleted_at: string;
   message: string;
 }
+
+// 랜덤 메뉴 응답 타입
+export interface RandomMenuResponse {
+  menu: MenuItem;
+  restaurant: RestaurantListItem;
+}

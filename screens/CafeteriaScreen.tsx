@@ -47,9 +47,9 @@ export default function SchoolRestaurantScreen() {
           }
         } else {
           // 저장된 설정이 없으면 기존 방식으로 정렬 옵션만 불러오기 (하위 호환성)
-          const savedSort = await AsyncStorage.getItem('cafeteriaSortOption');
-          if (savedSort && (savedSort === 'time' || savedSort === 'location')) {
-            setSortModeType(savedSort as SortType);
+        const savedSort = await AsyncStorage.getItem('cafeteriaSortOption');
+        if (savedSort && (savedSort === 'time' || savedSort === 'location')) {
+          setSortModeType(savedSort as SortType);
           }
         }
       } catch (error) {

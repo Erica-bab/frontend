@@ -166,6 +166,11 @@ export default function RestaurantStatusTag({ operatingStatus, businessHours, ra
     // 현재 시간을 state로 관리하여 동적으로 업데이트
     const [currentTime, setCurrentTime] = useState(new Date());
     
+    // 토글 중에 표시할 텍스트를 ref로 저장 (토글 중에는 업데이트하지 않음)
+    const displayTextRef = useRef<string>('');
+    const nextEventTextRef = useRef<string | null>(null);
+    const isTogglingRef = useRef(false);
+    
     // 운영 상태를 현재 시간 기준으로 동적으로 계산
     const computedOperatingStatus = useMemo(() => {
         // businessHours가 있으면 클라이언트에서 계산, 없으면 서버에서 받은 operatingStatus 사용
@@ -233,13 +238,17 @@ export default function RestaurantStatusTag({ operatingStatus, businessHours, ra
             setShowNextEvent(false);
             showNextEventRef.current = false;
             fadeAnim.setValue(1);
+            displayTextRef.current = statusLabel;
+            isTogglingRef.current = false;
             return;
         }
 
         // 초기 상태: 상태 레이블 표시
         setShowNextEvent(false);
         showNextEventRef.current = false;
+        displayTextRef.current = statusLabel;
         fadeAnim.setValue(1);
+        isTogglingRef.current = true;
 
         const toggleText = () => {
             // 페이드 아웃
@@ -251,6 +260,16 @@ export default function RestaurantStatusTag({ operatingStatus, businessHours, ra
                 // 텍스트 변경
                 showNextEventRef.current = !showNextEventRef.current;
                 setShowNextEvent(showNextEventRef.current);
+                
+                // 다음 이벤트로 전환할 때만 최신 시간으로 계산된 텍스트 사용
+                if (showNextEventRef.current) {
+                    // 최신 nextEventText 사용 (토글 시점에 계산된 값)
+                    const latestNextEventText = getNextEventText(computedOperatingStatus, new Date());
+                    displayTextRef.current = latestNextEventText || statusLabel;
+                } else {
+                    displayTextRef.current = statusLabel;
+                }
+                
                 // 페이드 인
                 Animated.timing(fadeAnim, {
                     toValue: 1,
@@ -280,10 +299,11 @@ export default function RestaurantStatusTag({ operatingStatus, businessHours, ra
             if (timeoutId) {
                 clearTimeout(timeoutId);
             }
+            isTogglingRef.current = false;
         };
-    }, [nextEventText, fadeAnim]);
+    }, [nextEventText, fadeAnim, statusLabel, computedOperatingStatus]);
 
-    const displayText = showNextEvent && nextEventText ? nextEventText : statusLabel;
+    const displayText = displayTextRef.current || statusLabel;
 
     return (
         <View className="flex-row items-center" style={{ gap: 8 }}>

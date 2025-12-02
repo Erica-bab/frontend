@@ -6,6 +6,7 @@ import * as Location from 'expo-location';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import SearchBar from '@/components/SearchBar';
 import AdBanner from '@/components/ui/AdBanner';
+import RouletteModal from '@/components/ui/RouletteModal';
 import RestaurantCard from '@/components/restaurant/RestaurantCard';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRestaurantListV2, useUpdateRestaurantOperatingStatus } from '@/api/restaurants/useRestaurant';
@@ -21,6 +22,7 @@ export default function RestuarantScreen() {
     const [sortOption, setSortOption] = useState<string>('위치순');
     const [isSortOpen, setIsSortOpen] = useState(false);
     const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
+    const [showRouletteModal, setShowRouletteModal] = useState(false);
     const { data, isLoading, error, refetch } = useRestaurantListV2(filterParams);
     const { mutate: updateOperatingStatus } = useUpdateRestaurantOperatingStatus();
     const appState = useRef(AppState.currentState);
@@ -184,7 +186,7 @@ export default function RestuarantScreen() {
                 onLocationUpdate={handleLocationUpdate}
                 onRefresh={refetch}
             >
-                <AdBanner />
+                <AdBanner onRoulettePress={() => setShowRouletteModal(true)} />
                 <View className='self-end relative'>
                     <Pressable
                         className='flex-row gap-1 items-center p-2 mr-2'
@@ -281,6 +283,12 @@ export default function RestuarantScreen() {
                     );
                 })}
             </SearchBar>
+            
+            {/* 룰렛 모달 */}
+            <RouletteModal
+                visible={showRouletteModal}
+                onClose={() => setShowRouletteModal(false)}
+            />
         </SafeAreaView>
     );
 }
