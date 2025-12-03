@@ -17,7 +17,7 @@ interface RatingStatsResponse {
 }
 
 // 별점 통계 조회 (사용자별 별점 포함)
-export const useRatingStats = (restaurantId: number, enabled: boolean = true) => {
+export const useRatingStats = (restaurantId: number, enabled: boolean = true, options?: { refetchInterval?: number }) => {
   return useQuery({
     queryKey: ['ratingStats', restaurantId],
     queryFn: async () => {
@@ -25,6 +25,7 @@ export const useRatingStats = (restaurantId: number, enabled: boolean = true) =>
       return data;
     },
     enabled: enabled && !!restaurantId,
+    refetchInterval: options?.refetchInterval,
   });
 };
 

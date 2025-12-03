@@ -5,6 +5,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import * as Location from 'expo-location';
 import Icon from '@/components/Icon';
 import { useRestaurantSearch } from '@/api/restaurants/useRestaurant';
+import { useRatingStats } from '@/api/restaurants/useRating';
 import { SearchResultItem } from '@/api/restaurants/types';
 import MapModal from '@/components/cafeteria/MapModal';
 import { formatCategory } from '@/utils/formatCategory';
@@ -25,6 +26,19 @@ function SearchResultCard({ item }: { item: SearchResultItem }) {
 
   if (item.type === 'restaurant' && item.restaurant) {
     const restaurant = item.restaurant;
+    
+    // 별점 전용 엔드포인트로 별점 주기적 새로고침
+    const { data: ratingStats } = useRatingStats(
+      restaurant.id,
+      true,
+      {
+        refetchInterval: 60000, // 1분마다 새로고침
+      }
+    );
+    
+    // 최신 별점 사용 (서버에서 가져온 별점이 있으면 사용, 없으면 props의 rating 사용)
+    const currentRating = ratingStats?.average ?? restaurant.average_rating;
+    const currentRatingCount = ratingStats?.count ?? restaurant.rating_count;
     
     // 운영 상태 레이블
     const statusLabels = {
@@ -56,10 +70,10 @@ function SearchResultCard({ item }: { item: SearchResultItem }) {
                 <Text className="text-sm text-gray-600">{statusText}</Text>
               )}
               <Text className="text-sm text-blue-500">
-                ★ {restaurant.average_rating.toFixed(1)}
+                ★ {currentRating.toFixed(1)}
               </Text>
               <Text className="text-sm text-gray-400">
-                ({restaurant.rating_count})
+                ({currentRatingCount})
               </Text>
             </View>
             {restaurant.average_price && (
@@ -76,6 +90,19 @@ function SearchResultCard({ item }: { item: SearchResultItem }) {
 
   if (item.type === 'menu' && item.menu && item.restaurant) {
     const restaurant = item.restaurant;
+    
+    // 별점 전용 엔드포인트로 별점 주기적 새로고침
+    const { data: ratingStats } = useRatingStats(
+      restaurant.id,
+      true,
+      {
+        refetchInterval: 60000, // 1분마다 새로고침
+      }
+    );
+    
+    // 최신 별점 사용 (서버에서 가져온 별점이 있으면 사용, 없으면 props의 rating 사용)
+    const currentRating = ratingStats?.average ?? restaurant.average_rating;
+    const currentRatingCount = ratingStats?.count ?? restaurant.rating_count;
     
     // 운영 상태 레이블
     const statusLabels = {
@@ -112,10 +139,10 @@ function SearchResultCard({ item }: { item: SearchResultItem }) {
                 <Text className="text-sm text-gray-600">{statusText}</Text>
               )}
               <Text className="text-sm text-blue-500">
-                ★ {restaurant.average_rating.toFixed(1)}
+                ★ {currentRating.toFixed(1)}
               </Text>
               <Text className="text-sm text-gray-400">
-                ({restaurant.rating_count})
+                ({currentRatingCount})
               </Text>
             </View>
           </View>

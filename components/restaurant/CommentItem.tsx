@@ -322,7 +322,7 @@ export default function CommentItem({
             </View>
           </View>
         </View>
-        <Text className="mb-2">{comment.content || ''}</Text>
+        <Text className="mb-2" style={{ flexWrap: 'wrap' }}>{comment.content || ''}</Text>
         <Text className="text-sm text-gray-500 mb-2">{formatDate(comment.created_at)}</Text>
         {showReplyButton && (
           <Pressable className="flex-row gap-1 items-center" onPress={handleReplyPress}>

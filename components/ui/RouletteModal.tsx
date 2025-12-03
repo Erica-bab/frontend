@@ -168,7 +168,7 @@ export default function RouletteModal({
           {/* 고정 헤더 */}
           <View className="flex-row items-center justify-between px-6 pt-4 pb-0">
             <View className="flex-1" />
-            <Text className="text-xl font-bold flex-1 text-center">오늘의 메뉴는?</Text>
+            <Text className="text-xl font-bold flex-1 text-center" numberOfLines={2}>오늘의 메뉴는?</Text>
             <Pressable
               className="flex-1 items-end"
               onPress={onClose}

@@ -6,6 +6,7 @@ import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RestaurantOperatingStatus, BusinessHours } from '@/api/restaurants/types';
 import { useRestaurantImages } from '@/api/restaurants/useRestaurantImage';
+import { useRatingStats } from '@/api/restaurants/useRating';
 import { formatDistance } from '@/utils/formatDistance';
 import { formatCategory } from '@/utils/formatCategory';
 
@@ -27,6 +28,18 @@ export default function RestaurantCard({ name, category, operatingStatus, busine
   const displayComment = comment || null;
   
   const formattedCategory = category ? formatCategory(category) : '';
+  
+  // 별점 전용 엔드포인트로 별점 주기적 새로고침
+  const { data: ratingStats } = useRatingStats(
+    restaurantId ? Number(restaurantId) : 0,
+    !!restaurantId,
+    {
+      refetchInterval: 60000, // 1분마다 새로고침
+    }
+  );
+  
+  // 최신 별점 사용 (서버에서 가져온 별점이 있으면 사용, 없으면 props의 rating 사용)
+  const currentRating = ratingStats?.average ?? rating;
   
   // 식당 이미지 조회 (restaurantId가 있을 때만)
   const { data: imagesData } = useRestaurantImages(
@@ -97,7 +110,7 @@ export default function RestaurantCard({ name, category, operatingStatus, busine
         <RestaurantStatusTag 
           operatingStatus={operatingStatus}
           businessHours={businessHours}
-          rating={rating} 
+          rating={currentRating} 
           onRatingPress={handleRatingPress}
           onStatusPress={handleStatusPress}
           onStatusExpired={onStatusExpired}
@@ -108,11 +121,11 @@ export default function RestaurantCard({ name, category, operatingStatus, busine
       <Pressable
         onPress={() => navigation.navigate('RestaurantDetail', { restaurantId, initialTab: 'photos' })}
       >
-        <View className="flex-row gap-2 h-[200px] bg-gray-100 mb-2">
+        <View className="flex-row gap-2 bg-gray-100 mb-2">
         {[0, 1, 2].map(index => {
           const url = displayThumbnails[index];
           return url ? (
-              <View key={index} className="flex-1 h-full rounded-lg overflow-hidden relative">
+              <View key={index} className="flex-1 rounded-lg overflow-hidden relative" style={{ aspectRatio: 1 }}>
               <Image
                 source={{ uri: url }}
                 className="w-full h-full"
@@ -126,7 +139,7 @@ export default function RestaurantCard({ name, category, operatingStatus, busine
                 )}
             </View>
           ) : (
-            <View key={index} className="flex-1 h-full rounded-lg bg-gray-200 items-center justify-center">
+            <View key={index} className="flex-1 rounded-lg bg-gray-200 items-center justify-center" style={{ aspectRatio: 1 }}>
               <Text className="text-gray-500 text-xs">이미지가 없습니다</Text>
             </View>
           );

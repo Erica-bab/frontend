@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { View, Text, Pressable, ScrollView, Alert, AppState, AppStateStatus } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import * as Location from 'expo-location';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -72,6 +72,13 @@ export default function RestuarantScreen() {
             }
         })();
     }, []);
+
+    // 화면이 포커스될 때마다 새로고침 (자세히 보기에서 돌아올 때)
+    useFocusEffect(
+        useCallback(() => {
+            refetch();
+        }, [refetch])
+    );
 
     // 앱이 포그라운드로 돌아올 때 새로고침
     useEffect(() => {

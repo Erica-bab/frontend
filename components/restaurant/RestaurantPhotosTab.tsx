@@ -1,4 +1,5 @@
-import { View, Text, ScrollView, Image, Pressable, Alert, ActivityIndicator, Dimensions } from 'react-native';
+import { useState } from 'react';
+import { View, Text, ScrollView, Image, Pressable, Alert, ActivityIndicator, Dimensions, Modal } from 'react-native';
 import { RestaurantDetailResponse } from '@/api/restaurants/types';
 import { useRestaurantImages, useDeleteRestaurantImage } from '@/api/restaurants/useRestaurantImage';
 import { useAuth, useCurrentUser } from '@/api/auth/useAuth';
@@ -21,6 +22,7 @@ export default function RestaurantPhotosTab({ restaurant, onShowLogin, onAddPhot
   const { data: currentUser } = useCurrentUser();
   const { data: imagesData, isLoading, refetch: refetchImages } = useRestaurantImages(restaurant.id);
   const { mutate: deleteImage, isPending: isDeleting } = useDeleteRestaurantImage(restaurant.id);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
   const resolveImageUri = (uri?: string) => {
     if (!uri) return null;
@@ -114,7 +116,7 @@ export default function RestaurantPhotosTab({ restaurant, onShowLogin, onAddPhot
   }
 
   return (
-    <View className="flex-1 bg-white">
+    <View className="bg-white">
       {/* 사진 추가하기 버튼 */}
       <Pressable
         onPress={() => {
@@ -130,7 +132,7 @@ export default function RestaurantPhotosTab({ restaurant, onShowLogin, onAddPhot
         <Text className="text-gray-700 text-sm font-medium">사진 추가하기</Text>
       </Pressable>
 
-      <ScrollView className="flex-1" contentContainerStyle={{ padding: IMAGE_GAP }}>
+      <View style={{ padding: IMAGE_GAP }}>
         <View className="flex-row flex-wrap" style={{ marginHorizontal: -IMAGE_GAP / 2 }}>
         {imageUrls.map((item, index) => (
           <View
@@ -142,11 +144,13 @@ export default function RestaurantPhotosTab({ restaurant, onShowLogin, onAddPhot
             }}
             className="relative rounded-lg overflow-hidden bg-gray-200"
           >
-            <Image
-              source={{ uri: item.url! }}
-              style={{ width: '100%', height: '100%' }}
-              resizeMode="cover"
-            />
+            <Pressable onPress={() => setSelectedImage(item.url!)}>
+              <Image
+                source={{ uri: item.url! }}
+                style={{ width: '100%', height: '100%' }}
+                resizeMode="cover"
+              />
+            </Pressable>
             {/* 본인이 업로드한 이미지에만 삭제 버튼 표시 */}
             {item.isMyUpload && (
               <Pressable
@@ -161,7 +165,28 @@ export default function RestaurantPhotosTab({ restaurant, onShowLogin, onAddPhot
           </View>
         ))}
         </View>
-      </ScrollView>
+      </View>
+
+      {/* 이미지 확대 모달 */}
+      <Modal
+        visible={selectedImage !== null}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setSelectedImage(null)}
+      >
+        <Pressable
+          className="flex-1 bg-black/90 justify-center items-center"
+          onPress={() => setSelectedImage(null)}
+        >
+          {selectedImage && (
+            <Image
+              source={{ uri: selectedImage }}
+              style={{ width: SCREEN_WIDTH * 0.9, height: SCREEN_WIDTH * 0.9 }}
+              resizeMode="contain"
+            />
+          )}
+        </Pressable>
+      </Modal>
     </View>
   );
 }
