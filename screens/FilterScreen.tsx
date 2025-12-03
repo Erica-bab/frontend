@@ -1,5 +1,5 @@
 import { useState, useCallback, useMemo, useEffect } from 'react';
-import { View, Text, Pressable, StyleSheet } from 'react-native';
+import { View, Text, Pressable, StyleSheet, Modal } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -199,6 +199,7 @@ export default function FilterScreen() {
   };
 
   return (
+    <>
     <BottomSheet
       snapPoints={snapPoints}
       enablePanDownToClose={true}
@@ -219,7 +220,8 @@ export default function FilterScreen() {
 
           {/* 스크롤 가능한 컨텐츠 */}
         <BottomSheetScrollView
-          contentContainerStyle={[styles.scrollViewContent]}
+          style={{ flex: 1 }}
+          contentContainerStyle={[styles.scrollViewContent, { paddingBottom: 100 + insets.bottom }]}
           showsVerticalScrollIndicator={false}
         >
             <Text className="pt-4 text-xl font-bold mb-4">운영시간</Text>
@@ -349,32 +351,42 @@ export default function FilterScreen() {
               ))}
             </View>
 
-            {/* 하단 여백 (버튼 공간 확보) */}
-            <View style={{ height: 80 + insets.bottom }} />
           </BottomSheetScrollView>
-
-          {/* 하단 버튼 - 고정 */}
-          <View 
-            style={[
-              styles.buttonContainer, 
-              { 
-                paddingBottom: insets.bottom + 16,
-                paddingTop: 16,
-                backgroundColor: 'white',
-                borderTopWidth: 1,
-                borderTopColor: '#e5e7eb',
-              }
-            ]}
-          >
-            <Button variant="secondary" onPress={handleReset} className="flex-1">
-              초기화
-            </Button>
-            <Button onPress={handleApply} className="flex-1">
-              적용
-            </Button>
-          </View>
     </View>
     </BottomSheet>
+    
+    {/* 하단 버튼 - 화면 하단 고정 (모달과 독립적) */}
+    <View 
+      style={[
+        styles.fixedButtonContainer, 
+        { 
+          bottom: 0,
+        }
+      ]}
+      pointerEvents="box-none"
+    >
+      <View 
+        style={[
+          styles.buttonContainer, 
+          { 
+            paddingBottom: insets.bottom + 16,
+            paddingTop: 16,
+            paddingHorizontal: 16,
+            backgroundColor: 'white',
+            borderTopWidth: 1,
+            borderTopColor: '#e5e7eb',
+          }
+        ]}
+      >
+        <Button variant="secondary" onPress={handleReset} className="flex-1">
+          초기화
+        </Button>
+        <Button onPress={handleApply} className="flex-1">
+          적용
+        </Button>
+      </View>
+    </View>
+  </>
   );
 }
 
@@ -420,7 +432,15 @@ const styles = StyleSheet.create({
   buttonContainer: {
     flexDirection: 'row',
     gap: 8,
-    paddingTop: 20,
-    marginTop: 8,
+    paddingTop: 16,
+    paddingBottom: 16,
+    paddingHorizontal: 16,
+  },
+  fixedButtonContainer: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    zIndex: 1000,
   },
 });
