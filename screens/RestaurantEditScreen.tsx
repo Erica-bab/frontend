@@ -729,15 +729,17 @@ export default function RestaurantEditScreen() {
       <Modal
         visible={editingMenu !== undefined}
         transparent={true}
-        animationType="slide"
+        animationType="fade"
         onRequestClose={() => setEditingMenu(undefined)}
       >
-        <View className="flex-1 bg-black/50 justify-end">
+        <Pressable 
+          className="flex-1 bg-black/50 justify-center items-center px-4"
+          onPress={() => setEditingMenu(undefined)}
+        >
           <Pressable 
-            className="flex-1" 
-            onPress={() => setEditingMenu(undefined)}
-          />
-          <View className="bg-white rounded-t-3xl p-6 pb-8">
+            className="bg-white rounded-2xl p-6 w-full max-w-md"
+            onPress={(e) => e.stopPropagation()}
+          >
             <View className="flex-row justify-between items-center mb-6">
               <Text className="text-xl font-bold">
                 {editingMenu ? '메뉴 수정' : '메뉴 추가'}
@@ -786,8 +788,8 @@ export default function RestaurantEditScreen() {
                 )}
               </Pressable>
             </View>
-          </View>
-        </View>
+          </Pressable>
+        </Pressable>
       </Modal>
     </SafeAreaView>
   );
