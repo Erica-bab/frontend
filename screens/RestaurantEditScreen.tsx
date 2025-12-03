@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, Pressable, TextInput, Alert, ActivityIndicator, Switch } from 'react-native';
+import { View, Text, ScrollView, Pressable, TextInput, Alert, ActivityIndicator, Switch, Modal } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -9,11 +9,15 @@ import Icon from '@/components/Icon';
 import { useAuth } from '@/api/auth/useAuth';
 import { AxiosError } from 'axios';
 import { getSafeErrorMessage } from '@/utils/errorHandler';
+import { Dropdown } from '@/components/filter/Dropdown';
 
-type EditTabType = 'phone' | 'hours' | 'menu';
+type EditTabType = 'phone' | 'hours' | 'menu' | 'affiliation';
 
 const DAYS = ['월', '화', '수', '목', '금', '토', '일'];
 const DAY_NUMBERS = ['1', '2', '3', '4', '5', '6', '7'];
+
+// 단과대 목록
+const COLLEGES = ['공학대학', '소프트웨어융합대학', '약학대학', '첨단융합대학', '글로벌문화통상대학', '커뮤니케이션&컬쳐대학', '경상대학', '디자인대학', '예체능대학', 'LIONS칼리지'];
 
 export default function RestaurantEditScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<any>>();
@@ -39,18 +43,15 @@ export default function RestaurantEditScreen() {
   
   // 메뉴 수정 상태
   const [editingMenu, setEditingMenu] = useState<MenuItem | null | undefined>(undefined);
-  
-  // editingMenu 상태 변경 추적
-  useEffect(() => {
-    console.log('editingMenu changed:', editingMenu);
-  }, [editingMenu]);
   const [menuName, setMenuName] = useState('');
   const [menuPrice, setMenuPrice] = useState('');
-  const [menuDescription, setMenuDescription] = useState('');
-  const [menuCategory, setMenuCategory] = useState('');
-  const [menuIsPopular, setMenuIsPopular] = useState(false);
-  const [menuIsAvailable, setMenuIsAvailable] = useState(true);
-  const [menuDisplayOrder, setMenuDisplayOrder] = useState(0);
+  
+  // 제휴 수정 상태
+  const [affiliations, setAffiliations] = useState<Array<{ college_id: number; college_name: string; year: number; description?: string }>>([]);
+  const [editingAffiliation, setEditingAffiliation] = useState<{ college_id: number; college_name: string; year: number; description?: string } | null | undefined>(undefined);
+  const [selectedCollege, setSelectedCollege] = useState<string>('');
+  const [affiliationDescription, setAffiliationDescription] = useState<string>('');
+  const [activeDropdown, setActiveDropdown] = useState<'college' | null>(null);
   
   // 초기 데이터 로드
   useEffect(() => {
@@ -77,6 +78,15 @@ export default function RestaurantEditScreen() {
         }
       });
       setHours(initialHours);
+      
+      // 제휴 초기화
+      if (restaurant.affiliations) {
+        setAffiliations(restaurant.affiliations.map(aff => ({
+          college_id: aff.college_id,
+          college_name: aff.college_name,
+          year: aff.year,
+        })));
+      }
     }
   }, [restaurant]);
   
@@ -155,59 +165,39 @@ export default function RestaurantEditScreen() {
   
   // 메뉴 추가/수정 모달 열기
   const handleOpenMenuEdit = (menu?: MenuItem) => {
-    console.log('handleOpenMenuEdit called with menu:', menu);
     if (menu) {
-      console.log('Setting editing menu:', menu);
       setEditingMenu(menu);
       setMenuName(menu.name);
       setMenuPrice(menu.price?.toString() || '');
-      setMenuDescription(menu.description || '');
-      setMenuCategory(menu.category || '');
-      setMenuIsPopular(menu.is_popular);
-      setMenuIsAvailable(menu.is_available);
-      setMenuDisplayOrder(menu.display_order);
     } else {
-      console.log('Setting editing menu to null (new menu)');
       setEditingMenu(null);
       setMenuName('');
       setMenuPrice('');
-      setMenuDescription('');
-      setMenuCategory('');
-      setMenuIsPopular(false);
-      setMenuIsAvailable(true);
-      setMenuDisplayOrder(0);
     }
   };
   
   // 메뉴 저장
   const handleSaveMenu = () => {
-    console.log('handleSaveMenu called, editingMenu:', editingMenu);
     if (!menuName.trim()) {
       Alert.alert('오류', '메뉴명을 입력해주세요.');
       return;
     }
     
     if (editingMenu) {
-      console.log('Updating menu:', editingMenu.id, 'version:', editingMenu.meta?.version);
-      // 메뉴 수정
+      // 메뉴 수정 - 이름과 가격만 수정 가능
       updateMenu(
         {
           menuId: editingMenu.id,
           request: {
             name: menuName.trim(),
             price: menuPrice ? parseInt(menuPrice) : undefined,
-            description: menuDescription.trim() || undefined,
-            category: menuCategory.trim() || undefined,
-            is_popular: menuIsPopular,
-            is_available: menuIsAvailable,
-            display_order: menuDisplayOrder,
             version: editingMenu.meta?.version || 1,
           },
         },
         {
           onSuccess: (data) => {
             Alert.alert('성공', data.message || '메뉴 수정 요청이 접수되었습니다.');
-            setEditingMenu(null);
+            setEditingMenu(undefined);
             refetch();
           },
           onError: (error) => {
@@ -222,16 +212,11 @@ export default function RestaurantEditScreen() {
         {
           name: menuName.trim(),
           price: menuPrice ? parseInt(menuPrice) : undefined,
-          description: menuDescription.trim() || undefined,
-          category: menuCategory.trim() || undefined,
-          is_popular: menuIsPopular,
-          is_available: menuIsAvailable,
-          display_order: menuDisplayOrder,
         },
         {
           onSuccess: (data) => {
             Alert.alert('성공', data.message || '메뉴 추가 요청이 접수되었습니다.');
-            setEditingMenu(null);
+            setEditingMenu(undefined);
             refetch();
           },
           onError: (error) => {
@@ -241,6 +226,104 @@ export default function RestaurantEditScreen() {
         }
       );
     }
+  };
+  
+  // 제휴 추가/수정 모달 열기
+  const handleOpenAffiliationEdit = (affiliation?: { college_id: number; college_name: string; year: number; description?: string }) => {
+    if (affiliation) {
+      setEditingAffiliation(affiliation);
+      setSelectedCollege(affiliation.college_name);
+      setAffiliationDescription(affiliation.description || '');
+    } else {
+      setEditingAffiliation(null);
+      setSelectedCollege('');
+      setAffiliationDescription('');
+    }
+  };
+  
+  // 제휴 저장
+  const handleSaveAffiliation = () => {
+    if (!selectedCollege) {
+      Alert.alert('오류', '단과대를 선택해주세요.');
+      return;
+    }
+    
+    const collegeIndex = COLLEGES.indexOf(selectedCollege);
+    if (collegeIndex === -1) {
+      Alert.alert('오류', '유효하지 않은 단과대입니다.');
+      return;
+    }
+    
+    const currentYear = new Date().getFullYear();
+    const newAffiliation = {
+      college_id: collegeIndex + 1,
+      college_name: selectedCollege,
+      year: currentYear,
+      description: affiliationDescription.trim() || undefined,
+    };
+    
+    if (editingAffiliation) {
+      // 제휴 수정
+      setAffiliations(prev => prev.map(aff => 
+        aff.college_id === editingAffiliation.college_id 
+          ? newAffiliation 
+          : aff
+      ));
+    } else {
+      // 제휴 추가
+      const exists = affiliations.some(aff => aff.college_id === newAffiliation.college_id);
+      if (exists) {
+        Alert.alert('오류', '이미 추가된 단과대입니다.');
+        return;
+      }
+      setAffiliations(prev => [...prev, newAffiliation]);
+    }
+    
+    setEditingAffiliation(undefined);
+    setSelectedCollege('');
+    setAffiliationDescription('');
+  };
+  
+  // 제휴 삭제
+  const handleDeleteAffiliation = (affiliation: { college_id: number; college_name: string; year: number; description?: string }) => {
+    Alert.alert('제휴 삭제', '정말 이 제휴를 삭제하시겠습니까?', [
+      { text: '취소', style: 'cancel' },
+      {
+        text: '삭제',
+        style: 'destructive',
+        onPress: () => {
+          setAffiliations(prev => prev.filter(aff => aff.college_id !== affiliation.college_id));
+        },
+      },
+    ]);
+  };
+  
+  // 제휴 저장 (서버에 전송)
+  const handleSaveAffiliations = () => {
+    if (!restaurant) return;
+    
+    // 백엔드 API 형식에 맞게 변환 (college_id와 description만 전송)
+    const affiliationsData = affiliations.map(aff => ({
+      college_id: aff.college_id,
+      description: aff.description,
+    }));
+    
+    updateRestaurant(
+      { 
+        affiliations: affiliationsData, 
+        version: restaurant.meta.version 
+      },
+      {
+        onSuccess: (data) => {
+          Alert.alert('성공', data.message || '제휴 수정 요청이 접수되었습니다.');
+          refetch();
+        },
+        onError: (error) => {
+          const message = getSafeErrorMessage(error, '제휴 수정에 실패했습니다.');
+          Alert.alert('오류', message);
+        },
+      }
+    );
   };
   
   // 메뉴 삭제
@@ -289,6 +372,12 @@ export default function RestaurantEditScreen() {
   const menus = menuData?.menus || [];
   const isPending = isUpdatingRestaurant || isUpdatingHours || isCreatingMenu || isUpdatingMenu || isDeletingMenu;
   
+  // 사용 가능한 단과대 목록 (이미 추가된 단과대 제외)
+  const availableColleges = COLLEGES.filter(college => 
+    !affiliations.some(aff => aff.college_name === college) || 
+    (editingAffiliation && editingAffiliation.college_name === college)
+  );
+  
   return (
     <SafeAreaView className="flex-1 bg-white" edges={['top', 'bottom']}>
       {/* 헤더 */}
@@ -324,6 +413,14 @@ export default function RestaurantEditScreen() {
         >
           <Text className={`font-medium ${selectedTab === 'menu' ? 'text-blue-500' : 'text-gray-600'}`}>
             메뉴
+          </Text>
+        </Pressable>
+        <Pressable
+          className={`flex-1 items-center py-3 ${selectedTab === 'affiliation' ? 'border-b-2 border-blue-500' : ''}`}
+          onPress={() => setSelectedTab('affiliation')}
+        >
+          <Text className={`font-medium ${selectedTab === 'affiliation' ? 'text-blue-500' : 'text-gray-600'}`}>
+            제휴
           </Text>
         </Pressable>
       </View>
@@ -431,17 +528,6 @@ export default function RestaurantEditScreen() {
                           editable={!isPending}
                         />
                       </View>
-                      
-                      <View className="mb-2">
-                        <Text className="text-sm text-gray-600 mb-1">특이사항</Text>
-                        <TextInput
-                          className="border border-gray-300 rounded-lg p-2"
-                          value={dayData.special_note || ''}
-                          onChangeText={(value) => updateHour(day, 'special_note', value)}
-                          placeholder="공휴일 휴무"
-                          editable={!isPending}
-                        />
-                      </View>
                     </View>
                   )}
                 </View>
@@ -508,110 +594,201 @@ export default function RestaurantEditScreen() {
                 </View>
               </View>
             ))}
+          </View>
+        )}
+        
+        {/* 제휴 수정 */}
+        {selectedTab === 'affiliation' && (
+          <View className="p-4">
+            <Pressable
+              className="bg-blue-500 rounded-lg p-3 items-center mb-4"
+              onPress={() => handleOpenAffiliationEdit()}
+              disabled={isPending}
+            >
+              <Text className="text-white font-medium">+ 제휴 추가</Text>
+            </Pressable>
             
-            {/* 메뉴 추가/수정 폼 */}
-            {editingMenu !== undefined && (
-              <View className="mt-4 border border-gray-300 rounded-lg p-4 bg-gray-50">
-                <View className="flex-row justify-between items-center mb-4">
-                  <Text className="text-lg font-bold">
-                    {editingMenu ? '메뉴 수정' : '메뉴 추가'}
-                  </Text>
-                  <Pressable onPress={() => setEditingMenu(undefined)}>
-                    <Text className="text-blue-500">닫기</Text>
-                  </Pressable>
-                </View>
-                
-                <Text className="text-sm text-gray-600 mb-1">메뉴명 *</Text>
-                <TextInput
-                  className="border border-gray-300 rounded-lg p-2 mb-3 bg-white"
-                  value={menuName}
-                  onChangeText={setMenuName}
-                  placeholder="제육볶음"
-                  editable={!isPending}
-                />
-                
-                <Text className="text-sm text-gray-600 mb-1">가격</Text>
-                <TextInput
-                  className="border border-gray-300 rounded-lg p-2 mb-3 bg-white"
-                  value={menuPrice}
-                  onChangeText={setMenuPrice}
-                  placeholder="12000"
-                  keyboardType="number-pad"
-                  editable={!isPending}
-                />
-                
-                <Text className="text-sm text-gray-600 mb-1">설명</Text>
-                <TextInput
-                  className="border border-gray-300 rounded-lg p-2 mb-3 bg-white"
-                  value={menuDescription}
-                  onChangeText={setMenuDescription}
-                  placeholder="맛있는 제육볶음입니다"
-                  multiline
-                  editable={!isPending}
-                />
-                
-                <Text className="text-sm text-gray-600 mb-1">카테고리</Text>
-                <TextInput
-                  className="border border-gray-300 rounded-lg p-2 mb-3 bg-white"
-                  value={menuCategory}
-                  onChangeText={setMenuCategory}
-                  placeholder="메인"
-                  editable={!isPending}
-                />
-                
-                <View className="flex-row items-center justify-between mb-3">
-                  <Text className="text-sm text-gray-600">인기 메뉴</Text>
-                  <Switch
-                    value={menuIsPopular}
-                    onValueChange={setMenuIsPopular}
-                    disabled={isPending}
-                  />
-                </View>
-                
-                <View className="flex-row items-center justify-between mb-3">
-                  <Text className="text-sm text-gray-600">판매 가능</Text>
-                  <Switch
-                    value={menuIsAvailable}
-                    onValueChange={setMenuIsAvailable}
-                    disabled={isPending}
-                  />
-                </View>
-                
-                <Text className="text-sm text-gray-600 mb-1">표시 순서</Text>
-                <TextInput
-                  className="border border-gray-300 rounded-lg p-2 mb-3 bg-white"
-                  value={menuDisplayOrder.toString()}
-                  onChangeText={(value) => setMenuDisplayOrder(parseInt(value) || 0)}
-                  placeholder="0"
-                  keyboardType="number-pad"
-                  editable={!isPending}
-                />
-                
-                <View className="flex-row gap-2 mt-2">
-                  <Pressable
-                    className="flex-1 bg-blue-500 rounded-lg p-3 items-center"
-                    onPress={handleSaveMenu}
-                    disabled={isPending}
-                  >
-                    {(isCreatingMenu || isUpdatingMenu) ? (
-                      <ActivityIndicator color="white" />
-                    ) : (
-                      <Text className="text-white font-medium">저장</Text>
+            {/* 제휴 목록 */}
+            {affiliations.map((affiliation) => (
+              <View key={affiliation.college_id} className="border border-gray-300 rounded-lg p-4 mb-3">
+                <View className="flex-row justify-between items-start">
+                  <View className="flex-1">
+                    <Text className="text-lg font-bold">{affiliation.college_name}</Text>
+                    {affiliation.description && (
+                      <Text className="text-gray-600 mt-1">{affiliation.description}</Text>
                     )}
-                  </Pressable>
-                  <Pressable
-                    className="flex-1 bg-gray-400 rounded-lg p-3 items-center"
-                    onPress={() => setEditingMenu(undefined)}
-                    disabled={isPending}
-                  >
-                    <Text className="text-white font-medium">취소</Text>
-                  </Pressable>
+                    {!affiliation.description && (
+                      <Text className="text-gray-400 text-sm mt-1">제휴 내용 없음</Text>
+                    )}
+                  </View>
+                  <View className="flex-row gap-2">
+                    <Pressable
+                      className="bg-blue-500 rounded px-3 py-1"
+                      onPress={() => handleOpenAffiliationEdit(affiliation)}
+                      disabled={isPending}
+                    >
+                      <Text className="text-white text-sm">수정</Text>
+                    </Pressable>
+                    <Pressable
+                      className="bg-red-500 rounded px-3 py-1"
+                      onPress={() => handleDeleteAffiliation(affiliation)}
+                      disabled={isPending}
+                    >
+                      <Text className="text-white text-sm">삭제</Text>
+                    </Pressable>
+                  </View>
                 </View>
               </View>
+            ))}
+            
+            {affiliations.length === 0 && (
+              <View className="border border-gray-300 rounded-lg p-8 items-center">
+                <Text className="text-gray-500">등록된 제휴가 없습니다.</Text>
+              </View>
+            )}
+            
+            {affiliations.length > 0 && (
+              <Pressable
+                className="bg-blue-500 rounded-lg p-3 items-center mt-4"
+                onPress={handleSaveAffiliations}
+                disabled={isPending}
+              >
+                <Text className="text-white font-medium">저장</Text>
+              </Pressable>
             )}
           </View>
         )}
       </ScrollView>
+      
+      {/* 제휴 추가/수정 모달 */}
+      <Modal
+        visible={editingAffiliation !== undefined}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setEditingAffiliation(undefined)}
+      >
+        <Pressable 
+          className="flex-1 bg-black/50 justify-center items-center px-4"
+          onPress={() => setEditingAffiliation(undefined)}
+        >
+          <Pressable 
+            className="bg-white rounded-2xl p-6 w-full max-w-md"
+            onPress={(e) => e.stopPropagation()}
+          >
+            <View className="flex-row justify-between items-center mb-6">
+              <Text className="text-xl font-bold">
+                {editingAffiliation ? '제휴 수정' : '제휴 추가'}
+              </Text>
+              <Pressable onPress={() => setEditingAffiliation(undefined)}>
+                <Icon name="cancel" width={24} height={24} />
+              </Pressable>
+            </View>
+            
+            <Text className="text-sm text-gray-600 mb-2">단과대 *</Text>
+            <Dropdown
+              label="단과대"
+              options={availableColleges}
+              selectedValue={selectedCollege}
+              onSelect={setSelectedCollege}
+              placeholder="단과대 선택"
+              isOpen={activeDropdown === 'college'}
+              onToggle={() => setActiveDropdown(activeDropdown === 'college' ? null : 'college')}
+            />
+            
+            <Text className="text-sm text-gray-600 mb-2 mt-2">제휴 내용</Text>
+            <TextInput
+              className="border border-gray-300 rounded-lg p-3 mb-6 bg-white"
+              value={affiliationDescription}
+              onChangeText={setAffiliationDescription}
+              placeholder="예: 10% 할인, 학생증 제시 시 5% 할인 등"
+              multiline
+              editable={!isPending}
+            />
+            
+            <View className="flex-row gap-3">
+              <Pressable
+                className="flex-1 bg-gray-300 rounded-lg p-4 items-center"
+                onPress={() => setEditingAffiliation(undefined)}
+                disabled={isPending}
+              >
+                <Text className="text-white font-medium">취소</Text>
+              </Pressable>
+              <Pressable
+                className="flex-1 bg-blue-500 rounded-lg p-4 items-center"
+                onPress={handleSaveAffiliation}
+                disabled={isPending}
+              >
+                <Text className="text-white font-medium">저장</Text>
+              </Pressable>
+            </View>
+          </Pressable>
+        </Pressable>
+      </Modal>
+      
+      {/* 메뉴 추가/수정 모달 */}
+      <Modal
+        visible={editingMenu !== undefined}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setEditingMenu(undefined)}
+      >
+        <View className="flex-1 bg-black/50 justify-end">
+          <Pressable 
+            className="flex-1" 
+            onPress={() => setEditingMenu(undefined)}
+          />
+          <View className="bg-white rounded-t-3xl p-6 pb-8">
+            <View className="flex-row justify-between items-center mb-6">
+              <Text className="text-xl font-bold">
+                {editingMenu ? '메뉴 수정' : '메뉴 추가'}
+              </Text>
+              <Pressable onPress={() => setEditingMenu(undefined)}>
+                <Icon name="cancel" width={24} height={24} />
+              </Pressable>
+            </View>
+            
+            <Text className="text-sm text-gray-600 mb-2">메뉴명 *</Text>
+            <TextInput
+              className="border border-gray-300 rounded-lg p-3 mb-4 bg-white"
+              value={menuName}
+              onChangeText={setMenuName}
+              placeholder="제육볶음"
+              editable={!isPending}
+            />
+            
+            <Text className="text-sm text-gray-600 mb-2">가격</Text>
+            <TextInput
+              className="border border-gray-300 rounded-lg p-3 mb-6 bg-white"
+              value={menuPrice}
+              onChangeText={setMenuPrice}
+              placeholder="12000"
+              keyboardType="number-pad"
+              editable={!isPending}
+            />
+            
+            <View className="flex-row gap-3">
+              <Pressable
+                className="flex-1 bg-gray-300 rounded-lg p-4 items-center"
+                onPress={() => setEditingMenu(undefined)}
+                disabled={isPending}
+              >
+                <Text className="text-white font-medium">취소</Text>
+              </Pressable>
+              <Pressable
+                className="flex-1 bg-blue-500 rounded-lg p-4 items-center"
+                onPress={handleSaveMenu}
+                disabled={isPending}
+              >
+                {(isCreatingMenu || isUpdatingMenu) ? (
+                  <ActivityIndicator color="white" />
+                ) : (
+                  <Text className="text-white font-medium">저장</Text>
+                )}
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }

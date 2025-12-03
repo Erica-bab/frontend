@@ -378,13 +378,13 @@ export default function FilterScreen() {
           }
         ]}
       >
-        <Button variant="secondary" onPress={handleReset} className="flex-1">
-          초기화
-        </Button>
-        <Button onPress={handleApply} className="flex-1">
-          적용
-        </Button>
-      </View>
+            <Button variant="secondary" onPress={handleReset} className="flex-1">
+              초기화
+            </Button>
+            <Button onPress={handleApply} className="flex-1">
+              적용
+            </Button>
+          </View>
     </View>
   </>
   );

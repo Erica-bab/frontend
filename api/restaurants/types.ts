@@ -275,8 +275,14 @@ export interface MenuListResponse {
 }
 
 // 식당 수정 관련 타입
+export interface AffiliationUpdate {
+  college_id: number;
+  description?: string;
+}
+
 export interface UpdateRestaurantRequest {
   phone?: string;
+  affiliations?: AffiliationUpdate[];
   version: number;
 }
 
