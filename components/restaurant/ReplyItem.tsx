@@ -10,6 +10,7 @@ import {
 import { useAuth } from '@/api/auth/useAuth';
 import Icon from '@/components/Icon';
 import { formatDate } from '@/utils/date';
+import { getSafeErrorMessage } from '@/utils/errorHandler';
 
 interface ReplyItemProps {
   comment: CommentItemType;
@@ -147,7 +148,8 @@ export default function ReplyItem({
                   Alert.alert('완료', '댓글이 삭제되었습니다.');
                 },
                 onError: (error: any) => {
-                  Alert.alert('오류', error?.response?.data?.detail || '댓글 삭제에 실패했습니다.');
+                  const message = getSafeErrorMessage(error, '댓글 삭제에 실패했습니다.');
+                  Alert.alert('오류', message);
                 },
               });
             },
@@ -174,7 +176,8 @@ export default function ReplyItem({
           Alert.alert('완료', '댓글이 신고되었습니다.');
         },
         onError: (error: any) => {
-          Alert.alert('오류', error?.response?.data?.detail || '댓글 신고에 실패했습니다.');
+          const message = getSafeErrorMessage(error, '댓글 신고에 실패했습니다.');
+          Alert.alert('오류', message);
         },
       }
     );
@@ -194,7 +197,8 @@ export default function ReplyItem({
           onUpdateSuccess?.();
         },
         onError: (error: any) => {
-          Alert.alert('오류', error?.response?.data?.detail || '댓글 수정에 실패했습니다.');
+          const message = getSafeErrorMessage(error, '댓글 수정에 실패했습니다.');
+          Alert.alert('오류', message);
         },
       }
     );

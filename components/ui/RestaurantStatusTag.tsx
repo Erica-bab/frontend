@@ -1,16 +1,19 @@
 import { View, Text, Pressable, Animated } from "react-native";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import Tag from "./Tag";
 import { getColor } from "../../utils/colors";
 import StarIcon from "../../assets/icon/star.svg";
-import { RestaurantOperatingStatus } from "@/api/restaurants/types";
+import { RestaurantOperatingStatus, BusinessHours } from "@/api/restaurants/types";
+import { calculateOperatingStatus } from "@/utils/operatingStatus";
 
 interface RestaurantStatusTagProps {
-    operatingStatus?: RestaurantOperatingStatus | null;
+    operatingStatus?: RestaurantOperatingStatus | null; // 서버에서 받은 운영 상태 (선택적)
+    businessHours?: BusinessHours | null; // 운영시간 정보 (클라이언트 계산용)
     rating: number;
     restaurantId?: string;
     onRatingPress?: () => void;
     onStatusPress?: () => void;
+    onStatusExpired?: () => void; // 상태가 만료되었을 때 호출되는 콜백
 }
 
 // operating_status type에 따른 표시 텍스트
@@ -99,16 +102,19 @@ function getDaysUntil(targetDate: Date): number {
     return Math.floor(diffMs / (1000 * 60 * 60 * 24));
 }
 
-// 다음 이벤트 텍스트 생성 함수
-function getNextEventText(operatingStatus: RestaurantOperatingStatus): string | null {
+// 다음 이벤트 텍스트 생성 함수 (현재 시간을 파라미터로 받음)
+function getNextEventText(operatingStatus: RestaurantOperatingStatus, currentTime: Date): string | null {
     const currentType = operatingStatus.current.type;
     const nextAction = operatingStatus.next;
     
     if (!nextAction?.at) return null;
     
     const nextDate = new Date(nextAction.at);
-    const minutesUntil = getMinutesUntil(nextDate);
+    const minutesUntil = Math.floor((nextDate.getTime() - currentTime.getTime()) / (1000 * 60));
     const daysUntil = getDaysUntil(nextDate);
+    
+    // 시간이 지나갔으면 null 반환 (상태가 업데이트되어야 함)
+    if (minutesUntil < 0) return null;
     
     // 운영중일 때: 30분 전부터 다음 이벤트 표시
     if (currentType === 'open') {
@@ -152,17 +158,35 @@ function getNextEventText(operatingStatus: RestaurantOperatingStatus): string | 
     return null;
 }
 
-export default function RestaurantStatusTag({ operatingStatus, rating = 0, onRatingPress, onStatusPress }: RestaurantStatusTagProps) {
+export default function RestaurantStatusTag({ operatingStatus, businessHours, rating = 0, onRatingPress, onStatusPress, onStatusExpired }: RestaurantStatusTagProps) {
     const [showNextEvent, setShowNextEvent] = useState(false);
     const fadeAnim = useRef(new Animated.Value(1)).current;
+    const showNextEventRef = useRef(false);
+    
+    // 현재 시간을 state로 관리하여 동적으로 업데이트
+    const [currentTime, setCurrentTime] = useState(new Date());
+    
+    // 토글 중에 표시할 텍스트를 ref로 저장 (토글 중에는 업데이트하지 않음)
+    const displayTextRef = useRef<string>('');
+    const nextEventTextRef = useRef<string | null>(null);
+    const isTogglingRef = useRef(false);
+    
+    // 운영 상태를 현재 시간 기준으로 동적으로 계산
+    const computedOperatingStatus = useMemo(() => {
+        // businessHours가 있으면 클라이언트에서 계산, 없으면 서버에서 받은 operatingStatus 사용
+        if (businessHours) {
+            return calculateOperatingStatus(businessHours, currentTime);
+        }
+        return operatingStatus;
+    }, [businessHours, operatingStatus, currentTime]);
     
     // operating_status가 없으면 기본값 사용
-    if (!operatingStatus) {
+    if (!computedOperatingStatus) {
         return (
             <View className="flex-row items-center" style={{ gap: 8 }}>
                 <Pressable onPress={onRatingPress}>
                     <Tag className="bg-transparent border-gray-400">
-                        <View className="flex-row items-center" style={{ gap: 4 }}>
+                        <View className="flex-row items-center" style={{ gap: 2 }}>
                             <StarIcon width={16} height={16} color={getColor('gray-400')} />
                             <Text className="text-sm font-bold text-gray-400">
                                 {rating.toFixed(1)}
@@ -174,22 +198,57 @@ export default function RestaurantStatusTag({ operatingStatus, rating = 0, onRat
         );
     }
 
-    const currentType = operatingStatus.current.type;
+    const currentType = computedOperatingStatus.current.type;
     const styles = statusStyles[currentType];
     const statusLabel = statusLabels[currentType];
-    const nextEventText = getNextEventText(operatingStatus);
+    
+    // 현재 시간을 기준으로 동적으로 다음 이벤트 텍스트 계산
+    const nextEventText = getNextEventText(computedOperatingStatus, currentTime);
+    
+    // 현재 시간을 주기적으로 업데이트 (1분마다)
+    useEffect(() => {
+        // 즉시 한 번 업데이트
+        setCurrentTime(new Date());
+        
+        // 1분마다 현재 시간 업데이트
+        const interval = setInterval(() => {
+            setCurrentTime(new Date());
+        }, 60000); // 1분마다
+        
+        return () => clearInterval(interval);
+    }, []); // 마운트 시 한 번만 실행
+    
+    // 서버 데이터를 사용하는 경우에만 만료 체크 (클라이언트 계산은 자동 업데이트되므로 불필요)
+    useEffect(() => {
+        if (!businessHours && operatingStatus?.next?.at && onStatusExpired) {
+            const nextDate = new Date(operatingStatus.next.at);
+            const now = new Date();
+            const minutesUntil = Math.floor((nextDate.getTime() - now.getTime()) / (1000 * 60));
+            
+            // 시간이 지나갔으면 부모 컴포넌트에 알려서 데이터 새로고침
+            if (minutesUntil < 0) {
+                onStatusExpired();
+            }
+        }
+    }, [businessHours, operatingStatus, onStatusExpired]);
 
-    // 5초마다 토글
+    // 운영시간 토글: 상태 레이블 3초, 다음 이벤트 5초
     useEffect(() => {
         if (!nextEventText) {
             setShowNextEvent(false);
+            showNextEventRef.current = false;
             fadeAnim.setValue(1);
+            displayTextRef.current = statusLabel;
+            isTogglingRef.current = false;
             return;
         }
 
         // 초기 상태: 상태 레이블 표시
         setShowNextEvent(false);
+        showNextEventRef.current = false;
+        displayTextRef.current = statusLabel;
         fadeAnim.setValue(1);
+        isTogglingRef.current = true;
 
         const toggleText = () => {
             // 페이드 아웃
@@ -199,7 +258,18 @@ export default function RestaurantStatusTag({ operatingStatus, rating = 0, onRat
                 useNativeDriver: true,
             }).start(() => {
                 // 텍스트 변경
-                setShowNextEvent(prev => !prev);
+                showNextEventRef.current = !showNextEventRef.current;
+                setShowNextEvent(showNextEventRef.current);
+                
+                // 다음 이벤트로 전환할 때만 최신 시간으로 계산된 텍스트 사용
+                if (showNextEventRef.current) {
+                    // 최신 nextEventText 사용 (토글 시점에 계산된 값)
+                    const latestNextEventText = getNextEventText(computedOperatingStatus, new Date());
+                    displayTextRef.current = latestNextEventText || statusLabel;
+                } else {
+                    displayTextRef.current = statusLabel;
+                }
+                
                 // 페이드 인
                 Animated.timing(fadeAnim, {
                     toValue: 1,
@@ -209,23 +279,31 @@ export default function RestaurantStatusTag({ operatingStatus, rating = 0, onRat
             });
         };
 
-        // 5초 후 첫 번째 전환 (상태 레이블 → 다음 이벤트)
-        const timeout = setTimeout(() => {
-            toggleText();
-        }, 5000);
+        let timeoutId: NodeJS.Timeout | null = null;
 
-        // 10초마다 반복 (상태 레이블 ↔ 다음 이벤트)
-        const interval = setInterval(() => {
-            toggleText();
-        }, 10000);
+        const scheduleToggle = (delay: number) => {
+            timeoutId = setTimeout(() => {
+                toggleText();
+                // 다음 토글: 현재 상태에 따라 다른 지연 시간
+                // showNextEventRef.current가 true면 다음 이벤트 표시 중이므로 5초 후 상태 레이블로
+                // false면 상태 레이블 표시 중이므로 3초 후 다음 이벤트로
+                const nextDelay = showNextEventRef.current ? 3000 : 5000;
+                scheduleToggle(nextDelay);
+            }, delay);
+        };
+
+        // 3초 후 첫 번째 전환 (상태 레이블 → 다음 이벤트)
+        scheduleToggle(3000);
 
         return () => {
-            clearTimeout(timeout);
-            clearInterval(interval);
+            if (timeoutId) {
+                clearTimeout(timeoutId);
+            }
+            isTogglingRef.current = false;
         };
-    }, [nextEventText, fadeAnim]);
+    }, [nextEventText, fadeAnim, statusLabel, computedOperatingStatus]);
 
-    const displayText = showNextEvent && nextEventText ? nextEventText : statusLabel;
+    const displayText = displayTextRef.current || statusLabel;
 
     return (
         <View className="flex-row items-center" style={{ gap: 8 }}>
@@ -243,7 +321,7 @@ export default function RestaurantStatusTag({ operatingStatus, rating = 0, onRat
             {/* 별점 태그 */}
             <Pressable onPress={onRatingPress}>
                 <Tag className={styles.outlined}>
-                    <View className="flex-row items-center" style={{ gap: 4 }}>
+                    <View className="flex-row items-center" style={{ gap: 2 }}>
                         <StarIcon width={16} height={16} color={styles.tintColor} />
                         <Text className={`text-sm font-bold ${styles.textColor}`}>
                             {rating.toFixed(1)}

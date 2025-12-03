@@ -25,14 +25,18 @@ import MailIcon from '@/assets/icon/mail.svg';
 import MeatballIcon from '@/assets/icon/meatball.svg';
 import PaperIcon from '@/assets/icon/paper.svg';
 import PeopleIcon from '@/assets/icon/people.svg';
+import PickupIcon from '@/assets/icon/pickup.svg';
 import PinIcon from '@/assets/icon/pin.svg';
 import ReplyIcon from '@/assets/icon/reply.svg';
 import RicericaIcon from '@/assets/icon/ricerica.svg';
 import RightAngleIcon from '@/assets/icon/right_angle.svg';
+import RouletteIcon from '@/assets/icon/roulette.svg';
+import RoundIcon from '@/assets/icon/round.svg';
 import SchoolIcon from '@/assets/icon/school.svg';
 import SearchIcon from '@/assets/icon/search.svg';
 import SendIcon from '@/assets/icon/send.svg';
 import ShareIcon from '@/assets/icon/share.svg';
+import StandIcon from '@/assets/icon/stand.svg';
 import StarIcon from '@/assets/icon/star.svg';
 import TelephoneIcon from '@/assets/icon/telephone.svg';
 import TriangleIcon from '@/assets/icon/triangle.svg';
@@ -65,14 +69,18 @@ const icons = {
   meatball: MeatballIcon,
   paper: PaperIcon,
   people: PeopleIcon,
+  pickup: PickupIcon,
   pin: PinIcon,
   reply: ReplyIcon,
   ricerica: RicericaIcon,
   rightAngle: RightAngleIcon,
+  roulette: RouletteIcon,
+  round: RoundIcon,
   school: SchoolIcon,
   search: SearchIcon,
   send: SendIcon,
   share: ShareIcon,
+  stand: StandIcon,
   star: StarIcon,
   telephone: TelephoneIcon,
   triangle: TriangleIcon,

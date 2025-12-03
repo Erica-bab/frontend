@@ -5,6 +5,7 @@ export interface UserInfo {
 
 export interface LocationInfo {
   address?: string | null;
+  detail_address?: string | null;
   latitude?: number | null;
   longitude?: number | null;
   distance?: number | null;
@@ -18,6 +19,7 @@ export interface BusinessHoursDay {
   close_time?: string | null;
   is_closed: boolean;
   special_note?: string | null;
+  closes_next_day?: boolean;
 }
 
 export interface BusinessHours {
@@ -272,4 +274,92 @@ export interface MenuListResponse {
   menus: MenuItem[];
   categories: string[];
   total_count: number;
+}
+
+// 식당 수정 관련 타입
+export interface UpdateRestaurantRequest {
+  phone?: string;
+  version: number;
+}
+
+export interface UpdateRestaurantResponse {
+  id: number;
+  name: string;
+  last_edited_at: string;
+  version: number;
+  message: string;
+}
+
+export interface BusinessHoursDayUpdate {
+  day_of_week: string;
+  open_time?: string;
+  break_start?: string;
+  break_end?: string;
+  last_order?: string;
+  close_time?: string;
+  is_closed?: boolean;
+  special_note?: string;
+  closes_next_day?: boolean;
+  version?: number;
+}
+
+export interface UpdateRestaurantHoursRequest {
+  hours: BusinessHoursDayUpdate[];
+}
+
+export interface UpdateRestaurantHoursResponse {
+  restaurant_id: number;
+  updated_count: number;
+  message: string;
+}
+
+export interface CreateMenuRequest {
+  name: string;
+  price?: number;
+  description?: string;
+  category?: string;
+  is_popular?: boolean;
+  is_available?: boolean;
+  display_order?: number;
+}
+
+export interface CreateMenuResponse {
+  id: number;
+  restaurant_id: number;
+  name: string;
+  created_at: string;
+  message: string;
+}
+
+export interface UpdateMenuRequest {
+  name?: string;
+  price?: number;
+  description?: string;
+  category?: string;
+  is_popular?: boolean;
+  is_available?: boolean;
+  display_order?: number;
+  version: number;
+}
+
+export interface UpdateMenuResponse {
+  id: number;
+  restaurant_id: number;
+  name: string;
+  last_edited_at: string;
+  version: number;
+  message: string;
+}
+
+export interface DeleteMenuResponse {
+  id: number;
+  restaurant_id: number;
+  deleted_at: string;
+  message: string;
+}
+
+// 랜덤 메뉴 응답 타입
+export interface RandomMenuResponse {
+  menu: MenuItem;
+  restaurant: RestaurantListItem;
 }

@@ -19,7 +19,7 @@ export default function LoginScreen() {
     navigation.goBack();
 
     // requires_setup이 true이면 AddInfo 화면으로 이동
-    if (user?.requires_setup === true) {
+    if (user && user.requires_setup === true) {
       navigation.navigate('AddInfo' as never);
     }
 

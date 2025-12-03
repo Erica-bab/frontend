@@ -12,6 +12,16 @@ import {
   SearchResponse,
   MenuListParams,
   MenuListResponse,
+  UpdateRestaurantRequest,
+  UpdateRestaurantResponse,
+  UpdateRestaurantHoursRequest,
+  UpdateRestaurantHoursResponse,
+  CreateMenuRequest,
+  CreateMenuResponse,
+  UpdateMenuRequest,
+  UpdateMenuResponse,
+  DeleteMenuResponse,
+  RandomMenuResponse,
 } from './types';
 
 // 카테고리 매핑
@@ -121,16 +131,72 @@ export const useRestaurantListV2 = (params?: Omit<RestaurantListParams, 'sort'>)
   });
 };
 
-export const useRestaurantDetail = (restaurantId: number, params?: { lat: number; lng: number }) => {
+export const useRestaurantDetail = (restaurantId: number) => {
   return useQuery({
-    queryKey: ['restaurant', restaurantId, params],
+    queryKey: ['restaurant', restaurantId],
     queryFn: async () => {
-      const { data } = await apiClient.get<RestaurantDetailResponse>(`/restaurants/${restaurantId}`, {
-        params: params?.lat && params?.lng ? { lat: params.lat, lng: params.lng } : undefined,
-      });
+      const { data } = await apiClient.get<RestaurantDetailResponse>(`/restaurants/${restaurantId}`);
       return data;
     },
     enabled: !!restaurantId,
+  });
+};
+
+
+// 운영 상태만 업데이트하는 함수 (캐시 최적화)
+export const useUpdateRestaurantOperatingStatus = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async ({ restaurantId }: { restaurantId: number }) => {
+      // 운영 상태만 가져오는 엔드포인트가 있다면 사용, 없으면 전체 정보 가져오기
+      const { data } = await apiClient.get<RestaurantDetailResponse>(`/restaurants/${restaurantId}`);
+      return data;
+    },
+    onSuccess: (data, variables) => {
+      // 캐시된 데이터의 operating_status만 업데이트
+      queryClient.setQueryData<RestaurantDetailResponse>(
+        ['restaurant', variables.restaurantId],
+        (oldData) => {
+          if (!oldData) return oldData;
+          return {
+            ...oldData,
+            operating_status: data.operating_status,
+          };
+        }
+      );
+      
+      // 리스트 캐시도 업데이트
+      queryClient.setQueriesData<RestaurantListResponse>(
+        { queryKey: ['restaurants'] },
+        (oldData) => {
+          if (!oldData) return oldData;
+          return {
+            ...oldData,
+            restaurants: oldData.restaurants.map((restaurant) =>
+              restaurant.id === variables.restaurantId
+                ? { ...restaurant, operating_status: data.operating_status }
+                : restaurant
+            ),
+          };
+        }
+      );
+      
+      queryClient.setQueriesData<RestaurantListResponse>(
+        { queryKey: ['restaurants-v2'] },
+        (oldData) => {
+          if (!oldData) return oldData;
+          return {
+            ...oldData,
+            restaurants: oldData.restaurants.map((restaurant) =>
+              restaurant.id === variables.restaurantId
+                ? { ...restaurant, operating_status: data.operating_status }
+                : restaurant
+            ),
+          };
+        }
+      );
+    },
   });
 };
 
@@ -199,5 +265,95 @@ export const useRestaurantMenus = (restaurantId: number, params?: MenuListParams
       return data;
     },
     enabled: !!restaurantId,
+  });
+};
+
+// 식당 전화번호 수정
+export const useUpdateRestaurant = (restaurantId: number) => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (request: UpdateRestaurantRequest) => {
+      const { data } = await apiClient.put<UpdateRestaurantResponse>(`/restaurants/${restaurantId}`, request);
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['restaurant', restaurantId] });
+    },
+  });
+};
+
+// 식당 운영시간 수정
+export const useUpdateRestaurantHours = (restaurantId: number) => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (request: UpdateRestaurantHoursRequest) => {
+      const { data } = await apiClient.put<UpdateRestaurantHoursResponse>(`/restaurants/${restaurantId}/hours`, request);
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['restaurant', restaurantId] });
+    },
+  });
+};
+
+// 메뉴 등록
+export const useCreateMenu = (restaurantId: number) => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (request: CreateMenuRequest) => {
+      const { data } = await apiClient.post<CreateMenuResponse>(`/restaurants/${restaurantId}/menus`, request);
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['restaurant', restaurantId, 'menus'] });
+      queryClient.invalidateQueries({ queryKey: ['restaurant', restaurantId] });
+    },
+  });
+};
+
+// 메뉴 수정
+export const useUpdateMenu = (restaurantId: number) => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ menuId, request }: { menuId: number; request: UpdateMenuRequest }) => {
+      const { data } = await apiClient.put<UpdateMenuResponse>(`/restaurants/${restaurantId}/menus/${menuId}`, request);
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['restaurant', restaurantId, 'menus'] });
+      queryClient.invalidateQueries({ queryKey: ['restaurant', restaurantId] });
+    },
+  });
+};
+
+// 메뉴 삭제
+export const useDeleteMenu = (restaurantId: number) => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (menuId: number) => {
+      const { data } = await apiClient.delete<DeleteMenuResponse>(`/restaurants/${restaurantId}/menus/${menuId}`);
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['restaurant', restaurantId, 'menus'] });
+      queryClient.invalidateQueries({ queryKey: ['restaurant', restaurantId] });
+    },
+  });
+};
+
+// 랜덤 메뉴 조회
+export const useRandomMenu = () => {
+  return useQuery({
+    queryKey: ['restaurants', 'menus', 'random'],
+    queryFn: async () => {
+      const { data } = await apiClient.get<RandomMenuResponse>('/restaurants/menus/random');
+      return data;
+    },
+    enabled: false, // 수동으로만 호출
   });
 };

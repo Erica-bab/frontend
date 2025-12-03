@@ -7,7 +7,8 @@ import Icon from '@/components/Icon';
 import { useRestaurantSearch } from '@/api/restaurants/useRestaurant';
 import { SearchResultItem } from '@/api/restaurants/types';
 import MapModal from '@/components/cafeteria/MapModal';
-import { formatDistance } from '@/utils/formatDistance';
+import { formatCategory } from '@/utils/formatCategory';
+
 
 interface SearchScreenProps {
   children?: React.ReactNode;
@@ -45,7 +46,7 @@ function SearchResultCard({ item }: { item: SearchResultItem }) {
           <View className="flex-1">
             <View className="flex-row items-center gap-2">
               <Text className="text-base font-semibold">{restaurant.name}</Text>
-              <Text className="text-xs text-gray-500">{restaurant.category}</Text>
+              <Text className="text-xs text-gray-500">{formatCategory(restaurant.category)}</Text>
             </View>
             <Text className="text-sm text-gray-500 mt-1">
               {restaurant.location.address}
@@ -138,8 +139,22 @@ export default function SearchScreen({ children, onFilterPress, isFilterApplied,
   const [currentLocation, setCurrentLocation] = useState({ latitude: 0, longitude: 0 });
   const [refreshing, setRefreshing] = useState(false);
   const locationUpdateIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const lastGeocodedLocationRef = useRef<{ latitude: number; longitude: number } | null>(null);
+  const geocodeErrorRef = useRef<boolean>(false);
   const appState = useRef(AppState.currentState);
   const STICKY_THRESHOLD = 30;
+  
+  // 두 좌표 간 거리 계산 (미터 단위)
+  const calculateDistanceBetweenCoords = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
+    const R = 6371000; // 지구 반경 (미터)
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+      Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
+  };
 
   const { data: searchData, isLoading: isSearching } = useRestaurantSearch({
     q: searchQuery,
@@ -149,7 +164,7 @@ export default function SearchScreen({ children, onFilterPress, isFilterApplied,
   });
 
   // 위치 업데이트 로직 (RefreshControl 트리거 없음)
-  const updateLocation = useCallback(async (showRefreshIndicator = false) => {
+  const updateLocation = useCallback(async (showRefreshIndicator = false, forceGeocode = false) => {
     if (showRefreshIndicator) {
       setRefreshing(true);
     }
@@ -163,65 +178,97 @@ export default function SearchScreen({ children, onFilterPress, isFilterApplied,
         };
         setCurrentLocation(coords);
 
-        const [address] = await Location.reverseGeocodeAsync({
-          latitude: coords.latitude,
-          longitude: coords.longitude,
-        });
+        // 위치가 충분히 변경되었는지 확인 (100미터 이상 이동했을 때만 geocode)
+        let shouldGeocode = forceGeocode || 
+          !lastGeocodedLocationRef.current ||
+          calculateDistanceBetweenCoords(
+            coords.latitude,
+            coords.longitude,
+            lastGeocodedLocationRef.current.latitude,
+            lastGeocodedLocationRef.current.longitude
+          ) > 100; // 100미터 이상 이동했을 때만
+        // rate limit 에러가 발생했으면 일정 시간 동안 geocode 호출 안함
+        if (geocodeErrorRef.current && !forceGeocode) {
+          shouldGeocode = false;
+        }
 
-        if (address) {
-          // 주소를 상세하게 표시
-          let addressText = '';
-          
-          if (address.formattedAddress) {
-            // formattedAddress 사용 시 중복 단어 제거
-            const parts = address.formattedAddress.split(' ');
-            const uniqueParts: string[] = [];
-            const seen = new Set<string>();
-            
-            for (const part of parts) {
-              // 공백 제거 후 중복 체크
-              const trimmedPart = part.trim();
-              if (trimmedPart && !seen.has(trimmedPart)) {
-                seen.add(trimmedPart);
-                uniqueParts.push(trimmedPart);
+        if (shouldGeocode && !geocodeErrorRef.current) {
+          try {
+            const [address] = await Location.reverseGeocodeAsync({
+              latitude: coords.latitude,
+              longitude: coords.longitude,
+            });
+
+            if (address) {
+              // 주소를 상세하게 표시
+              let addressText = '';
+              
+              if (address.formattedAddress) {
+                // formattedAddress 사용 시 중복 단어 제거
+                const parts = address.formattedAddress.split(' ');
+                const uniqueParts: string[] = [];
+                const seen = new Set<string>();
+                
+                for (const part of parts) {
+                  // 공백 제거 후 중복 체크
+                  const trimmedPart = part.trim();
+                  if (trimmedPart && !seen.has(trimmedPart)) {
+                    seen.add(trimmedPart);
+                    uniqueParts.push(trimmedPart);
+                  }
+                }
+                
+                addressText = uniqueParts.join(' ');
+              } else {
+                // formattedAddress가 없으면 수동으로 조합 (중복 제거)
+                const addressParts = [
+                  address.region,
+                  address.city,
+                  address.district,
+                  address.subregion,
+                  address.street,
+                  address.streetNumber
+                ].filter(Boolean);
+                
+                // 중복 제거
+                const uniqueParts: string[] = [];
+                const seen = new Set<string>();
+                
+                for (const part of addressParts) {
+                  if (part && !seen.has(part)) {
+                    seen.add(part);
+                    uniqueParts.push(part);
+                  }
+                }
+                
+                addressText = uniqueParts.join(' ');
               }
-            }
-            
-            addressText = uniqueParts.join(' ');
-          } else {
-            // formattedAddress가 없으면 수동으로 조합 (중복 제거)
-            const addressParts = [
-              address.region,
-              address.city,
-              address.district,
-              address.subregion,
-              address.street,
-              address.streetNumber
-            ].filter(Boolean);
-            
-            // 중복 제거
-            const uniqueParts: string[] = [];
-            const seen = new Set<string>();
-            
-            for (const part of addressParts) {
-              if (part && !seen.has(part)) {
-                seen.add(part);
-                uniqueParts.push(part);
+              
+              // 30글자 넘어가면 ... 으로 잘라서 표시
+              if (addressText.length > 30) {
+                addressText = addressText.substring(0, 30) + '...';
               }
+              
+              setLocationText(addressText || '현재위치');
+              lastGeocodedLocationRef.current = coords;
+              geocodeErrorRef.current = false; // 성공 시 에러 플래그 리셋
             }
-            
-            addressText = uniqueParts.join(' ');
+          } catch (geocodeError: any) {
+            // rate limit 에러 처리
+            if (geocodeError?.message?.includes('rate limit') || geocodeError?.message?.includes('too many requests')) {
+              console.warn('Geocoding rate limit exceeded. Skipping geocode for a while.');
+              geocodeErrorRef.current = true;
+              // 5분 후 다시 시도 가능하도록 설정
+              setTimeout(() => {
+                geocodeErrorRef.current = false;
+              }, 5 * 60 * 1000);
+            } else {
+              console.error('Failed to geocode location:', geocodeError);
+            }
           }
-          
-          // 30글자 넘어가면 ... 으로 잘라서 표시
-          if (addressText.length > 30) {
-            addressText = addressText.substring(0, 30) + '...';
-          }
-          
-          setLocationText(addressText || '현재위치');
         }
         
-        // 부모 컴포넌트에 위치 업데이트 알림
+        // 부모 컴포넌트에 위치 업데이트 알림 (geocode 실패 여부와 관계없이)
         onLocationUpdate?.({ lat: coords.latitude, lng: coords.longitude });
       }
     } catch (error) {
@@ -235,7 +282,7 @@ export default function SearchScreen({ children, onFilterPress, isFilterApplied,
 
   // Pull-to-refresh용 위치 새로고침 (RefreshControl 트리거)
   const refreshLocation = useCallback(async () => {
-    await updateLocation(true);
+    await updateLocation(true, true); // forceGeocode = true로 강제 geocode
   }, [updateLocation]);
 
   useEffect(() => {
@@ -246,11 +293,6 @@ export default function SearchScreen({ children, onFilterPress, isFilterApplied,
     locationUpdateIntervalRef.current = setInterval(() => {
       updateLocation(false);
     }, 60 * 1000); // 1분
-
-    // 5분마다 위치 자동 새로고침
-    locationUpdateIntervalRef.current = setInterval(() => {
-      refreshLocation();
-    }, 5 * 60 * 1000); // 5분 = 5 * 60 * 1000ms
 
     return () => {
       if (locationUpdateIntervalRef.current) {

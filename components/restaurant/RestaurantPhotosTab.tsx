@@ -3,6 +3,7 @@ import { RestaurantDetailResponse } from '@/api/restaurants/types';
 import { useRestaurantImages, useDeleteRestaurantImage } from '@/api/restaurants/useRestaurantImage';
 import { useAuth, useCurrentUser } from '@/api/auth/useAuth';
 import Icon from '@/components/Icon';
+import { getSafeErrorMessage } from '@/utils/errorHandler';
 
 interface RestaurantPhotosTabProps {
   restaurant: RestaurantDetailResponse;
@@ -61,7 +62,8 @@ export default function RestaurantPhotosTab({ restaurant, onShowLogin, onAddPhot
                 refetchImages();
               },
               onError: (error: any) => {
-                Alert.alert('오류', error?.response?.data?.detail || '사진 삭제에 실패했습니다.');
+                const message = getSafeErrorMessage(error, '사진 삭제에 실패했습니다.');
+                Alert.alert('오류', message);
               },
             });
           },

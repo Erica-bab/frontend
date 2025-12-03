@@ -4,7 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import * as Location from 'expo-location';
-import { useRestaurantDetail } from '@/api/restaurants/useRestaurant';
+import { useRestaurantDetail, useUpdateRestaurantOperatingStatus } from '@/api/restaurants/useRestaurant';
 import { useCreateComment } from '@/api/restaurants/useReviewComment';
 import { useAuth } from '@/api/auth/useAuth';
 import { useCheckBookmark, useToggleBookmark, useMyComments, useMyReplies } from '@/api/user/useUserActivity';
@@ -21,6 +21,7 @@ import NaverMapWebView from '@/components/NaverMapWebView';
 import Icon from '@/components/Icon';
 import { useRestaurantImages } from '@/api/restaurants/useRestaurantImage';
 import { calculateDistance } from '@/utils/calculateDistance';
+import { formatCategory } from '@/utils/formatCategory';
 
 type RestaurantTabType = 'home' | 'menu' | 'comments' | 'photos';
 
@@ -34,28 +35,8 @@ export default function RestaurantDetailScreen() {
   const { isAuthenticated, isLoading: isAuthLoading, refreshAuthState } = useAuth();
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
 
-  // 현재 위치 가져오기
-  useEffect(() => {
-    (async () => {
-      try {
-        const { status } = await Location.requestForegroundPermissionsAsync();
-        if (status === 'granted') {
-          const location = await Location.getCurrentPositionAsync({});
-          setUserLocation({
-            lat: location.coords.latitude,
-            lng: location.coords.longitude,
-          });
-        }
-      } catch (error) {
-        console.error('Failed to get location:', error);
-      }
-    })();
-  }, []);
-
-  const { data: restaurant, isLoading, error } = useRestaurantDetail(
-    Number(restaurantId),
-    userLocation ? { lat: userLocation.lat, lng: userLocation.lng } : undefined
-  );
+  const { data: restaurant, isLoading, error, refetch: refetchRestaurant } = useRestaurantDetail(Number(restaurantId));
+  const { mutate: updateOperatingStatus } = useUpdateRestaurantOperatingStatus();
   const { mutate: createComment, isPending: isCommentLoading } = useCreateComment(Number(restaurantId));
   const { refetch: refetchRestaurantImages } = useRestaurantImages(restaurant?.id || 0);
   const [showImageUploadModal, setShowImageUploadModal] = useState(false);
@@ -118,7 +99,8 @@ export default function RestaurantDetailScreen() {
     if (!restaurant) return;
     try {
       const shareUrl = `https://에리카밥.com/share/${restaurantId}`;
-      const shareMessage = `${restaurant.name} - ${restaurant.category}\n⭐ ${restaurant.rating.average.toFixed(1)}\n${restaurant.location.address || '위치 정보 없음'}\n\n${shareUrl}`;
+      const categoryText = restaurant.category ? formatCategory(restaurant.category) : '';
+      const shareMessage = `${restaurant.name}${categoryText ? ` - ${categoryText}` : ''}\n⭐ ${restaurant.rating.average.toFixed(1)}\n${restaurant.location.address || '위치 정보 없음'}\n\n${shareUrl}`;
 
       await Share.share({
         message: shareMessage,
@@ -132,7 +114,11 @@ export default function RestaurantDetailScreen() {
 
   // 수정 핸들러
   const handleEditPress = () => {
-    Alert.alert('알림', '준비중인 기능입니다.');
+    if (!isAuthenticated) {
+      (navigation.navigate as any)('Login', { onSuccess: refreshAuthState });
+      return;
+    }
+    navigation.navigate('RestaurantEdit', { restaurantId: Number(restaurantId) });
   };
 
   if (isLoading) {
@@ -176,7 +162,8 @@ export default function RestaurantDetailScreen() {
           <Icon name='leftAngle' size={20} />
         </Pressable>
 
-        <ScrollView>
+        {/* 공통 헤더 부분 */}
+        <View>
         <View className='h-64'>
           <NaverMapWebView
             latitude={restaurant.location.latitude ?? 0}
@@ -184,17 +171,22 @@ export default function RestaurantDetailScreen() {
             name={restaurant.name}
           />
         </View>
-        <View className="flex-1">
           <View>
             <View className="flex-row items-center m-4">
               <Text className="text-xl text-blue-500">{restaurant.name}</Text>
-              <Text className="text-lg ml-1">{restaurant.category}</Text>
+              {restaurant.category && formatCategory(restaurant.category) && (
+                <Text className="text-lg ml-1 text-gray-600">{formatCategory(restaurant.category)}</Text>
+              )}
             </View>
             <View className='ml-4 mb-4'>
               <RestaurantStatusTag
-                operatingStatus={restaurant.operating_status}
+                businessHours={restaurant.business_hours}
                 rating={restaurant.rating.average}
                 onRatingPress={() => setSelectedTab('comments')}
+                onStatusExpired={() => {
+                  // 운영 상태는 클라이언트에서 계산하므로 새로고침 불필요
+                  // 필요시 refetchRestaurant() 호출
+                }}
               />
             </View>
           </View>
@@ -259,38 +251,46 @@ export default function RestaurantDetailScreen() {
                 onBoxClass="border-b-2 border-[#2563EB] -pb-2"
               />
             </View>
+            </View>
           </View>
 
           {/* 탭 콘텐츠 조건부 렌더링 */}
-          {selectedTab === 'home' && (() => {
-            // 클라이언트에서 거리 계산
-            const distance = userLocation && restaurant.location.latitude && restaurant.location.longitude
-              ? calculateDistance(
-                  userLocation.lat,
-                  userLocation.lng,
-                  restaurant.location.latitude,
-                  restaurant.location.longitude
-                )
-              : null;
-
-            return <RestaurantHomeTab restaurant={restaurant} distance={distance} />;
-          })()}
-          {selectedTab === 'menu' && <RestaurantMenuTab restaurant={restaurant} />}
+        {selectedTab === 'comments' || selectedTab === 'photos' ? (
+          // 댓글 탭과 사진 탭은 자체 ScrollView를 가지고 있으므로 부모 ScrollView 없이 렌더링
+          <View className="flex-1">
           {selectedTab === 'comments' && (
             <RestaurantCommentsTab
               restaurant={restaurant}
               onShowLogin={() => (navigation.navigate as any)('Login', { onSuccess: refreshAuthState })}
             />
           )}
-          {selectedTab === 'photos' && (
-            <RestaurantPhotosTab
-              restaurant={restaurant}
-              onShowLogin={() => (navigation.navigate as any)('Login', { onSuccess: refreshAuthState })}
-              onAddPhotoPress={() => setShowImageUploadModal(true)}
-            />
-          )}
+            {selectedTab === 'photos' && (
+              <RestaurantPhotosTab
+                restaurant={restaurant}
+                onShowLogin={() => (navigation.navigate as any)('Login', { onSuccess: refreshAuthState })}
+                onAddPhotoPress={() => setShowImageUploadModal(true)}
+              />
+            )}
         </View>
+        ) : (
+          // 홈 탭과 메뉴 탭은 ScrollView로 감싸서 스크롤 가능하게 함
+          <ScrollView className="flex-1">
+            {selectedTab === 'home' && (() => {
+              // 클라이언트에서 거리 계산
+              const distance = userLocation && restaurant.location.latitude && restaurant.location.longitude
+                ? calculateDistance(
+                    userLocation.lat,
+                    userLocation.lng,
+                    restaurant.location.latitude,
+                    restaurant.location.longitude
+                  )
+                : null;
+
+              return <RestaurantHomeTab restaurant={restaurant} distance={distance} />;
+            })()}
+            {selectedTab === 'menu' && <RestaurantMenuTab restaurant={restaurant} />}
       </ScrollView>
+        )}
 
       {/* 댓글 입력창 - 하단 고정 */}
       {selectedTab === 'comments' && (

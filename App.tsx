@@ -13,6 +13,7 @@ import ProfileScreen from './screens/ProfileScreen';
 import FilterScreen from './screens/FilterScreen';
 import LoginScreen from './screens/LoginScreen';
 import RestaurantDetailScreen from './screens/RestaurantDetailScreen';
+import RestaurantEditScreen from './screens/RestaurantEditScreen';
 import CommentDetailScreen from './screens/CommentsDetailScreen';
 import BookmarkScreen from './screens/BookmarkScreen';
 import AddInfoScreen from './screens/AddInfo';
@@ -122,6 +123,13 @@ export default function App() {
                 <Stack.Screen
                   name="RestaurantDetail"
                   component={RestaurantDetailScreen}
+                  options={{
+                    headerShown: false,
+                  }}
+                />
+                <Stack.Screen
+                  name="RestaurantEdit"
+                  component={RestaurantEditScreen}
                   options={{
                     headerShown: false,
                   }}

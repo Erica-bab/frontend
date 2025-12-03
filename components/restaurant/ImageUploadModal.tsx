@@ -7,6 +7,7 @@ import { useUploadRestaurantImage } from '@/api/restaurants/useRestaurantImage';
 import { useAuth } from '@/api/auth/useAuth';
 import Button from '@/components/ui/Button';
 import Icon from '@/components/Icon';
+import { getSafeErrorMessage } from '@/utils/errorHandler';
 
 interface ImageUploadModalProps {
   restaurantId: number;
@@ -126,10 +127,8 @@ export default function ImageUploadModal({
           console.error('Upload error:', error);
           console.error('Error response:', error?.response);
           console.error('Error data:', error?.response?.data);
-          Alert.alert(
-            '오류', 
-            error?.response?.data?.detail || error?.response?.data?.message || error?.message || '사진 업로드에 실패했습니다.'
-          );
+          const message = getSafeErrorMessage(error, '사진 업로드에 실패했습니다.');
+          Alert.alert('오류', message);
         },
       }
     );

@@ -6,6 +6,7 @@ import { useNavigation } from '@react-navigation/native';
 import Button from "@/components/ui/Button";
 import { useCurrentUser, useUpdateUser } from '@/api/auth/useAuth';
 import { OptionBtn } from '@/components/filter/OptionButton';
+import { getSafeErrorMessage } from '@/utils/errorHandler';
 
 // FilterScreen에서 가져온 단과대 목록
 const COLLEGES = ['공학대학', '소프트웨어융합대학', '약학대학', '첨단융합대학', '글로벌문화통상대학', '커뮤니케이션&컬쳐대학', '경상대학', '디자인대학', '예체능대학', 'LIONS칼리지'];
@@ -92,7 +93,8 @@ export default function AddInfo() {
           },
           onError: (error: any) => {
             console.error('정보 업데이트 실패:', error);
-            Alert.alert('오류', error?.response?.data?.detail || '정보 저장에 실패했습니다.');
+            const message = getSafeErrorMessage(error, '정보 저장에 실패했습니다.');
+            Alert.alert('오류', message);
           },
         }
       );
@@ -113,7 +115,8 @@ export default function AddInfo() {
           },
           onError: (error: any) => {
             console.error('정보 업데이트 실패:', error);
-            Alert.alert('오류', error?.response?.data?.detail || '정보 저장에 실패했습니다.');
+            const message = getSafeErrorMessage(error, '정보 저장에 실패했습니다.');
+            Alert.alert('오류', message);
           },
         }
       );

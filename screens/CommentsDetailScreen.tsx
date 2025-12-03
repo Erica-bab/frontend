@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { View, Text, Pressable, ScrollView, KeyboardAvoidingView, Platform, Alert } from 'react-native';
+import { useState, useCallback } from 'react';
+import { View, Text, Pressable, ScrollView, KeyboardAvoidingView, Platform, Alert, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -12,6 +12,7 @@ import Icon from '@/components/Icon';
 import CommentItem from '@/components/restaurant/CommentItem';
 import ReplyItem from '@/components/restaurant/ReplyItem';
 import CommentInput from '@/components/restaurant/CommentInput';
+import { getSafeErrorMessage } from '@/utils/errorHandler';
 
 export default function CommentDetailScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<any>>();
@@ -24,6 +25,9 @@ export default function CommentDetailScreen() {
   // 댓글 목록 조회
   const { data: commentsData, isLoading: isCommentsLoading, refetch: refetchComments } = useComments(restaurantId || 0);
   
+  // Pull-to-refresh 상태
+  const [refreshing, setRefreshing] = useState(false);
+  
   // 인증된 경우에만 좋아요한 댓글 목록 조회 (limit 최대값 100)
   const { refetch: refetchLikedComments } = useLikedComments(1, 100, isAuthenticated === true);
   const { refetch: refetchMyComments } = useMyComments(1, 100, isAuthenticated === true);
@@ -34,7 +38,10 @@ export default function CommentDetailScreen() {
   // 원댓글과 대댓글 찾기
   const comment = commentsData?.comments.find(c => c.id === commentId);
   // 백엔드는 원댓글의 replies 배열에 대댓글을 포함시켜 반환함
-  const replies = (comment?.replies || []).filter(reply => reply && reply.user);
+  // 대댓글을 오래된 순(오름차순)으로 정렬
+  const replies = (comment?.replies || [])
+    .filter(reply => reply && reply.user)
+    .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
 
   const { mutate: createComment, isPending: isCreatingReply } = useCreateComment(restaurantId || 0);
   const { mutate: deleteComment } = useDeleteComment(restaurantId || 0);
@@ -70,7 +77,8 @@ export default function CommentDetailScreen() {
           }
         },
         onError: (error: any) => {
-          Alert.alert('오류', error?.response?.data?.detail || '답글 작성에 실패했습니다.');
+          const message = getSafeErrorMessage(error, '답글 작성에 실패했습니다.');
+          Alert.alert('오류', message);
         },
       }
     );
@@ -94,10 +102,28 @@ export default function CommentDetailScreen() {
         }
       },
       onError: (error: any) => {
-        Alert.alert('오류', error?.response?.data?.detail || '댓글 삭제에 실패했습니다.');
+        const message = getSafeErrorMessage(error, '댓글 삭제에 실패했습니다.');
+        Alert.alert('오류', message);
       },
     });
   };
+
+  // Pull-to-refresh 핸들러
+  const handleRefresh = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      await refetchComments();
+      if (isAuthenticated) {
+        await Promise.all([
+          refetchLikedComments(),
+          refetchMyComments(),
+          refetchMyReplies(),
+        ]);
+      }
+    } finally {
+      setRefreshing(false);
+    }
+  }, [refetchComments, refetchLikedComments, refetchMyComments, refetchMyReplies, isAuthenticated]);
 
   return (
     <SafeAreaView className="flex-1 bg-white" edges={['top', 'bottom']}>
@@ -115,7 +141,15 @@ export default function CommentDetailScreen() {
           <View style={{ width: 24 }} />
         </View>
 
-        <ScrollView className="flex-1">
+        <ScrollView 
+          className="flex-1"
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={handleRefresh}
+            />
+          }
+        >
           {isCommentsLoading ? (
             <View className="p-8 items-center">
               <Text className="text-gray-500">댓글 불러오는 중...</Text>

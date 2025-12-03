@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { View, Text, ActivityIndicator } from 'react-native';
+import { useState, useEffect, useCallback } from 'react';
+import { View, Text, ActivityIndicator, ScrollView, RefreshControl } from 'react-native';
 import { RestaurantDetailResponse } from '@/api/restaurants/types';
 import {
   useComments,
@@ -20,7 +20,7 @@ interface RestaurantCommentsTabProps {
 
 export default function RestaurantCommentsTab({ restaurant, onShowLogin }: RestaurantCommentsTabProps) {
   const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
-  const { data: commentsData, isLoading: isCommentsLoading } = useComments(restaurant.id);
+  const { data: commentsData, isLoading: isCommentsLoading, refetch: refetchComments } = useComments(restaurant.id);
   const { mutate: createOrUpdateRating, isPending: isRatingLoading } = useCreateOrUpdateRating(restaurant.id);
   const { refetch: refetchLikedComments } = useLikedComments(1, 100, isAuthenticated === true);
   const { refetch: refetchMyComments } = useMyComments(1, 100, isAuthenticated === true);
@@ -31,6 +31,9 @@ export default function RestaurantCommentsTab({ restaurant, onShowLogin }: Resta
 
   // 옵티미스틱 업데이트를 위한 로컬 상태
   const [optimisticRating, setOptimisticRating] = useState<number>(0);
+  
+  // Pull-to-refresh 상태
+  const [refreshing, setRefreshing] = useState(false);
 
   // 서버에서 받은 별점으로 로컬 상태 동기화
   useEffect(() => {
@@ -65,6 +68,24 @@ export default function RestaurantCommentsTab({ restaurant, onShowLogin }: Resta
     );
   };
 
+  // Pull-to-refresh 핸들러
+  const handleRefresh = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      await refetchComments();
+      await refetchRatingStats();
+      if (isAuthenticated) {
+        await Promise.all([
+          refetchLikedComments(),
+          refetchMyComments(),
+          refetchMyReplies(),
+        ]);
+      }
+    } finally {
+      setRefreshing(false);
+    }
+  }, [refetchComments, refetchRatingStats, refetchLikedComments, refetchMyComments, refetchMyReplies, isAuthenticated]);
+
   const comments = commentsData?.comments ?? [];
 
   return (
@@ -82,7 +103,15 @@ export default function RestaurantCommentsTab({ restaurant, onShowLogin }: Resta
       </View>
 
       {/* 댓글 목록 */}
-      <View>
+      <ScrollView
+        className="flex-1"
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={handleRefresh}
+          />
+        }
+      >
         {isCommentsLoading ? (
           <View className="p-8 items-center">
             <ActivityIndicator size="large" color="#3B82F6" />
@@ -106,7 +135,7 @@ export default function RestaurantCommentsTab({ restaurant, onShowLogin }: Resta
             />
           ))
         )}
-      </View>
+      </ScrollView>
     </View>
   );
 }
