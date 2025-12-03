@@ -92,6 +92,31 @@ export default function App() {
         AddInfo: 'addinfo',
       },
     },
+    getStateFromPath(path, options) {
+      // share/:restaurantId 패턴을 RestaurantDetail로 매핑
+      const shareMatch = path.match(/^share\/(\d+)$/);
+      if (shareMatch) {
+        const restaurantId = shareMatch[1];
+        return {
+          routes: [
+            {
+              name: 'Main',
+              state: {
+                routes: [{ name: 'Restaurant' }],
+                index: 0,
+              },
+            },
+            {
+              name: 'RestaurantDetail',
+              params: { restaurantId },
+            },
+          ],
+          index: 1,
+        };
+      }
+      // 기본 파싱을 위해 undefined 반환 (React Navigation이 자동으로 처리)
+      return undefined;
+    },
   };
 
   return (
