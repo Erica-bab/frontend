@@ -608,7 +608,7 @@ export default function RestaurantEditScreen() {
               <Text className="text-white font-medium">+ 제휴 추가</Text>
             </Pressable>
             
-            {/* 제휴 목록 */}
+            {/* 제휴 */}
             {affiliations.map((affiliation) => (
               <View key={affiliation.college_id} className="border border-gray-300 rounded-lg p-4 mb-3">
                 <View className="flex-row justify-between items-start">

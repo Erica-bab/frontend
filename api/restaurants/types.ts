@@ -58,6 +58,7 @@ export interface CollegeAffiliation {
   college_id: number;
   college_name: string;
   year: number;
+  description?: string | null;
 }
 
 export interface PopularMenu {
