@@ -89,7 +89,7 @@ export default function RestaurantCommentsTab({ restaurant, onShowLogin }: Resta
   const comments = commentsData?.comments ?? [];
 
   return (
-    <View className='flex-1'>
+    <View>
       {/* 별점 섹션 */}
       <View className="p-4 border-b border-gray-200 items-center">
         <StarRating rating={optimisticRating} onRate={handleRating} isLoading={isRatingLoading} />
@@ -103,39 +103,29 @@ export default function RestaurantCommentsTab({ restaurant, onShowLogin }: Resta
       </View>
 
       {/* 댓글 목록 */}
-      <ScrollView
-        className="flex-1"
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={handleRefresh}
+      {isCommentsLoading ? (
+        <View className="p-8 items-center">
+          <ActivityIndicator size="large" color="#3B82F6" />
+          <Text className="text-gray-500 mt-2">댓글 불러오는 중...</Text>
+        </View>
+      ) : comments.length === 0 ? (
+        <View className="p-8 items-center">
+          <Text className="text-gray-500">아직 댓글이 없습니다</Text>
+        </View>
+      ) : (
+        comments.map((comment) => (
+          <CommentItem
+            key={comment.id}
+            comment={comment}
+            restaurantId={restaurant.id}
+            likedCommentIds={likedCommentIds}
+            myCommentIds={myCommentIds}
+            onLikeToggle={refetchLikedComments}
+            onShowLogin={onShowLogin}
+            showReplyButton
           />
-        }
-      >
-        {isCommentsLoading ? (
-          <View className="p-8 items-center">
-            <ActivityIndicator size="large" color="#3B82F6" />
-            <Text className="text-gray-500 mt-2">댓글 불러오는 중...</Text>
-          </View>
-        ) : comments.length === 0 ? (
-          <View className="p-8 items-center">
-            <Text className="text-gray-500">아직 댓글이 없습니다</Text>
-          </View>
-        ) : (
-          comments.map((comment) => (
-            <CommentItem
-              key={comment.id}
-              comment={comment}
-              restaurantId={restaurant.id}
-              likedCommentIds={likedCommentIds}
-              myCommentIds={myCommentIds}
-              onLikeToggle={refetchLikedComments}
-              onShowLogin={onShowLogin}
-              showReplyButton
-            />
-          ))
-        )}
-      </ScrollView>
+        ))
+      )}
     </View>
   );
 }

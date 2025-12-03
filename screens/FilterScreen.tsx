@@ -349,8 +349,23 @@ export default function FilterScreen() {
               ))}
             </View>
 
-            {/* 하단 버튼 - 스크롤뷰 안에 포함 */}
-            <View style={[styles.buttonContainer, { paddingBottom: insets.bottom + 16 }]}>
+            {/* 하단 여백 (버튼 공간 확보) */}
+            <View style={{ height: 80 + insets.bottom }} />
+          </BottomSheetScrollView>
+
+          {/* 하단 버튼 - 고정 */}
+          <View 
+            style={[
+              styles.buttonContainer, 
+              { 
+                paddingBottom: insets.bottom + 16,
+                paddingTop: 16,
+                backgroundColor: 'white',
+                borderTopWidth: 1,
+                borderTopColor: '#e5e7eb',
+              }
+            ]}
+          >
             <Button variant="secondary" onPress={handleReset} className="flex-1">
               초기화
             </Button>
@@ -358,7 +373,6 @@ export default function FilterScreen() {
               적용
             </Button>
           </View>
-        </BottomSheetScrollView>
     </View>
     </BottomSheet>
   );
