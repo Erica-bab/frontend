@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { Platform } from 'react-native';
 import { apiClient } from '../client';
 import * as FileSystem from 'expo-file-system/legacy';
 
@@ -75,9 +76,20 @@ export const useUploadRestaurantImage = (restaurantId: number) => {
       };
       const type = mimeTypeMap[extension] || 'image/jpeg';
 
+      // Android에서 file:// URI 문제 해결을 위해 실제 파일 경로 사용
+      // iOS는 file:// URI를 그대로 사용 가능하지만, Android는 content:// 또는 실제 경로 필요
+      let finalUri = imageUri;
+      
+      // Android에서 file:// URI인 경우 content:// URI로 변환 시도
+      if (imageUri.startsWith('file://')) {
+        // file:// URI를 그대로 사용하되, Android에서는 절대 경로로 변환
+        finalUri = imageUri.replace('file://', '');
+      }
+
       // React Native FormData 형식으로 파일 추가
+      // Android에서는 uri를 절대 경로로 사용
       formData.append('image', {
-        uri: imageUri,
+        uri: Platform.OS === 'android' ? finalUri : imageUri,
         type: type,
         name: filename,
       } as any);
@@ -87,9 +99,11 @@ export const useUploadRestaurantImage = (restaurantId: number) => {
 
       console.log('Upload FormData:', {
         imageUri,
+        finalUri,
         filename,
         type,
         displayOrder,
+        platform: Platform.OS,
       });
 
       // multipart/form-data로 업로드

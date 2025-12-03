@@ -48,6 +48,15 @@ export default {
       versionCode: 6,
       edgeToEdgeEnabled: true,
       predictiveBackGestureEnabled: false,
+      permissions: [
+        "INTERNET",
+        "CAMERA",
+        "READ_EXTERNAL_STORAGE",
+        "READ_MEDIA_IMAGES",
+        "WRITE_EXTERNAL_STORAGE",
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION"
+      ],
       config: {
         googleMaps: {
           apiKey: process.env.GOOGLE_MAPS_API_KEY
@@ -61,12 +70,6 @@ export default {
     plugins: [
       "expo-router",
       "expo-web-browser",
-      [
-        "react-native-maps",
-        {
-          googleMapsApiKey: process.env.GOOGLE_MAPS_API_KEY
-        }
-      ],
       "expo-apple-authentication",
       [
         "expo-location",
