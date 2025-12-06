@@ -155,17 +155,20 @@ export default function CafeteriaHeader({
               : 0;
             
             return (
-              <View key={locationCode} className="items-center">
-                <TextIconButton
-                  isOn={selectedLocation === locationCode}
-                  onPress={() => onChangeLocation(locationCode)}
-                  text={locationNames[locationCode]}
-                  {...TabClasses}
-                />
+              <Pressable
+                key={locationCode}
+                onPress={() => onChangeLocation(locationCode)}
+                className={`flex-row items-center ${TabClasses.baseBoxClass} ${selectedLocation === locationCode ? TabClasses.onBoxClass : ''}`}
+              >
+                <Text className={selectedLocation === locationCode ? TabClasses.onTextClass : TabClasses.offTextClass}>
+                  {locationNames[locationCode]}
+                </Text>
                 {menuCount > 0 && (
-                  <Text className="text-xs text-gray-400 mt-[-4px]">{menuCount}</Text>
+                  <Text className={`text-xs ml-1 ${selectedLocation === locationCode ? 'text-blue-400' : 'text-gray-400'}`}>
+                    {menuCount}
+                  </Text>
                 )}
-              </View>
+              </Pressable>
             );
           })}
         </View>
@@ -180,17 +183,20 @@ export default function CafeteriaHeader({
             }, 0) || 0;
             
             return (
-              <View key={mealType} className="items-center">
-                <TextIconButton
-                  isOn={selectedTime === mealType}
-                  onPress={() => onChangeTime(mealType)}
-                  text={mealType}
-                  {...TabClasses}
-                />
+              <Pressable
+                key={mealType}
+                onPress={() => onChangeTime(mealType)}
+                className={`flex-row items-center ${TabClasses.baseBoxClass} ${selectedTime === mealType ? TabClasses.onBoxClass : ''}`}
+              >
+                <Text className={selectedTime === mealType ? TabClasses.onTextClass : TabClasses.offTextClass}>
+                  {mealType}
+                </Text>
                 {menuCount > 0 && (
-                  <Text className="text-xs text-gray-400 mt-[-4px]">{menuCount}</Text>
+                  <Text className={`text-xs ml-1 ${selectedTime === mealType ? 'text-blue-400' : 'text-gray-400'}`}>
+                    {menuCount}
+                  </Text>
                 )}
-              </View>
+              </Pressable>
             );
           })}
         </View>
