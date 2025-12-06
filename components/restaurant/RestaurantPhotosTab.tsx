@@ -17,11 +17,9 @@ interface RestaurantPhotosTabProps {
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const IMAGE_GAP = 4;
 const IMAGES_PER_ROW = 3;
-// ScrollView의 padding (IMAGE_GAP) + 각 이미지의 좌우 margin (IMAGE_GAP / 2 * 2) + 이미지 간 gap (IMAGE_GAP * (IMAGES_PER_ROW - 1))
-// 총 좌우 여백: IMAGE_GAP * 2 (padding) + IMAGE_GAP * 2 (margin) = IMAGE_GAP * 4
-// 이미지 간 간격: IMAGE_GAP * (IMAGES_PER_ROW - 1) = IMAGE_GAP * 2
-// 따라서: (SCREEN_WIDTH - IMAGE_GAP * 4 - IMAGE_GAP * 2) / IMAGES_PER_ROW
-const IMAGE_SIZE = (SCREEN_WIDTH - IMAGE_GAP * 6) / IMAGES_PER_ROW;
+// ScrollView의 좌우 padding (IMAGE_GAP * 2) + 이미지 간 간격 (IMAGE_GAP * (IMAGES_PER_ROW - 1))
+// 따라서: (SCREEN_WIDTH - IMAGE_GAP * 2 - IMAGE_GAP * (IMAGES_PER_ROW - 1)) / IMAGES_PER_ROW
+const IMAGE_SIZE = (SCREEN_WIDTH - IMAGE_GAP * 2 - IMAGE_GAP * (IMAGES_PER_ROW - 1)) / IMAGES_PER_ROW;
 
 export default function RestaurantPhotosTab({ restaurant, onShowLogin, onAddPhotoPress }: RestaurantPhotosTabProps) {
   const { isAuthenticated } = useAuth();
@@ -134,7 +132,9 @@ export default function RestaurantPhotosTab({ restaurant, onShowLogin, onAddPhot
 
       <ScrollView
         contentContainerStyle={{ 
-          padding: IMAGE_GAP,
+          paddingHorizontal: IMAGE_GAP,
+          paddingTop: IMAGE_GAP,
+          paddingBottom: IMAGE_GAP,
           flexDirection: 'row',
           flexWrap: 'wrap',
         }}
@@ -145,7 +145,8 @@ export default function RestaurantPhotosTab({ restaurant, onShowLogin, onAddPhot
             style={{
               width: IMAGE_SIZE,
               height: IMAGE_SIZE,
-              margin: IMAGE_GAP / 2,
+              marginRight: IMAGE_GAP,
+              marginBottom: IMAGE_GAP,
             }}
             className="relative rounded-lg overflow-hidden bg-gray-200"
           >
