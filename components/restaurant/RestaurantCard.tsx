@@ -1,4 +1,4 @@
-import { View, Text, Pressable } from 'react-native';
+import { View, Text, Pressable, Dimensions } from 'react-native';
 import Card from '@/components/ui/Card';
 import RestaurantStatusTag from '@/components/ui/RestaurantStatusTag';
 import Icon from '@/components/Icon';
@@ -9,6 +9,15 @@ import { formatDistance } from '@/utils/formatDistance';
 import { formatCategory } from '@/utils/formatCategory';
 import { resolveImageUri, getRandomThumbnails } from '@/utils/image';
 import LazyImage from '@/components/ui/LazyImage';
+
+const SCREEN_WIDTH = Dimensions.get('window').width;
+const IMAGE_GAP = 8; // gap-2 = 8px
+const IMAGES_PER_ROW = 3;
+// 기존 높이 계산: (화면 너비 - 좌우 패딩 - gap) / 3 * (5/4)
+const CARD_PADDING = 16; // Card의 기본 패딩
+const IMAGE_CONTAINER_WIDTH = SCREEN_WIDTH - CARD_PADDING * 2;
+const SINGLE_IMAGE_WIDTH = (IMAGE_CONTAINER_WIDTH - IMAGE_GAP * (IMAGES_PER_ROW - 1)) / IMAGES_PER_ROW;
+const FIXED_IMAGE_HEIGHT = SINGLE_IMAGE_WIDTH * (5 / 4); // aspectRatio 4/5
 
 interface RestaurantCardProps {
   name: string;
@@ -93,10 +102,10 @@ export default function RestaurantCard({ name, category, operatingStatus, busine
       <Pressable
         onPress={() => navigation.navigate('RestaurantDetail', { restaurantId, initialTab: 'photos' })}
       >
-        <View className="flex-row gap-2 bg-gray-100 mb-2">
+        <View className="flex-row gap-2 bg-gray-100 mb-2" style={{ height: FIXED_IMAGE_HEIGHT }}>
           {displayThumbnails.length === 0 ? (
             // 이미지가 없을 때: 전체 영역 하나로 합쳐서 메시지 표시
-            <View className="flex-1 rounded-lg bg-gray-200 items-center justify-center" style={{ aspectRatio: 4/5 }}>
+            <View className="flex-1 rounded-lg bg-gray-200 items-center justify-center">
               <Icon name="camera" width={32} height={32} color="#9CA3AF" />
               <Text className="text-gray-500 text-sm mt-2 text-center px-4">
                 여기를 눌러 식당 사진을 추가해주세요
@@ -104,7 +113,7 @@ export default function RestaurantCard({ name, category, operatingStatus, busine
             </View>
           ) : displayThumbnails.length === 1 ? (
             // 이미지가 1개일 때: 1개로 전체 영역 차지
-            <View className="flex-1 rounded-lg overflow-hidden relative" style={{ aspectRatio: 4/5 }}>
+            <View className="flex-1 rounded-lg overflow-hidden relative">
               <LazyImage
                 source={{ uri: displayThumbnails[0] }}
                 style={{ width: '100%', height: '100%' }}
@@ -115,7 +124,7 @@ export default function RestaurantCard({ name, category, operatingStatus, busine
           ) : displayThumbnails.length === 2 ? (
             // 이미지가 2개일 때: 2개로 전체 영역 차지
             displayThumbnails.map((url, index) => (
-              <View key={index} className="flex-1 rounded-lg overflow-hidden relative" style={{ aspectRatio: 4/5 }}>
+              <View key={index} className="flex-1 rounded-lg overflow-hidden relative">
                 <LazyImage
                   source={{ uri: url }}
                   style={{ width: '100%', height: '100%' }}
@@ -127,7 +136,7 @@ export default function RestaurantCard({ name, category, operatingStatus, busine
           ) : (
             // 이미지가 3개 이상일 때: 기존처럼 3개 표시
             displayThumbnails.slice(0, 3).map((url, index) => (
-              <View key={index} className="flex-1 rounded-lg overflow-hidden relative" style={{ aspectRatio: 4/5 }}>
+              <View key={index} className="flex-1 rounded-lg overflow-hidden relative">
                 <LazyImage
                   source={{ uri: url }}
                   style={{ width: '100%', height: '100%' }}
