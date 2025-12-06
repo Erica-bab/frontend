@@ -123,7 +123,7 @@ export default function RestaurantCard({ name, category, operatingStatus, busine
             </Text>
           </Pressable>
         ) : displayThumbnails.length === 1 ? (
-          // 이미지가 1개일 때: 1개로 전체 영역 차지 (가운데 정렬)
+          // 이미지가 1개일 때: 1개로 전체 영역 차지 (가로 최대, 세로 가운데 정렬)
           <Pressable
             onPress={() => navigation.navigate('RestaurantDetail', { restaurantId, initialTab: 'photos' })}
             className="flex-1 rounded-lg overflow-hidden relative"
@@ -131,12 +131,12 @@ export default function RestaurantCard({ name, category, operatingStatus, busine
             <LazyImage
               source={{ uri: displayThumbnails[0] }}
               style={{ width: '100%', height: '100%' }}
-              resizeMode="center"
+              resizeMode="cover"
               threshold={200}
             />
           </Pressable>
         ) : displayThumbnails.length === 2 ? (
-          // 이미지가 2개일 때: 2개로 전체 영역 차지 (가운데 정렬)
+          // 이미지가 2개일 때: 2개로 전체 영역 차지 (가로 최대, 세로 가운데 정렬)
           displayThumbnails.map((url, index) => (
             <Pressable
               key={index}
@@ -146,7 +146,7 @@ export default function RestaurantCard({ name, category, operatingStatus, busine
               <LazyImage
                 source={{ uri: url }}
                 style={{ width: '100%', height: '100%' }}
-                resizeMode="center"
+                resizeMode="cover"
                 threshold={200}
               />
             </Pressable>
