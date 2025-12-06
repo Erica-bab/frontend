@@ -22,7 +22,13 @@ export default function FilterScreen() {
   const navigation = useNavigation<any>();
   const route = useRoute();
   const insets = useSafeAreaInsets();
-  const { onApply } = route.params as { onApply?: (params: RestaurantListParams) => void } || {};
+  const { onApply, currentFilter } = route.params as { 
+    onApply?: (params: RestaurantListParams) => void;
+    currentFilter?: {
+      filterParams?: any;
+      operatingTimeFilter?: { dayOfWeek?: string; hour?: string; minute?: string } | null;
+    };
+  } || {};
 
   const snapPoints = useMemo(() => ['85%', '95%'], []);
   const [operatingTimeMode, setOperatingTimeMode] = useState<'none' | 'operating' | 'manual'>('none');
@@ -60,6 +66,28 @@ export default function FilterScreen() {
         const savedFilter = await AsyncStorage.getItem('restaurantFilter');
         if (savedFilter) {
           const filter = JSON.parse(savedFilter);
+          
+          // 현재 적용된 필터 상태 확인
+          const hasCurrentFilter = currentFilter && (
+            (currentFilter.filterParams && Object.keys(currentFilter.filterParams).length > 0) ||
+            currentFilter.operatingTimeFilter !== null
+          );
+          
+          // 실제로 필터가 적용되지 않았는데 스토리지에 필터가 있으면 스토리지 초기화
+          if (!hasCurrentFilter) {
+            // 스토리지 초기화
+            await AsyncStorage.removeItem('restaurantFilter');
+            // UI도 초기화
+            setOperatingTimeMode('none');
+            setSelectedDay(undefined);
+            setSelectedHour(undefined);
+            setSelectedMin(undefined);
+            setSelectedFoodTypes([]);
+            setSelectedAffiliates([]);
+            setSelectedRestaurantTypes([]);
+            return;
+          }
+          
           const savedMode = filter.operatingTimeMode || 'none';
           
           // operatingTimeMode가 'operating'인데 시간 정보가 없으면 'none'으로 초기화
@@ -84,7 +112,7 @@ export default function FilterScreen() {
       }
     };
     loadSavedFilter();
-  }, []);
+  }, [currentFilter]);
 
   // 시간 선택 시 분 드롭다운 활성화
   useEffect(() => {

@@ -104,6 +104,11 @@ export default function RestuarantScreen() {
 
     const handleFilterPress = () => {
         navigation.navigate('Filter', {
+            // 현재 적용된 필터 상태 전달 (스토리지와 동기화 확인용)
+            currentFilter: {
+                filterParams,
+                operatingTimeFilter,
+            },
             onApply: (params: RestaurantListParams) => {
                 // sort, lat, lng, is_open_only, day_of_week, time 제거하고 필터 파라미터만 추출
                 // 운영시간 필터는 로컬에서 처리하므로 서버 파라미터에서 제외
@@ -123,14 +128,17 @@ export default function RestuarantScreen() {
                 }
                 
                 // 필터가 비어있는지 확인 (모든 값이 없거나 빈 배열/문자열인지)
-                const hasFilter = Object.keys(filterOnly).length > 0 && 
+                const hasOtherFilters = Object.keys(filterOnly).length > 0 && 
                     Object.values(filterOnly).some(value => {
                         if (Array.isArray(value)) return value.length > 0;
                         if (typeof value === 'string') return value.length > 0;
                         return value !== undefined && value !== null;
                     });
                 
-                if (hasFilter) {
+                const hasOperatingTimeFilter = !!day_of_week;
+                const hasAnyFilter = hasOtherFilters || hasOperatingTimeFilter;
+                
+                if (hasAnyFilter) {
                     // 필터가 있으면 병합
                     setFilterParams(prev => ({
                         ...prev,
@@ -139,6 +147,11 @@ export default function RestuarantScreen() {
                 } else {
                     // 필터가 없으면 완전히 초기화
                     setFilterParams({});
+                    setOperatingTimeFilter(null);
+                    // 스토리지도 함께 초기화
+                    AsyncStorage.removeItem('restaurantFilter').catch(error => {
+                        console.error('Failed to remove filter from storage:', error);
+                    });
                 }
             },
         });
