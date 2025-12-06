@@ -202,11 +202,6 @@ export default function FilterScreen() {
   const showResetButton = hasSelectedFilter || hasAppliedFilter;
 
   const handleApply = async () => {
-    // 필터가 선택되지 않았으면 적용 불가
-    if (!hasSelectedFilter) {
-      return;
-    }
-
     // 운영중 모드인 경우 현재 시간으로 업데이트
     let finalDay = selectedDay;
     let finalHour = selectedHour;
@@ -233,6 +228,20 @@ export default function FilterScreen() {
       if (finalDay && finalHour && !finalMin) {
         finalMin = '00';
       }
+    }
+
+    // 필터가 선택되지 않았을 때는 스토리지 삭제
+    if (!hasSelectedFilter) {
+      try {
+        await AsyncStorage.removeItem('restaurantFilter');
+      } catch (error) {
+        console.error('Failed to remove filter:', error);
+      }
+      
+      // 빈 params로 onApply 호출하여 필터 해제
+      onApply?.({});
+      goBack();
+      return;
     }
 
     // 필터 저장
