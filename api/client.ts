@@ -53,12 +53,12 @@ apiClient.interceptors.request.use(
 
         // 개발 환경에서만 요청 로그 출력
         if (__DEV__) {
-            console.log('API Request:', {
-                url: config.url,
-                method: config.method,
-                data: config.data instanceof FormData ? '[FormData]' : config.data,
-                headers: config.headers,
-            });
+        console.log('API Request:', {
+            url: config.url,
+            method: config.method,
+            data: config.data instanceof FormData ? '[FormData]' : config.data,
+            headers: config.headers,
+        });
         }
 
         return config;
@@ -73,23 +73,23 @@ apiClient.interceptors.response.use(
     (response: any) => {
         // 개발 환경에서만 응답 로그 출력
         if (__DEV__) {
-            console.log('API Response:', {
-                url: response.config.url,
-                status: response.status,
-                data: response.data,
-            });
+        console.log('API Response:', {
+            url: response.config.url,
+            status: response.status,
+            data: response.data,
+        });
         }
         return response;
     },
     async (error: any) => {
         // 개발 환경에서만 에러 로그 출력 (에러는 항상 로깅하는 것이 좋지만, 프로덕션에서는 간소화)
         if (__DEV__) {
-            console.error('API Error:', {
-                url: error.config?.url,
-                status: error.response?.status,
-                data: error.response?.data,
-                message: error.message,
-            });
+        console.error('API Error:', {
+            url: error.config?.url,
+            status: error.response?.status,
+            data: error.response?.data,
+            message: error.message,
+        });
         }
         const originalRequest = error.config;
         // 401 에러이고, refresh 엔드포인트가 아니고, 아직 재시도하지 않은 경우

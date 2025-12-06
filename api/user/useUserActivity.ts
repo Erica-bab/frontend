@@ -192,14 +192,14 @@ export const useToggleBookmark = () => {
         }
       } else {
         // 현재 상태를 모르는 경우에만 체크 API 호출 (하위 호환성)
-        const { data: checkData } = await apiClient.get<{ is_bookmarked: boolean }>(
-          `/users/me/bookmarks/${restaurantId}/check`
-        );
+      const { data: checkData } = await apiClient.get<{ is_bookmarked: boolean }>(
+        `/users/me/bookmarks/${restaurantId}/check`
+      );
 
-        if (checkData.is_bookmarked) {
-          await apiClient.delete(`/users/me/bookmarks/${restaurantId}`);
-        } else {
-          await apiClient.post(`/users/me/bookmarks/${restaurantId}`);
+      if (checkData.is_bookmarked) {
+        await apiClient.delete(`/users/me/bookmarks/${restaurantId}`);
+      } else {
+        await apiClient.post(`/users/me/bookmarks/${restaurantId}`);
         }
       }
     },

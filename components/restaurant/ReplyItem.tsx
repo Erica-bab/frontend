@@ -55,7 +55,7 @@ export default function ReplyItem({
     onShowLogin,
     onDelete,
     onUpdateSuccess,
-  });
+    });
 
   const handleMenuPress = () => {
     setShowMenu(!showMenu);

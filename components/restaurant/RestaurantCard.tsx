@@ -176,17 +176,30 @@ export default function RestaurantCard({ name, category, operatingStatus, busine
         )}
       </View>
 
-      {displayComment && (
-        <Pressable
-          className='bg-gray-100 flex-row rounded-lg p-4 w-full justify-between items-center gap-2'
-          onPress={() => navigation.navigate('RestaurantDetail', { restaurantId, initialTab: 'comments' })}
-        >
-          <Text className='text-gray-500 flex-1' numberOfLines={2}>
-            {displayComment}
-          </Text>
-          <Icon name='rightAngle' width={8}/>
-        </Pressable>
-      )}
+      {/* 댓글 영역 - 댓글이 있으면 댓글 표시, 없으면 안내 메시지 */}
+      <Pressable
+        className='bg-gray-100 flex-row rounded-lg p-4 w-full justify-between items-center gap-2'
+        onPress={() => navigation.navigate('RestaurantDetail', { restaurantId, initialTab: 'comments' })}
+      >
+        {displayComment ? (
+          <>
+            <Text className='text-gray-500 flex-1' numberOfLines={2}>
+              {displayComment}
+            </Text>
+            <Icon name='rightAngle' width={8}/>
+          </>
+        ) : (
+          <>
+            <View className='flex-1 flex-row items-center gap-2'>
+              <Icon name='chat' width={16} height={16} color="#9CA3AF" />
+              <Text className='text-gray-400 flex-1' numberOfLines={2}>
+                여기를 눌러 댓글을 작성해보세요
+              </Text>
+            </View>
+            <Icon name='rightAngle' width={8} color="#9CA3AF"/>
+          </>
+        )}
+      </Pressable>
       <Pressable
         onPress={handleCardPress}
         className='w-full justify-center items-center bg-blue-500 p-1 rounded-lg'

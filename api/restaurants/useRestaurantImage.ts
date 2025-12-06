@@ -87,12 +87,12 @@ export const useUploadRestaurantImage = (restaurantId: number) => {
 
       // 개발 환경에서만 로그 출력
       if (__DEV__) {
-        console.log('Upload FormData:', {
-          imageUri,
-          filename,
-          type,
-          displayOrder,
-        });
+      console.log('Upload FormData:', {
+        imageUri,
+        filename,
+        type,
+        displayOrder,
+      });
       }
 
       // multipart/form-data로 업로드

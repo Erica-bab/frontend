@@ -31,15 +31,15 @@ export default function BookmarkScreen() {
             toggleBookmark(
               { restaurantId, currentState: true },
               {
-                onSuccess: () => {
-                  refetch();
-                },
-                onError: (err) => {
-                  if ((err as AxiosError)?.response?.status === 403) {
-                    (navigation.navigate as any)('Login');
-                  }
-                  console.error('Failed to remove bookmark:', err);
-                },
+              onSuccess: () => {
+                refetch();
+              },
+              onError: (err) => {
+                if ((err as AxiosError)?.response?.status === 403) {
+                  (navigation.navigate as any)('Login');
+                }
+                console.error('Failed to remove bookmark:', err);
+              },
               }
             );
           },
