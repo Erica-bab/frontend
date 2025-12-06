@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { View, Text, ActivityIndicator, ScrollView, RefreshControl } from 'react-native';
 import { RestaurantDetailResponse } from '@/api/restaurants/types';
 import {
@@ -91,7 +91,18 @@ export default function RestaurantCommentsTab({ restaurant, onShowLogin }: Resta
     }
   }, [refetchComments, refetchRatingStats, refetchLikedComments, refetchMyComments, refetchMyReplies, isAuthenticated]);
 
-  const comments = commentsData?.comments ?? [];
+  // 댓글 정렬: 좋아요순 (내림차순), 좋아요가 같으면 옛날 댓글순 (오름차순)
+  const sortedComments = useMemo(() => {
+    const comments = commentsData?.comments ?? [];
+    return [...comments].sort((a, b) => {
+      // 좋아요 수 비교 (내림차순)
+      if (a.like_count !== b.like_count) {
+        return b.like_count - a.like_count;
+      }
+      // 좋아요가 같으면 생성일 비교 (오름차순 - 옛날 댓글순)
+      return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+    });
+  }, [commentsData?.comments]);
 
   return (
     <View>
@@ -113,12 +124,12 @@ export default function RestaurantCommentsTab({ restaurant, onShowLogin }: Resta
           <ActivityIndicator size="large" color="#3B82F6" />
           <Text className="text-gray-500 mt-2">댓글 불러오는 중...</Text>
         </View>
-      ) : comments.length === 0 ? (
+      ) : sortedComments.length === 0 ? (
         <View className="p-8 items-center">
           <Text className="text-gray-500">아직 댓글이 없습니다</Text>
         </View>
       ) : (
-        comments.map((comment) => (
+        sortedComments.map((comment) => (
           <CommentItem
             key={comment.id}
             comment={comment}
