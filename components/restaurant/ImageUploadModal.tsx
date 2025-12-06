@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { View, Text, Pressable, Image, Alert, ActivityIndicator } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
@@ -28,7 +28,6 @@ export default function ImageUploadModal({
   const { isAuthenticated } = useAuth();
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const { mutate: uploadImage, isPending: isUploading } = useUploadRestaurantImage(restaurantId);
-  const bottomSheetModalRef = useRef<BottomSheetModal>(null);
 
   const snapPoints = useMemo(() => {
     return selectedImage ? ['60%'] : ['30%'];
@@ -137,18 +136,8 @@ export default function ImageUploadModal({
 
   const handleClose = () => {
     setSelectedImage(null);
-    bottomSheetModalRef.current?.close();
     onClose();
   };
-
-  // visible prop 변경 시 모달 열기/닫기
-  useEffect(() => {
-    if (visible) {
-      bottomSheetModalRef.current?.present();
-    } else {
-      bottomSheetModalRef.current?.close();
-    }
-  }, [visible]);
 
   const renderBackdrop = useCallback(
     (props: any) => (
