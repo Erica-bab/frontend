@@ -4,10 +4,6 @@ import {
   RestaurantListResponse,
   RestaurantDetailResponse,
   RestaurantListParams,
-  CommentListParams,
-  CreateRatingRequest,
-  CreateCommentRequest,
-  CommentItem,
   SearchParams,
   SearchResponse,
   MenuListParams,
@@ -23,33 +19,7 @@ import {
   DeleteMenuResponse,
   RandomMenuResponse,
 } from './types';
-
-// 카테고리 매핑
-const CATEGORY_MAP: Record<string, number> = {
-  '분식': 1,
-  '패스트푸드': 2,
-  '아시안': 3,
-  '일식': 4,
-  '중식': 5,
-  '한식': 6,
-  '양식': 7,
-  '고기': 8,
-};
-
-const DAY_MAP: Record<string, number> = {
-  '월요일': 1,
-  '화요일': 2,
-  '수요일': 3,
-  '목요일': 4,
-  '금요일': 5,
-  '토요일': 6,
-  '일요일': 7,
-};
-
-const SUB_CATEGORY_MAP: Record<string, number> = {
-  '개인식당': 1,
-  '프랜차이즈': 2,
-};
+import { CATEGORY_MAP, SUB_CATEGORY_MAP } from '@/constants/mappings';
 
 // 필터 상태 타입
 export interface FilterState {
@@ -193,49 +163,7 @@ export const useUpdateRestaurantOperatingStatus = () => {
   });
 };
 
-export const useRestaurantComments = (restaurantId: number, params?: CommentListParams) => {
-  return useQuery({
-    queryKey: ['restaurant', restaurantId, 'comments', params],
-    queryFn: async () => {
-      const { data } = await apiClient.get<{ comments: CommentItem[]; total: number; page: number; limit: number }>(
-        `/restaurants/${restaurantId}/comments`,
-        { params }
-      );
-      return data;
-    },
-    enabled: !!restaurantId,
-  });
-};
-
-export const useCreateRating = (restaurantId: number) => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (request: CreateRatingRequest) => {
-      const { data } = await apiClient.post(`/restaurants/${restaurantId}/ratings`, request);
-      return data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['restaurant', restaurantId] });
-      queryClient.invalidateQueries({ queryKey: ['restaurants'] });
-    },
-  });
-};
-
-export const useCreateComment = (restaurantId: number) => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (request: CreateCommentRequest) => {
-      const { data } = await apiClient.post(`/restaurants/${restaurantId}/comments`, request);
-      return data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['restaurant', restaurantId, 'comments'] });
-      queryClient.invalidateQueries({ queryKey: ['restaurant', restaurantId] });
-    },
-  });
-};
+// 댓글 관련 API는 useReviewComment.ts로 이동됨
 
 // 통합 검색
 export const useRestaurantSearch = (params: SearchParams) => {

@@ -14,6 +14,7 @@ import { useMyCommentIds } from '@/hooks/useMyCommentIds';
 import Icon from '@/components/Icon';
 import { formatDate } from '@/utils/date';
 import { getSafeErrorMessage } from '@/utils/errorHandler';
+import { REPORT_REASONS } from '@/constants/mappings';
 
 interface CommentItemProps {
   comment: CommentItemType;
@@ -51,15 +52,6 @@ export default function CommentItem({
   const [showEditModal, setShowEditModal] = useState(false);
   const [showReportMenu, setShowReportMenu] = useState(false);
   const [editText, setEditText] = useState(comment?.content || '');
-
-  // 신고 사유 목록 (백엔드 Enum 키와 매핑)
-  const reportReasons = [
-    { label: '스팸', value: 'SPAM' },
-    { label: '욕설/비방', value: 'ABUSE' },
-    { label: '부적절한 내용', value: 'INAPPROPRIATE' },
-    { label: '허위 정보', value: 'FAKE' },
-    { label: '기타', value: 'OTHER' },
-  ];
   
   // 좋아요한 댓글 목록에서 현재 댓글의 좋아요 상태 확인
   const isLikedFromServer = likedCommentIds?.has(comment.id) ?? false;
@@ -299,11 +291,11 @@ export default function CommentItem({
                   }}
                 >
                   <ScrollView className="max-h-96">
-                    {reportReasons.map((reason, index) => (
+                    {REPORT_REASONS.map((reason, index) => (
                       <Pressable
                         key={index}
                         className={`py-3 px-4 ${
-                          index < reportReasons.length - 1 ? 'border-b border-gray-200' : ''
+                          index < REPORT_REASONS.length - 1 ? 'border-b border-gray-200' : ''
                         }`}
                         onPress={() => handleReportReasonSelect(reason.value)}
                       >

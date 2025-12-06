@@ -2,7 +2,7 @@ export default {
   expo: {
     name: "에푸",
     slug: "efoo",
-    version: "1.1.0",
+    version: "1.2.0",
     scheme: ["efoo", "com.googleusercontent.apps.1041029378289-puugfhcoucnpvmi8bk8k2a5uapiaak38"],
     extra: {
       "eas": {

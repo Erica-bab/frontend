@@ -9,6 +9,7 @@ import { useRestaurantImages } from '@/api/restaurants/useRestaurantImage';
 import { useRatingStats } from '@/api/restaurants/useRating';
 import { formatDistance } from '@/utils/formatDistance';
 import { formatCategory } from '@/utils/formatCategory';
+import { resolveImageUri, getRandomThumbnails } from '@/utils/image';
 
 interface RestaurantCardProps {
   name: string;
@@ -47,21 +48,6 @@ export default function RestaurantCard({ name, category, operatingStatus, busine
   const { data: imagesData } = useRestaurantImages(
     restaurantId ? Number(restaurantId) : 0
   );
-
-  const resolveImageUri = (uri?: string) => {
-    if (!uri) return null;
-    const path = uri.startsWith('/') ? uri.slice(1) : uri;
-    return `https://에리카밥.com/${path}`;
-  };
-
-  // 이미지 데이터에서 랜덤으로 3개 선택
-  const getRandomThumbnails = (images: string[], count: number): string[] => {
-    if (images.length <= count) return images;
-    
-    // 배열을 복사하고 셔플
-    const shuffled = [...images].sort(() => Math.random() - 0.5);
-    return shuffled.slice(0, count);
-  };
 
   const imageUrls = (imagesData?.images?.map(img => resolveImageUri(img.image_url)).filter((url): url is string => url !== null) || []);
   const displayThumbnails = imageUrls.length > 0

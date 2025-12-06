@@ -24,12 +24,6 @@ export default function RestaurantPhotosTab({ restaurant, onShowLogin, onAddPhot
   const { mutate: deleteImage, isPending: isDeleting } = useDeleteRestaurantImage(restaurant.id);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
-  const resolveImageUri = (uri?: string) => {
-    if (!uri) return null;
-    const path = uri.startsWith('/') ? uri.slice(1) : uri;
-    return `https://에리카밥.com/${path}`;
-  };
-
   // 본인이 업로드한 이미지인지 확인하는 함수
   const isMyImage = (imageId: number): boolean => {
     if (!isAuthenticated || !currentUser || !imagesData?.images) return false;
