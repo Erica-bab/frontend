@@ -1,10 +1,11 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import { View, Text, Pressable, ScrollView, Alert, AppState, AppStateStatus } from 'react-native';
+import { View, Text, Pressable, ScrollView, Alert, AppState, AppStateStatus, ActivityIndicator } from 'react-native';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import * as Location from 'expo-location';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useQueryClient } from '@tanstack/react-query';
+import { AxiosError } from 'axios';
 import SearchBar from '@/components/SearchBar';
 import AdBanner from '@/components/ui/AdBanner';
 import RouletteModal from '@/components/ui/RouletteModal';
@@ -15,6 +16,7 @@ import { RestaurantListParams } from '@/api/restaurants/types';
 import Icon from '@/components/Icon';
 import { calculateDistance } from '@/utils/calculateDistance';
 import { isRestaurantOpenAt, hasOperatingHoursOnDay } from '@/utils/operatingStatus';
+import { getSafeErrorMessage } from '@/utils/errorHandler';
 
 const SORT_OPTIONS = ['위치순', '별점순', '가격순'];
 
