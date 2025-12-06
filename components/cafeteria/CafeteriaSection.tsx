@@ -3,8 +3,6 @@ import CafeteriaInfo from '@/components/cafeteria/CafeteriaInfo';
 import TextIconBox from '@/components/ui/TextIconBox';
 import { Restaurant, MealType, MealItem } from '@/api/cafeteria/types';
 import { IconName } from '@/components/Icon';
-import { User } from '@/api/auth/types'
-import { useCurrentUser } from '@/api/auth/useAuth'
 
 interface CafeteriaSectionProps {
   sortModeType: 'time' | 'location';
