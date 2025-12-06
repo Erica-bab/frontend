@@ -1,17 +1,10 @@
-import { useState, useEffect } from 'react';
-import { View, Text, Pressable, TextInput, ActivityIndicator, Alert, Modal, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
+import { View, Text, Pressable } from 'react-native';
 import { CommentItem as CommentItemType } from '@/api/restaurants/types';
-import {
-  useToggleCommentLike,
-  useUpdateComment,
-  useDeleteComment,
-  useReportComment,
-} from '@/api/restaurants/useReviewComment';
-import { useAuth } from '@/api/auth/useAuth';
 import Icon from '@/components/Icon';
 import { formatDate } from '@/utils/date';
-import { getSafeErrorMessage } from '@/utils/errorHandler';
-import { REPORT_REASONS } from '@/constants/mappings';
+import { useCommentActions } from '@/hooks/useCommentActions';
+import { CommentMenu } from './CommentMenu';
+import { CommentEditModal } from './CommentEditModal';
 
 interface ReplyItemProps {
   comment: CommentItemType;
@@ -34,166 +27,38 @@ export default function ReplyItem({
   onDelete,
   onUpdateSuccess,
 }: ReplyItemProps) {
-  const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
-  const { mutate: toggleLike } = useToggleCommentLike(restaurantId);
-  const { mutate: updateComment, isPending: isUpdating } = useUpdateComment(restaurantId, comment.id);
-  const { mutate: deleteComment, isPending: isDeleting } = useDeleteComment(restaurantId);
-  const { mutate: reportComment } = useReportComment(restaurantId);
-
-  const [showMenu, setShowMenu] = useState(false);
-  const [showEditModal, setShowEditModal] = useState(false);
-  const [showReportMenu, setShowReportMenu] = useState(false);
-  const [editText, setEditText] = useState(comment?.content || '');
-  
-  // 좋아요한 댓글 목록에서 현재 댓글의 좋아요 상태 확인
-  const isLikedFromServer = likedCommentIds?.has(comment.id) ?? false;
-  const [isLiked, setIsLiked] = useState(isLikedFromServer);
-  const [likeCount, setLikeCount] = useState(comment.like_count ?? 0);
-
-  // 좋아요한 댓글 목록이 업데이트되면 상태 동기화
-  useEffect(() => {
-    setIsLiked(isLikedFromServer);
-  }, [isLikedFromServer]);
-
-  // 댓글 데이터가 업데이트되면 좋아요 수 동기화
-  useEffect(() => {
-    setLikeCount(comment.like_count ?? 0);
-  }, [comment.like_count]);
-
-  // 현재 사용자가 댓글 작성자인지 확인 (/users/me/activities 사용)
-  const isMyComment = myCommentIds?.has(comment.id) ?? false;
-
-  const handleLikePress = () => {
-    // 로그인 상태 확인
-    if (!isAuthLoading && !isAuthenticated) {
-      onShowLogin?.();
-      return;
-    }
-
-    // 옵티미스틱 업데이트: 즉시 UI 업데이트
-    const newIsLiked = !isLiked;
-    const previousLikeCount = likeCount;
-    const previousIsLiked = isLiked;
-    setIsLiked(newIsLiked);
-    setLikeCount(prev => newIsLiked ? prev + 1 : prev - 1);
-
-    // API 호출
-    toggleLike(comment.id, {
-      onSuccess: (data) => {
-        // API 응답으로 좋아요 수 업데이트
-        setLikeCount(data.like_count);
-        // 좋아요한 댓글 목록 새로고침
-        onLikeToggle?.();
-      },
-      onError: (error: any) => {
-        // 에러 시 원래 상태로 롤백
-        setIsLiked(previousIsLiked);
-        setLikeCount(previousLikeCount);
-        // 403 에러면 로그인 팝업 표시
-        if (error?.response?.status === 403) {
-          onShowLogin?.();
-        }
-        console.error('좋아요 실패:', error);
-      },
-    });
-  };
+  const {
+    showMenu,
+    setShowMenu,
+    showEditModal,
+    setShowEditModal,
+    showReportMenu,
+    setShowReportMenu,
+    editText,
+    setEditText,
+    isLiked,
+    likeCount,
+    isMyComment,
+    isUpdating,
+    handleLikePress,
+    handleEdit,
+    handleDelete,
+    handleReport,
+    handleReportReasonSelect,
+    handleSaveEdit,
+  } = useCommentActions({
+    comment,
+    restaurantId,
+    likedCommentIds,
+    myCommentIds,
+    onLikeToggle,
+    onShowLogin,
+    onDelete,
+    onUpdateSuccess,
+  });
 
   const handleMenuPress = () => {
     setShowMenu(!showMenu);
-  };
-
-  const handleEdit = () => {
-    setShowMenu(false);
-    setEditText(comment.content);
-    setShowEditModal(true);
-  };
-
-  const handleDelete = () => {
-    setShowMenu(false);
-    if (onDelete) {
-      Alert.alert(
-        '댓글 삭제',
-        '정말 이 댓글을 삭제하시겠습니까?',
-        [
-          { text: '취소', style: 'cancel' },
-          {
-            text: '삭제',
-            style: 'destructive',
-            onPress: () => {
-              onDelete(comment.id);
-            },
-          },
-        ]
-      );
-    } else {
-      Alert.alert(
-        '댓글 삭제',
-        '정말 이 댓글을 삭제하시겠습니까?',
-        [
-          { text: '취소', style: 'cancel' },
-          {
-            text: '삭제',
-            style: 'destructive',
-            onPress: () => {
-              deleteComment(comment.id, {
-                onSuccess: () => {
-                  Alert.alert('완료', '댓글이 삭제되었습니다.');
-                },
-                onError: (error: any) => {
-                  const message = getSafeErrorMessage(error, '댓글 삭제에 실패했습니다.');
-                  Alert.alert('오류', message);
-                },
-              });
-            },
-          },
-        ]
-      );
-    }
-  };
-
-  const handleReport = () => {
-    setShowMenu(false);
-    setShowReportMenu(true);
-  };
-
-  const handleReportReasonSelect = (reasonValue: string) => {
-    setShowReportMenu(false);
-    reportComment(
-      {
-        commentId: comment.id,
-        request: { reason: reasonValue },
-      },
-      {
-        onSuccess: () => {
-          Alert.alert('완료', '댓글이 신고되었습니다.');
-        },
-        onError: (error: any) => {
-          const message = getSafeErrorMessage(error, '댓글 신고에 실패했습니다.');
-          Alert.alert('오류', message);
-        },
-      }
-    );
-  };
-
-  const handleSaveEdit = () => {
-    if (!editText.trim()) {
-      Alert.alert('입력 오류', '댓글 내용을 입력해주세요.');
-      return;
-    }
-    updateComment(
-      { content: editText.trim() },
-      {
-        onSuccess: () => {
-          setShowEditModal(false);
-          Alert.alert('완료', '댓글이 수정되었습니다.');
-          onUpdateSuccess?.();
-        },
-        onError: (error: any) => {
-          const message = getSafeErrorMessage(error, '댓글 수정에 실패했습니다.');
-          Alert.alert('오류', message);
-        },
-      }
-    );
   };
 
   // comment나 필수 필드가 없으면 빈 View 반환
@@ -237,66 +102,15 @@ export default function ReplyItem({
                     <Icon name="meatball" size={16} color="#6B7280" />
                   </Pressable>
                   
-                  {/* 메뉴 팝업 */}
                   {showMenu && (
-                    <View
-                      className="absolute bg-white rounded-lg shadow-sm border border-gray-200 right-0 top-6 z-50"
-                      style={{
-                        minWidth: 80,
-                        elevation: 5,
-                      }}
-                    >
-                      {isMyComment ? (
-                        <>
-                          <Pressable
-                            className="py-3 px-4 border-b border-gray-200"
-                            onPress={handleEdit}
-                          >
-                            <Text className="text-center">수정</Text>
-                          </Pressable>
-                          <Pressable
-                            className="py-3 px-4"
-                            onPress={handleDelete}
-                          >
-                            <Text className="text-center text-red-500">삭제</Text>
-                          </Pressable>
-                        </>
-                      ) : (
-                        <Pressable
-                          className="py-3 px-4"
-                          onPress={handleReport}
-                        >
-                          <Text className="text-center text-gray-600">신고</Text>
-                        </Pressable>
-                      )}
-                    </View>
-                  )}
-
-                  {/* 신고 사유 메뉴 팝업 */}
-                  {showReportMenu && (
-                    <View
-                      className="absolute bg-white rounded-lg shadow-sm border border-gray-200 right-0 top-6 z-50"
-                      style={{
-                        minWidth: 200,
-                        maxWidth: 300,
-                        maxHeight: 400,
-                        elevation: 5,
-                      }}
-                    >
-                      <ScrollView className="max-h-96">
-                        {REPORT_REASONS.map((reason, index) => (
-                          <Pressable
-                            key={index}
-                            className={`py-3 px-4 ${
-                              index < reportReasons.length - 1 ? 'border-b border-gray-200' : ''
-                            }`}
-                            onPress={() => handleReportReasonSelect(reason.value)}
-                          >
-                            <Text className="text-gray-900">{reason.label}</Text>
-                          </Pressable>
-                        ))}
-                      </ScrollView>
-                    </View>
+                    <CommentMenu
+                      isMyComment={isMyComment}
+                      showReportMenu={showReportMenu}
+                      onEdit={handleEdit}
+                      onDelete={handleDelete}
+                      onReport={handleReport}
+                      onReportReasonSelect={handleReportReasonSelect}
+                    />
                   )}
                 </View>
               </View>
@@ -318,53 +132,14 @@ export default function ReplyItem({
         />
       )}
 
-      {/* 수정 모달 */}
-      <Modal
+      <CommentEditModal
         visible={showEditModal}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setShowEditModal(false)}
-      >
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          className="flex-1"
-        >
-          <Pressable
-            className="flex-1 bg-black/50"
-            onPress={() => setShowEditModal(false)}
-          />
-          <View className="bg-white rounded-t-3xl p-6">
-            <Text className="text-xl font-bold mb-4">댓글 수정</Text>
-            <TextInput
-              className="border border-gray-300 rounded-lg px-3 py-2 mb-4 min-h-[100px]"
-              placeholder="댓글을 입력하세요"
-              value={editText}
-              onChangeText={setEditText}
-              multiline
-              textAlignVertical="top"
-            />
-            <View className="flex-row gap-2">
-              <Pressable
-                className="flex-1 bg-gray-200 rounded-lg py-3"
-                onPress={() => setShowEditModal(false)}
-              >
-                <Text className="text-center font-medium">취소</Text>
-              </Pressable>
-              <Pressable
-                className="flex-1 bg-blue-500 rounded-lg py-3"
-                onPress={handleSaveEdit}
-                disabled={isUpdating}
-              >
-                {isUpdating ? (
-                  <ActivityIndicator size="small" color="#FFFFFF" />
-                ) : (
-                  <Text className="text-center text-white font-medium">저장</Text>
-                )}
-              </Pressable>
-            </View>
-          </View>
-        </KeyboardAvoidingView>
-      </Modal>
+        editText={editText}
+        isUpdating={isUpdating}
+        onClose={() => setShowEditModal(false)}
+        onTextChange={setEditText}
+        onSave={handleSaveEdit}
+      />
     </>
   );
 }
