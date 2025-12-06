@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
@@ -6,6 +7,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import * as Linking from 'expo-linking';
+import * as SplashScreen from 'expo-splash-screen';
 
 import CafeteriaScreen from './screens/CafeteriaScreen';
 import RestuarantScreen from './screens/Restaurant';
@@ -87,7 +89,20 @@ function TabNavigator() {
   );
 }
 
+// 스플래시 스크린이 자동으로 숨겨지지 않도록 설정
+SplashScreen.preventAutoHideAsync();
+
 export default function App() {
+  useEffect(() => {
+    // 앱이 준비되면 1초 후에 스플래시 스크린 숨기기
+    const hideSplash = async () => {
+      await new Promise(resolve => setTimeout(resolve, 1000)); // 1초 대기
+      await SplashScreen.hideAsync();
+    };
+
+    hideSplash();
+  }, []);
+
   const linking = {
     prefixes: ['efoo://', 'https://에리카밥.com'],
     config: {
