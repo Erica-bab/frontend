@@ -20,7 +20,12 @@ interface RestaurantCommentsTabProps {
 
 export default function RestaurantCommentsTab({ restaurant, onShowLogin }: RestaurantCommentsTabProps) {
   const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
-  const { data: commentsData, isLoading: isCommentsLoading, refetch: refetchComments } = useComments(restaurant.id);
+  // 댓글 탭에서 45초마다 자동 새로고침 (30초-1분 사이)
+  const { data: commentsData, isLoading: isCommentsLoading, refetch: refetchComments } = useComments(
+    restaurant.id,
+    undefined,
+    { refetchInterval: 45 * 1000 } // 45초마다 새로고침
+  );
   const { mutate: createOrUpdateRating, isPending: isRatingLoading } = useCreateOrUpdateRating(restaurant.id);
   const { refetch: refetchLikedComments } = useLikedComments(1, 100, isAuthenticated === true);
   const { refetch: refetchMyComments } = useMyComments(1, 100, isAuthenticated === true);

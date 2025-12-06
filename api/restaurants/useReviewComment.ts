@@ -28,7 +28,11 @@ export const useCreateOrUpdateRating = (restaurantId: number) => {
 // ============ 댓글(Comment) ============
 
 // 댓글 목록 조회
-export const useComments = (restaurantId: number, params?: CommentListParams) => {
+export const useComments = (
+  restaurantId: number, 
+  params?: CommentListParams,
+  options?: { refetchInterval?: number | false }
+) => {
   return useQuery({
     queryKey: ['restaurant', restaurantId, 'comments', params],
     queryFn: async () => {
@@ -41,6 +45,7 @@ export const useComments = (restaurantId: number, params?: CommentListParams) =>
       return data;
     },
     enabled: !!restaurantId,
+    refetchInterval: options?.refetchInterval,
   });
 };
 
