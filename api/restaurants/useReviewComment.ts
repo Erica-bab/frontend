@@ -56,6 +56,9 @@ export const useCreateComment = (restaurantId: number) => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['restaurant', restaurantId, 'comments'] });
       queryClient.invalidateQueries({ queryKey: ['restaurant', restaurantId] });
+      // 리스트의 popular_comment 업데이트를 위해 리스트 쿼리도 무효화
+      queryClient.invalidateQueries({ queryKey: ['restaurants'] });
+      queryClient.invalidateQueries({ queryKey: ['restaurants-v2'] });
     },
   });
 };
@@ -95,9 +98,12 @@ export const useDeleteComment = (restaurantId: number) => {
       return data;
     },
     onSuccess: () => {
-      // 댓글 삭제는 댓글 개수에 영향을 주므로 상세 정보도 무효화
+      // 댓글 삭제는 댓글 개수와 popular_comment에 영향을 주므로 모두 무효화
       queryClient.invalidateQueries({ queryKey: ['restaurant', restaurantId, 'comments'] });
       queryClient.invalidateQueries({ queryKey: ['restaurant', restaurantId] });
+      // 리스트의 popular_comment 업데이트를 위해 리스트 쿼리도 무효화
+      queryClient.invalidateQueries({ queryKey: ['restaurants'] });
+      queryClient.invalidateQueries({ queryKey: ['restaurants-v2'] });
     },
   });
 };

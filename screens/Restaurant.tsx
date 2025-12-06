@@ -4,6 +4,7 @@ import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import * as Location from 'expo-location';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useQueryClient } from '@tanstack/react-query';
 import SearchBar from '@/components/SearchBar';
 import AdBanner from '@/components/ui/AdBanner';
 import RouletteModal from '@/components/ui/RouletteModal';
@@ -19,6 +20,7 @@ const SORT_OPTIONS = ['위치순', '별점순', '가격순'];
 
 export default function RestuarantScreen() {
     const navigation = useNavigation<NativeStackNavigationProp<any>>();
+    const queryClient = useQueryClient();
     const [filterParams, setFilterParams] = useState<Omit<RestaurantListParams, 'sort'>>({});
     // 운영시간 필터는 로컬에서 처리하므로 별도로 관리
     const [operatingTimeFilter, setOperatingTimeFilter] = useState<{ dayOfWeek?: string; hour?: string; minute?: string } | null>(null);
@@ -77,10 +79,14 @@ export default function RestuarantScreen() {
     }, []);
 
     // 화면이 포커스될 때마다 새로고침 (자세히 보기에서 돌아올 때)
+    // 별점과 댓글 변경사항을 반영하기 위해 리스트와 별점 쿼리 모두 무효화
     useFocusEffect(
         useCallback(() => {
+            // 리스트 쿼리 새로고침 (별점 포함)
             refetch();
-        }, [refetch])
+            // 별점 통계 쿼리도 무효화하여 최신 별점 반영
+            queryClient.invalidateQueries({ queryKey: ['ratingStats'] });
+        }, [refetch, queryClient])
     );
 
     // 앱이 포그라운드로 돌아올 때 새로고침

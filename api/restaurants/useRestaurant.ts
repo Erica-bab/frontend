@@ -91,6 +91,8 @@ export const useRestaurantListV2 = (params?: Omit<RestaurantListParams, 'sort'>)
       const { data } = await apiClient.get<RestaurantListResponse>('/restaurants/v2', { params });
       return data;
     },
+    // 다른 사용자의 별점/댓글 변경사항을 반영하기 위해 5분마다 자동 새로고침
+    refetchInterval: 5 * 60 * 1000, // 5분 (300000ms)
   });
 };
 
