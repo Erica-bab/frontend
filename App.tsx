@@ -96,7 +96,7 @@ export default function App() {
   useEffect(() => {
     // 앱이 준비되면 1초 후에 스플래시 스크린 숨기기
     const hideSplash = async () => {
-      await new Promise(resolve => setTimeout(resolve, 1000)); // 1초 대기
+      await new Promise(resolve => setTimeout(resolve, 2000)); // 2초 대기
       await SplashScreen.hideAsync();
     };
 
