@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { View, Text, FlatList, Pressable, Alert, ActivityIndicator, Dimensions, Modal } from 'react-native';
+import { View, Text, FlatList, Pressable, Alert, ActivityIndicator, Dimensions, Modal, Image } from 'react-native';
 import { RestaurantDetailResponse } from '@/api/restaurants/types';
 import { useRestaurantImages, useDeleteRestaurantImage } from '@/api/restaurants/useRestaurantImage';
 import { useAuth, useCurrentUser } from '@/api/auth/useAuth';
@@ -134,6 +134,8 @@ export default function RestaurantPhotosTab({ restaurant, onShowLogin, onAddPhot
         keyExtractor={(item) => String(item.id)}
         contentContainerStyle={{ padding: IMAGE_GAP }}
         columnWrapperStyle={{ marginHorizontal: -IMAGE_GAP / 2 }}
+        nestedScrollEnabled={true} // ScrollView 안에서 중첩 스크롤 허용
+        scrollEnabled={false} // 부모 ScrollView가 스크롤 처리
         // 레이지 로딩 최적화
         initialNumToRender={9} // 처음 9개만 렌더링 (3x3)
         maxToRenderPerBatch={6} // 한 번에 6개씩 추가 렌더링
