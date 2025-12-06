@@ -171,7 +171,7 @@ export default function FilterScreen() {
     navigation.goBack();
   }, [navigation]);
 
-  const handleReset = async () => {
+  const handleReset = () => {
     // 필터 초기화
     setOperatingTimeMode('none');
     setSelectedDay(undefined);
@@ -180,13 +180,6 @@ export default function FilterScreen() {
     setSelectedFoodTypes([]);
     setSelectedAffiliates([]);
     setSelectedRestaurantTypes([]);
-    
-    // 저장된 필터도 삭제
-    try {
-      await AsyncStorage.removeItem('restaurantFilter');
-    } catch (error) {
-      console.error('Failed to remove filter:', error);
-    }
     
     // 초기 상태 업데이트
     setInitialFilterState({
@@ -197,6 +190,11 @@ export default function FilterScreen() {
       selectedFoodTypes: [],
       selectedAffiliates: [],
       selectedRestaurantTypes: [],
+    });
+    
+    // 저장된 필터도 삭제 (비동기, await 없이)
+    AsyncStorage.removeItem('restaurantFilter').catch(error => {
+      console.error('Failed to remove filter:', error);
     });
     
     // 바로 적용하고 모달 닫기
