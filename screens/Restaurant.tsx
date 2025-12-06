@@ -147,11 +147,26 @@ export default function RestuarantScreen() {
                 const hasAnyFilter = hasOtherFilters || hasOperatingTimeFilter;
                 
                 if (hasAnyFilter) {
-                    // 필터가 있으면 병합
-                    setFilterParams(prev => ({
-                        ...prev,
-                        ...filterOnly,
-                    }));
+                    // 필터가 있으면 완전히 교체 (병합이 아닌 교체로 변경하여 이전 필터 제거)
+                    // filterToParams에서 생성된 모든 필터 필드를 명시적으로 설정
+                    const newFilterParams: any = {};
+                    
+                    // categories가 있으면 설정, 없으면 undefined (명시적으로 제거)
+                    if (filterOnly.categories) {
+                        newFilterParams.categories = filterOnly.categories;
+                    }
+                    
+                    // affiliations가 있으면 설정, 없으면 undefined (명시적으로 제거)
+                    if (filterOnly.affiliations) {
+                        newFilterParams.affiliations = filterOnly.affiliations;
+                    }
+                    
+                    // sub_category가 있으면 설정, 없으면 undefined (명시적으로 제거)
+                    if (filterOnly.sub_category) {
+                        newFilterParams.sub_category = filterOnly.sub_category;
+                    }
+                    
+                    setFilterParams(newFilterParams);
                 } else {
                     // 필터가 없으면 완전히 초기화
                     setFilterParams({});
