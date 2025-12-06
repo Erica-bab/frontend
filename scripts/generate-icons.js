@@ -86,7 +86,7 @@ export default function Icon({ name, size = 24, width, height, ...props }: IconP
 
   fs.writeFileSync(OUTPUT_FILE, content);
   console.log(`✓ Icon.tsx 생성 완료 (${icons.length}개 아이콘)`);
-  icons.forEach((icon) => console.log(`  - ${icon.camelName}`));
+  icons.forEach((icon) => console.log(`  - ${icon.camelName}, path: ${icon.importPath}`));
 }
 
 generateIconFile();
