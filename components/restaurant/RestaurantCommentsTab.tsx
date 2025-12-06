@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { View, Text, ActivityIndicator, ScrollView, RefreshControl } from 'react-native';
+import { View, Text, ActivityIndicator, ScrollView, RefreshControl, Pressable } from 'react-native';
 import { RestaurantDetailResponse } from '@/api/restaurants/types';
 import {
   useComments,
@@ -12,6 +12,15 @@ import { useMyCommentIds } from '@/hooks/useMyCommentIds';
 import { useMyRating } from '@/api/restaurants/useRating';
 import CommentItem from '@/components/restaurant/CommentItem';
 import StarRating from '@/components/restaurant/StarRating';
+import Icon from '@/components/Icon';
+
+type CommentSortOption = 'recent' | 'oldest' | 'likes';
+
+const COMMENT_SORT_OPTIONS: { value: CommentSortOption; label: string }[] = [
+  { value: 'recent', label: '최근순' },
+  { value: 'oldest', label: '오래된순' },
+  { value: 'likes', label: '좋아요순' },
+];
 
 interface RestaurantCommentsTabProps {
   restaurant: RestaurantDetailResponse;
@@ -39,6 +48,10 @@ export default function RestaurantCommentsTab({ restaurant, onShowLogin }: Resta
   
   // Pull-to-refresh 상태
   const [refreshing, setRefreshing] = useState(false);
+
+  // 댓글 정렬 옵션
+  const [sortOption, setSortOption] = useState<CommentSortOption>('likes');
+  const [isSortOpen, setIsSortOpen] = useState(false);
 
   // 서버에서 받은 별점으로 로컬 상태 동기화
   useEffect(() => {
@@ -91,18 +104,29 @@ export default function RestaurantCommentsTab({ restaurant, onShowLogin }: Resta
     }
   }, [refetchComments, refetchRatingStats, refetchLikedComments, refetchMyComments, refetchMyReplies, isAuthenticated]);
 
-  // 댓글 정렬: 좋아요순 (내림차순), 좋아요가 같으면 옛날 댓글순 (오름차순)
+  // 댓글 정렬
   const sortedComments = useMemo(() => {
     const comments = commentsData?.comments ?? [];
     return [...comments].sort((a, b) => {
-      // 좋아요 수 비교 (내림차순)
-      if (a.like_count !== b.like_count) {
-        return b.like_count - a.like_count;
+      switch (sortOption) {
+        case 'recent':
+          // 최근순: 생성일 내림차순 (최신 댓글이 위)
+          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+        
+        case 'oldest':
+          // 오래된순: 생성일 오름차순 (옛날 댓글이 위)
+          return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+        
+        case 'likes':
+        default:
+          // 좋아요순: 좋아요 수 내림차순, 같으면 옛날 댓글순
+          if (a.like_count !== b.like_count) {
+            return b.like_count - a.like_count;
+          }
+          return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
       }
-      // 좋아요가 같으면 생성일 비교 (오름차순 - 옛날 댓글순)
-      return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
     });
-  }, [commentsData?.comments]);
+  }, [commentsData?.comments, sortOption]);
 
   return (
     <View>
@@ -117,6 +141,49 @@ export default function RestaurantCommentsTab({ restaurant, onShowLogin }: Resta
               : '별점을 눌러주세요'}
         </Text>
       </View>
+
+      {/* 댓글 정렬 옵션 */}
+      {!isCommentsLoading && sortedComments.length > 0 && (
+        <View className="px-4 py-2 border-b border-gray-200 flex-row justify-end">
+          <View className="relative">
+            <Pressable
+              className="flex-row gap-1 items-center px-3 py-1"
+              onPress={() => setIsSortOpen(!isSortOpen)}
+            >
+              <Text className="text-sm text-gray-600">
+                {COMMENT_SORT_OPTIONS.find(opt => opt.value === sortOption)?.label || '정렬'}
+              </Text>
+              <Icon name="dropdown" width={10} height={13} />
+            </Pressable>
+            {isSortOpen && (
+              <View
+                className="absolute top-full right-0 mt-1 bg-white rounded-lg overflow-hidden"
+                style={{
+                  borderWidth: 1,
+                  borderColor: 'rgba(226, 232, 240, 1)',
+                  zIndex: 1000,
+                  minWidth: 100,
+                }}
+              >
+                {COMMENT_SORT_OPTIONS.map((option) => (
+                  <Pressable
+                    key={option.value}
+                    onPress={() => {
+                      setSortOption(option.value);
+                      setIsSortOpen(false);
+                    }}
+                    className="px-4 py-3 border-b border-gray-100"
+                  >
+                    <Text className={`text-sm ${sortOption === option.value ? 'font-bold text-blue-600' : 'text-black'}`}>
+                      {option.label}
+                    </Text>
+                  </Pressable>
+                ))}
+              </View>
+            )}
+          </View>
+        </View>
+      )}
 
       {/* 댓글 목록 */}
       {isCommentsLoading ? (
