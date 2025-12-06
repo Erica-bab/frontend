@@ -66,7 +66,14 @@ export default {
     plugins: [
       "expo-router",
       "expo-web-browser",
-      "expo-splash-screen",
+      [
+        "expo-splash-screen",
+        {
+          image: "./assets/app/splash-image.png",
+          resizeMode: "cover",
+          backgroundColor: "#2563EB"
+        }
+      ],
       [
         "react-native-maps",
         {
