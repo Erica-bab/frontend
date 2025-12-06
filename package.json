@@ -7,7 +7,9 @@
     "android": "expo run:android",
     "ios": "expo run:ios",
     "web": "expo start --web",
-    "icons": "node scripts/generate-icons.js"
+    "icons": "node scripts/generate-icons.js",
+    "fix-splash": "node scripts/fix-splash-screen.js",
+    "prebuild:ios": "expo prebuild --clean --platform ios && npm run fix-splash"
   },
   "dependencies": {
     "@gorhom/bottom-sheet": "^5.2.7",
