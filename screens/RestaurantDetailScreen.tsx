@@ -221,11 +221,18 @@ export default function RestaurantDetailScreen() {
           />
         </View>
           <View>
-            <View className="flex-row items-center m-4">
-              <Text className="text-xl text-blue-500">{restaurant.name}</Text>
+            <View className="m-4">
+              <View className="flex-row items-center">
+                <Text className="text-xl text-blue-500">{restaurant.name}</Text>
                 {restaurant.category && formatCategory(restaurant.category) && (
                   <Text className="text-lg ml-1 text-gray-600">{formatCategory(restaurant.category)}</Text>
                 )}
+              </View>
+              {restaurant.menu_summary?.average_price && (
+                <Text className="text-sm text-gray-500 mt-1">
+                  평균 {Math.round(restaurant.menu_summary.average_price).toLocaleString()}원
+                </Text>
+              )}
             </View>
             <View className='ml-4 mb-4'>
               <RestaurantStatusTag
