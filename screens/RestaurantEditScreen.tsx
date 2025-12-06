@@ -742,54 +742,54 @@ export default function RestaurantEditScreen() {
           >
             <View className="flex-row justify-between items-center mb-6">
               <Text className="text-xl font-bold">
-                {editingMenu ? '메뉴 수정' : '메뉴 추가'}
-              </Text>
-              <Pressable onPress={() => setEditingMenu(undefined)}>
+                    {editingMenu ? '메뉴 수정' : '메뉴 추가'}
+                  </Text>
+                  <Pressable onPress={() => setEditingMenu(undefined)}>
                 <Icon name="cancel" width={24} height={24} />
-              </Pressable>
-            </View>
-            
+                  </Pressable>
+                </View>
+                
             <Text className="text-sm text-gray-600 mb-2">메뉴명 *</Text>
-            <TextInput
+                <TextInput
               className="border border-gray-300 rounded-lg p-3 mb-4 bg-white"
-              value={menuName}
-              onChangeText={setMenuName}
-              placeholder="제육볶음"
-              editable={!isPending}
-            />
-            
+                  value={menuName}
+                  onChangeText={setMenuName}
+                  placeholder="제육볶음"
+                  editable={!isPending}
+                />
+                
             <Text className="text-sm text-gray-600 mb-2">가격</Text>
-            <TextInput
+                <TextInput
               className="border border-gray-300 rounded-lg p-3 mb-6 bg-white"
-              value={menuPrice}
-              onChangeText={setMenuPrice}
-              placeholder="12000"
-              keyboardType="number-pad"
-              editable={!isPending}
-            />
-            
+                  value={menuPrice}
+                  onChangeText={setMenuPrice}
+                  placeholder="12000"
+                  keyboardType="number-pad"
+                  editable={!isPending}
+                />
+                
             <View className="flex-row gap-3">
               <Pressable
                 className="flex-1 bg-gray-300 rounded-lg p-4 items-center"
                 onPress={() => setEditingMenu(undefined)}
-                disabled={isPending}
+                    disabled={isPending}
               >
                 <Text className="text-white font-medium">취소</Text>
               </Pressable>
-              <Pressable
+                  <Pressable
                 className="flex-1 bg-blue-500 rounded-lg p-4 items-center"
-                onPress={handleSaveMenu}
-                disabled={isPending}
-              >
-                {(isCreatingMenu || isUpdatingMenu) ? (
-                  <ActivityIndicator color="white" />
-                ) : (
-                  <Text className="text-white font-medium">저장</Text>
-                )}
-              </Pressable>
+                    onPress={handleSaveMenu}
+                    disabled={isPending}
+                  >
+                    {(isCreatingMenu || isUpdatingMenu) ? (
+                      <ActivityIndicator color="white" />
+                    ) : (
+                      <Text className="text-white font-medium">저장</Text>
+                    )}
+                  </Pressable>
             </View>
           </Pressable>
-        </Pressable>
+                  </Pressable>
       </Modal>
     </SafeAreaView>
   );

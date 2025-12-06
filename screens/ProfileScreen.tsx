@@ -257,17 +257,17 @@ export default function ProfileScreen() {
         <View className="mt-4">
           {isAuthenticated ? (
             <>
-              <Pressable
-                className="bg-blue-500 p-3 rounded-lg"
-                onPress={handleLogout}
-                disabled={isLoggingOut}
-              >
-                {isLoggingOut ? (
-                  <ActivityIndicator size="small" color="#FFFFFF" />
-                ) : (
-                  <Text className="text-white text-center font-medium">로그아웃</Text>
-                )}
-              </Pressable>
+            <Pressable
+              className="bg-blue-500 p-3 rounded-lg"
+              onPress={handleLogout}
+              disabled={isLoggingOut}
+            >
+              {isLoggingOut ? (
+                <ActivityIndicator size="small" color="#FFFFFF" />
+              ) : (
+                <Text className="text-white text-center font-medium">로그아웃</Text>
+              )}
+            </Pressable>
               <Pressable
                 className="mt-2 items-center"
                 onPress={handleDeleteAccount}
