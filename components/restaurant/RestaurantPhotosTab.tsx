@@ -139,17 +139,21 @@ export default function RestaurantPhotosTab({ restaurant, onShowLogin, onAddPhot
           flexWrap: 'wrap',
         }}
       >
-        {imageUrls.map((item) => (
-          <View
-            key={item.id}
-            style={{
-              width: IMAGE_SIZE,
-              height: IMAGE_SIZE,
-              marginRight: IMAGE_GAP,
-              marginBottom: IMAGE_GAP,
-            }}
-            className="relative rounded-lg overflow-hidden bg-gray-200"
-          >
+        {imageUrls.map((item, index) => {
+          // 마지막 열 이미지(인덱스가 2, 5, 8...)는 marginRight 제거
+          const isLastInRow = (index + 1) % IMAGES_PER_ROW === 0;
+          
+          return (
+            <View
+              key={item.id}
+              style={{
+                width: IMAGE_SIZE,
+                height: IMAGE_SIZE,
+                marginRight: isLastInRow ? 0 : IMAGE_GAP,
+                marginBottom: IMAGE_GAP,
+              }}
+              className="relative rounded-lg overflow-hidden bg-gray-200"
+            >
             <Pressable onPress={() => setSelectedImage(item.url!)}>
               <LazyImage
                 source={{ uri: item.url! }}
@@ -170,7 +174,8 @@ export default function RestaurantPhotosTab({ restaurant, onShowLogin, onAddPhot
               </Pressable>
             )}
           </View>
-        ))}
+          );
+        })}
       </ScrollView>
 
       {/* 이미지 확대 모달 */}
