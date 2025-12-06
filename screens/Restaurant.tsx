@@ -312,12 +312,62 @@ export default function RestuarantScreen() {
                     )}
                 </View>
 
-                {isLoading && <Text className="p-4">로딩중...</Text>}
-                {error && <Text className="p-4 text-red-500">에러 발생</Text>}
+                {/* 로딩 상태 */}
+                {isLoading && (
+                    <View className="flex-1 items-center justify-center py-20">
+                        <ActivityIndicator size="large" color="#3B82F6" />
+                        <Text className="text-gray-600 mt-4 text-base">식당 정보를 불러오는 중...</Text>
+                    </View>
+                )}
 
+                {/* 에러 상태 */}
+                {error && !isLoading && (
+                    <View className="flex-1 items-center justify-center py-20 px-4">
+                        <Icon name="warnning" width={64} height={64} color="#EF4444" />
+                        <Text className="text-gray-900 font-semibold text-lg mt-4 text-center">
+                            {(() => {
+                                const axiosError = error as AxiosError;
+                                if (axiosError?.code === 'NETWORK_ERROR' || axiosError?.message?.includes('Network') || !axiosError?.response) {
+                                    return '네트워크 연결 오류';
+                                }
+                                if (axiosError?.response?.status === 500) {
+                                    return '서버 오류가 발생했습니다';
+                                }
+                                return '데이터를 불러오는데 실패했습니다';
+                            })()}
+                        </Text>
+                        <Text className="text-gray-500 text-sm mt-2 text-center">
+                            {getSafeErrorMessage(error, '잠시 후 다시 시도해주세요')}
+                        </Text>
+                        <Pressable
+                            onPress={() => refetch()}
+                            className="mt-6 bg-blue-500 px-6 py-3 rounded-lg"
+                        >
+                            <Text className="text-white font-semibold">다시 시도</Text>
+                        </Pressable>
+                    </View>
+                )}
+
+                {/* 빈 상태 */}
                 {!isLoading && !error && sortedRestaurants.length === 0 && (
-                    <View className="flex-1 items-center justify-center p-8">
-                        <Text className="text-gray-400 text-lg">검색 결과가 없습니다</Text>
+                    <View className="flex-1 items-center justify-center py-20 px-4">
+                        <View className="w-16 h-16 rounded-full bg-gray-100 items-center justify-center mb-4">
+                            <Icon name="search" width={32} height={32} color="#9CA3AF" />
+                        </View>
+                        <Text className="text-gray-400 text-lg mt-2 text-center font-medium">
+                            {isFilterApplied ? '필터 조건에 맞는 식당이 없습니다' : '등록된 식당이 없습니다'}
+                        </Text>
+                        <Text className="text-gray-400 text-sm mt-2 text-center">
+                            {isFilterApplied ? '다른 조건으로 검색해보세요' : '첫 번째 식당을 등록해보세요'}
+                        </Text>
+                        {isFilterApplied && (
+                            <Pressable
+                                onPress={handleFilterPress}
+                                className="mt-6 bg-gray-100 px-6 py-3 rounded-lg"
+                            >
+                                <Text className="text-gray-700 font-semibold">필터 수정하기</Text>
+                            </Pressable>
+                        )}
                     </View>
                 )}
 
