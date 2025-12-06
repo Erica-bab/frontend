@@ -180,7 +180,33 @@ export default function FilterScreen() {
     }
   };
 
+  // 필터가 선택되었는지 확인
+  const hasSelectedFilter = useMemo(() => {
+    return (
+      operatingTimeMode !== 'none' ||
+      selectedFoodTypes.length > 0 ||
+      selectedAffiliates.length > 0 ||
+      selectedRestaurantTypes.length > 0
+    );
+  }, [operatingTimeMode, selectedFoodTypes, selectedAffiliates, selectedRestaurantTypes]);
+
+  // 적용된 필터가 있는지 확인
+  const hasAppliedFilter = useMemo(() => {
+    return currentFilter && (
+      (currentFilter.filterParams && Object.keys(currentFilter.filterParams).length > 0) ||
+      currentFilter.operatingTimeFilter !== null
+    );
+  }, [currentFilter]);
+
+  // 초기화 버튼을 표시할지 결정
+  const showResetButton = hasSelectedFilter || hasAppliedFilter;
+
   const handleApply = async () => {
+    // 필터가 선택되지 않았으면 적용 불가
+    if (!hasSelectedFilter) {
+      return;
+    }
+
     // 운영중 모드인 경우 현재 시간으로 업데이트
     let finalDay = selectedDay;
     let finalHour = selectedHour;
@@ -427,10 +453,16 @@ export default function FilterScreen() {
           }
         ]}
       >
-            <Button variant="secondary" onPress={handleReset} className="flex-1">
-              초기화
-            </Button>
-            <Button onPress={handleApply} className="flex-1">
+            {showResetButton && (
+              <Button variant="secondary" onPress={handleReset} className="flex-1">
+                초기화
+              </Button>
+            )}
+            <Button 
+              onPress={handleApply} 
+              className={showResetButton ? "flex-1" : "w-full"}
+              disabled={!hasSelectedFilter}
+            >
               적용
             </Button>
           </View>
