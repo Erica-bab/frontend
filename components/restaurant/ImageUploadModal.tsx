@@ -154,15 +154,13 @@ export default function ImageUploadModal({
 
   return (
     <BottomSheetModal
-      ref={bottomSheetModalRef}
       key={selectedImage ? 'with-image' : 'without-image'}
-      index={0}
+      index={visible ? 0 : -1}
       snapPoints={snapPoints}
       enablePanDownToClose={true}
       onChange={(index) => {
         if (index === -1) {
-          setSelectedImage(null);
-          onClose();
+          handleClose();
         }
       }}
       backdropComponent={renderBackdrop}
@@ -184,11 +182,8 @@ export default function ImageUploadModal({
           }}
         >
           <View style={{ justifyContent: 'center' }}>
-            <View className="flex-row justify-between items-center mb-6">
+            <View className="mb-6">
               <Text className="text-xl font-bold">사진 추가</Text>
-              <Pressable onPress={handleClose}>
-                <Icon name="cancel" />
-              </Pressable>
             </View>
 
             {selectedImage ? (
