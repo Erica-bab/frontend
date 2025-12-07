@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { View } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import CafeteriaList from '@/components/cafeteria/CafeteriaList';
@@ -130,6 +130,14 @@ export default function SchoolRestaurantScreen() {
     cafeteria_details: true,
   };
   const { data, isLoading, error, refetch } = useCafeteria(cafeteriaParams);
+
+  // 화면이 포커스될 때마다 새로고침 (다른 탭에서 돌아올 때)
+  useFocusEffect(
+    useCallback(() => {
+      // 화면 포커스 시 데이터 새로고침
+      refetch();
+    }, [refetch])
+  );
 
   // 오늘 날짜로 이동
   const goToToday = useCallback(() => {
