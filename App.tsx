@@ -1,4 +1,5 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { View, Animated } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
@@ -93,13 +94,26 @@ function TabNavigator() {
 SplashScreen.preventAutoHideAsync();
 
 export default function App() {
+  const [splashOpacity] = useState(new Animated.Value(1));
+  const [isSplashVisible, setIsSplashVisible] = useState(true);
+
   useEffect(() => {
-    // 앱이 준비되면 1초 후에 스플래시 스크린 숨기기
+    // 앱이 준비되면 1초 후에 스플래시 스크린 페이드 아웃
     const hideSplash = async () => {
       try {
         // 최소 1초는 표시 (네이티브 스플래시와 겹치는 시간 확보)
         await new Promise(resolve => setTimeout(resolve, 1000));
-        await SplashScreen.hideAsync();
+        
+        // 페이드 아웃 애니메이션 (300ms)
+        Animated.timing(splashOpacity, {
+          toValue: 0,
+          duration: 300,
+          useNativeDriver: true,
+        }).start(async () => {
+          // 애니메이션 완료 후 스플래시 스크린 숨기기
+          await SplashScreen.hideAsync();
+          setIsSplashVisible(false);
+        });
       } catch (error) {
         console.warn('Splash screen hide error:', error);
       }
@@ -153,6 +167,21 @@ export default function App() {
       <SafeAreaProvider>
         <QueryClientProvider client={queryClient}>
           <BottomSheetModalProvider>
+            {isSplashVisible && (
+              <Animated.View
+                style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  backgroundColor: '#2563EB',
+                  opacity: splashOpacity,
+                  zIndex: 9999,
+                }}
+                pointerEvents="none"
+              />
+            )}
             <NavigationContainer linking={linking}>
               <Stack.Navigator 
                 screenOptions={{ 

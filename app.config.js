@@ -2,13 +2,8 @@ export default {
   expo: {
     name: "에푸",
     slug: "efoo",
-    version: "1.2.1",
+    version: "1.2.2",
     scheme: ["efoo", "com.googleusercontent.apps.1041029378289-puugfhcoucnpvmi8bk8k2a5uapiaak38"],
-    extra: {
-      "eas": {
-        "projectId": "412b9e21-ad5e-4226-b19f-ec89449204ca"
-      }
-    },
     orientation: "portrait",
     icon: "./assets/app/adaptive-icon.png",
     userInterfaceStyle: "light",
