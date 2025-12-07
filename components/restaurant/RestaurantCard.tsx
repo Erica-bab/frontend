@@ -27,13 +27,14 @@ interface RestaurantCardProps {
   businessHours?: BusinessHours | null; // 운영시간 정보 (클라이언트 계산용)
   rating: number; // 서버에서 받은 별점 (리스트 API에서 이미 포함)
   comment?: string;
+  commentCount?: number; // 댓글 수
   restaurantId?: string;
   thumbnailUrls?: string[]; // 서버에서 받은 썸네일 URL (리스트 API에서 이미 포함)
   distance?: number | null;
   onStatusExpired?: () => void; // 상태가 만료되었을 때 호출되는 콜백
 }
 
-export default function RestaurantCard({ name, category, operatingStatus, businessHours, rating, comment, restaurantId, thumbnailUrls, distance, onStatusExpired }: RestaurantCardProps) {
+export default function RestaurantCard({ name, category, operatingStatus, businessHours, rating, comment, commentCount, restaurantId, thumbnailUrls, distance, onStatusExpired }: RestaurantCardProps) {
   const navigation = useNavigation<NativeStackNavigationProp<any>>();
   const displayComment = comment || null;
   
@@ -209,21 +210,23 @@ export default function RestaurantCard({ name, category, operatingStatus, busine
         className='bg-gray-100 flex-row rounded-lg p-4 w-full justify-between items-center gap-2'
         onPress={() => navigation.navigate('RestaurantDetail', { restaurantId, initialTab: 'comments' })}
       >
-        {displayComment ? (
-          <>
-            <Text className='text-gray-500 flex-1' numberOfLines={2}>
+        <View className='flex-1'>
+          {displayComment ? (
+            <Text className='text-gray-500' numberOfLines={2}>
               {displayComment}
             </Text>
-            <Icon name='rightAngle' width={8}/>
-          </>
-        ) : (
-          <>
-            <Text className='text-gray-400 flex-1' numberOfLines={2}>
+          ) : (
+            <Text className='text-gray-400' numberOfLines={2}>
               여기를 눌러 댓글을 작성해보세요
             </Text>
-            <Icon name='rightAngle' width={8} color="#9CA3AF"/>
-          </>
-        )}
+          )}
+          {commentCount !== undefined && commentCount !== null && (
+            <Text className='text-gray-400 text-xs mt-1'>
+              댓글 {commentCount.toLocaleString()}개
+            </Text>
+          )}
+        </View>
+        <Icon name='rightAngle' width={8} color={displayComment ? undefined : "#9CA3AF"}/>
       </Pressable>
       <Pressable
         onPress={handleCardPress}

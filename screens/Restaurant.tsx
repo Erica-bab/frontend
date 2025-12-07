@@ -18,7 +18,7 @@ import { calculateDistance } from '@/utils/calculateDistance';
 import { isRestaurantOpenAt, hasOperatingHoursOnDay } from '@/utils/operatingStatus';
 import { getSafeErrorMessage } from '@/utils/errorHandler';
 
-const SORT_OPTIONS = ['위치순', '별점순', '가격순'];
+const SORT_OPTIONS = ['위치순', '별점순', '댓글순', '가격순'];
 
 export default function RestuarantScreen() {
     const navigation = useNavigation<NativeStackNavigationProp<any>>();
@@ -246,6 +246,15 @@ export default function RestuarantScreen() {
                 }
                 return b.average_rating - a.average_rating;
             });
+        } else if (sortOption === '댓글순') {
+            // 댓글순 정렬 (내림차순)
+            return restaurants.sort((a, b) => {
+                if (a.comment_count === b.comment_count) {
+                    // 댓글 수가 같으면 별점으로 정렬 (내림차순)
+                    return b.average_rating - a.average_rating;
+                }
+                return b.comment_count - a.comment_count;
+            });
         } else if (sortOption === '가격순') {
             // 가격순 정렬 (오름차순, 가격이 없는 경우 맨 뒤)
             return restaurants.sort((a, b) => {
@@ -413,6 +422,7 @@ export default function RestuarantScreen() {
                             restaurantId={restaurant.id.toString()}
                             thumbnailUrls={restaurant.thumbnail_urls}
                             comment={restaurant.popular_comment?.content}
+                            commentCount={restaurant.comment_count}
                             distance={distance}
                         />
                     );

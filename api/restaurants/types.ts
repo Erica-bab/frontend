@@ -167,6 +167,7 @@ export interface RestaurantListItem {
   thumbnail_urls: string[];
   average_rating: number;
   rating_count: number;
+  comment_count: number;
   location: LocationInfo;
   business_hours: BusinessHours;
   affiliations: CollegeAffiliation[];
