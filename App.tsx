@@ -96,12 +96,18 @@ SplashScreen.preventAutoHideAsync();
 export default function App() {
   const [splashOpacity] = useState(new Animated.Value(1));
   const [isSplashVisible, setIsSplashVisible] = useState(true);
+  const [isAppReady, setIsAppReady] = useState(false);
 
   useEffect(() => {
-    // 앱이 준비되면 1초 후에 스플래시 스크린 페이드 아웃
-    const hideSplash = async () => {
+    // 앱이 준비되면 1초 후에 스플래시 아래에서 앱 로딩 시작
+    // 2초 후에 스플래시 스크린 페이드 아웃
+    const prepareApp = async () => {
       try {
-        // 최소 1초는 표시 (네이티브 스플래시와 겹치는 시간 확보)
+        // 1초 후: 앱 로딩 시작 (스플래시는 계속 보임)
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        setIsAppReady(true);
+        
+        // 추가 1초 대기 (총 2초) 후 페이드 아웃 시작
         await new Promise(resolve => setTimeout(resolve, 1000));
         
         // 페이드 아웃 애니메이션 (300ms)
@@ -119,7 +125,7 @@ export default function App() {
       }
     };
 
-    hideSplash();
+    prepareApp();
   }, []);
 
   const linking = {
@@ -182,7 +188,8 @@ export default function App() {
                 pointerEvents="none"
               />
             )}
-            <NavigationContainer linking={linking}>
+            {isAppReady && (
+              <NavigationContainer linking={linking}>
               <Stack.Navigator 
                 screenOptions={{ 
                   headerShown: false,
@@ -265,7 +272,8 @@ export default function App() {
                   }}
                 />
               </Stack.Navigator>
-            </NavigationContainer>
+              </NavigationContainer>
+            )}
           </BottomSheetModalProvider>
         </QueryClientProvider>
       </SafeAreaProvider>
