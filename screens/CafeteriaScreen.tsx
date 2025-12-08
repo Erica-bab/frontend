@@ -24,33 +24,6 @@ export default function SchoolRestaurantScreen() {
   const [selectedTime, setSelectedTime] = useState<MealType>('조식');
   const [currentDate, setCurrentDate] = useState(new Date());
 
-  // 탭 재클릭 시 초기화 함수
-  const resetToInitial = useCallback(async () => {
-    // 필터 초기화
-    setSortModeType('time');
-    setSelectedLocation('re12');
-    setSelectedTime('조식');
-    setCurrentDate(new Date());
-    // 필터 스토리지 초기화
-    await AsyncStorage.removeItem('cafeteriaFilterSettings');
-    await AsyncStorage.removeItem('cafeteriaSortOption');
-    // 데이터 새로고침
-    refetch();
-  }, [refetch]);
-
-  // 탭 재클릭 감지
-  useEffect(() => {
-    const unsubscribe = navigation.addListener('tabPress', (e) => {
-      if (isFocused) {
-        // 현재 탭이 활성화되어 있으면 초기화
-        e.preventDefault();
-        resetToInitial();
-      }
-    });
-
-    return unsubscribe;
-  }, [navigation, isFocused, resetToInitial]);
-
   // 저장된 필터 설정 불러오기
   useEffect(() => {
     const loadSavedFilterSettings = async () => {
@@ -158,6 +131,33 @@ export default function SchoolRestaurantScreen() {
     cafeteria_details: true,
   };
   const { data, isLoading, isFetching, error, refetch } = useCafeteria(cafeteriaParams);
+
+  // 탭 재클릭 시 초기화 함수
+  const resetToInitial = useCallback(async () => {
+    // 필터 초기화
+    setSortModeType('time');
+    setSelectedLocation('re12');
+    setSelectedTime('조식');
+    setCurrentDate(new Date());
+    // 필터 스토리지 초기화
+    await AsyncStorage.removeItem('cafeteriaFilterSettings');
+    await AsyncStorage.removeItem('cafeteriaSortOption');
+    // 데이터 새로고침
+    refetch();
+  }, [refetch]);
+
+  // 탭 재클릭 감지
+  useEffect(() => {
+    const unsubscribe = (navigation as any).addListener?.('tabPress', (e: any) => {
+      if (isFocused) {
+        // 현재 탭이 활성화되어 있으면 초기화
+        e?.preventDefault?.();
+        resetToInitial();
+      }
+    });
+
+    return unsubscribe;
+  }, [navigation, isFocused, resetToInitial]);
 
   // 오늘 날짜로 이동
   const goToToday = useCallback(() => {
