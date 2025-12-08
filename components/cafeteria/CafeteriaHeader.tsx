@@ -72,7 +72,7 @@ export default function CafeteriaHeader({
     );
   };
   const TabClasses = {
-    baseBoxClass: 'pb-2',
+    baseBoxClass: 'pb-1',
     offTextClass: 'text-[#000000] font-medium text-xl',
     onTextClass: 'text-[#2563EB] font-medium text-xl',
     onBoxClass: 'border-b-2 border-[#2563EB] pb-0',
@@ -98,7 +98,7 @@ export default function CafeteriaHeader({
   };
 
   return (
-    <SafeAreaView className="w-full flex bg-white px-10 pb-4">
+    <SafeAreaView className="w-full flex bg-white px-10 pb-2">
       {/* sort */}
       <View className="flex-row justify-end -mr-4 mt-1">
         <ChangeSortButton
