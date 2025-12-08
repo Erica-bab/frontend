@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation, useIsFocused } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -20,6 +20,7 @@ export default function SchoolRestaurantScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<any>>();
   const isFocused = useIsFocused();
   const { refreshAuthState } = useAuth();
+  const insets = useSafeAreaInsets();
   const [sortModeType, setSortModeType] = useState<SortType>('time');
   const [selectedLocation, setSelectedLocation] = useState<RestaurantCode>('re12');
   const [selectedTime, setSelectedTime] = useState<MealType>('조식');
@@ -169,7 +170,7 @@ export default function SchoolRestaurantScreen() {
   }, [refetch]);
 
   return (
-    <SafeAreaView edges={['top']} className="flex-1 bg-white">
+    <View className="flex-1 bg-white" style={{ paddingTop: insets.top }}>
       <CafeteriaHeader
         sortModeType={sortModeType}
         onChangeSortModeType={handleSortModeChange}
@@ -196,6 +197,6 @@ export default function SchoolRestaurantScreen() {
         onShowLogin={() => (navigation.navigate as any)('Login', { onSuccess: refreshAuthState })}
         onRefresh={handleRefresh}
       />
-    </SafeAreaView>
+    </View>
   );
 }
