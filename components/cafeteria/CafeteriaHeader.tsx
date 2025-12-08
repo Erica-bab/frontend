@@ -1,5 +1,5 @@
 import { View, Text, Pressable, Alert } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { RestaurantCode, MealType, CafeteriaResponse } from '@/api/cafeteria/types';
 import TextIconButton from '@/components/ui/TextIconButton';
 
@@ -62,6 +62,9 @@ export default function CafeteriaHeader({
   onGoToToday,
   meal_data,
 }: CafeteriaHeaderProps) {
+  // SafeArea insets를 즉시 가져와서 초기 렌더링 시에도 안정적인 위치 보장
+  const insets = useSafeAreaInsets();
+  
   // 오늘 날짜인지 확인
   const isToday = () => {
     const today = new Date();
@@ -98,7 +101,7 @@ export default function CafeteriaHeader({
   };
 
   return (
-    <View className="w-full flex bg-white px-10 pb-3">
+    <View className="w-full flex bg-white px-10 pb-3" style={{ paddingTop: insets.top }}>
       {/* sort */}
       <View className="flex-row justify-end -mr-4 mt-1">
         <ChangeSortButton
