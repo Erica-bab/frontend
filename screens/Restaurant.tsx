@@ -60,12 +60,10 @@ export default function RestuarantScreen() {
         await AsyncStorage.removeItem('restaurantFilter');
     }, [refetch]);
 
-    // 탭 재클릭 감지
+    // 탭 재클릭 감지 (커스텀 이벤트)
     useEffect(() => {
-        const unsubscribe = navigation.addListener('tabPress', (e) => {
+        const unsubscribe = (navigation as any).addListener('resetToInitial', () => {
             if (isFocused) {
-                // 현재 탭이 활성화되어 있으면 초기화
-                e.preventDefault();
                 resetToInitial();
             }
         });

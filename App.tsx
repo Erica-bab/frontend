@@ -60,6 +60,17 @@ function TabNavigator() {
             <BobIcon width={size} height={size} color={color} />
           ),
         }}
+        listeners={({ navigation, route }) => ({
+          tabPress: (e) => {
+            // 현재 탭이 활성화되어 있으면 초기화
+            const state = navigation.getState();
+            const currentRoute = state.routes[state.index];
+            if (currentRoute.name === 'Restaurant' && route.name === 'Restaurant') {
+              // Restaurant 화면에 초기화 이벤트 전달
+              navigation.emit('resetToInitial');
+            }
+          },
+        })}
       />
 
       <Tab.Screen
@@ -71,6 +82,17 @@ function TabNavigator() {
             <SchoolIcon width={size} height={size} color={color} />
           ),
         }}
+        listeners={({ navigation, route }) => ({
+          tabPress: (e) => {
+            // 현재 탭이 활성화되어 있으면 초기화
+            const state = navigation.getState();
+            const currentRoute = state.routes[state.index];
+            if (currentRoute.name === 'SchoolRestaruant' && route.name === 'SchoolRestaruant') {
+              // Cafeteria 화면에 초기화 이벤트 전달
+              navigation.emit('resetToInitial');
+            }
+          },
+        })}
       />
 
       <Tab.Screen
