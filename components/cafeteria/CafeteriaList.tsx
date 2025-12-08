@@ -65,19 +65,17 @@ export default function CafeteriaList({
      }, 500);
    };
 
-  // 화면은 무조건 렌더링, 내용만 상태에 따라 처리
+  // 완전히 단순화: 항상 뭔가를 렌더링
   const isRefreshing = refreshing || isLoading || isFetching;
   const hasData = meal_data && meal_data.restaurants && meal_data.restaurants.length > 0;
-  // 로딩 상태: 초기 로딩이거나 데이터가 없을 때만 로딩 표시
-  // isFetching만으로는 로딩 표시하지 않음 (백그라운드 새로고침은 오버레이로 처리)
-  const showLoading = isLoading || (!meal_data && !meal_error);
-
+  
   // 시간순 정렬일 때
   if (sortModeType === 'time') {
     const restaurant = hasData 
       ? meal_data.restaurants.find(r => r.restaurant_code === selectedLocation)
       : null;
 
+    // 항상 기본 레이아웃 렌더링
     return (
       <View className="flex-1 bg-[#F8FAFC] relative">
         <ScrollView 
@@ -91,44 +89,56 @@ export default function CafeteriaList({
             />
           }
         >
-          {meal_error ? (
+          {/* 에러 상태 */}
+          {meal_error && (
             <View className="flex-1 items-center justify-center py-20 px-4">
               <Text className="text-gray-500 text-lg">에러가 발생했어요.</Text>
               <Text className="text-gray-400 text-sm mt-2">{meal_error.message}</Text>
             </View>
-          ) : showLoading ? (
+          )}
+          
+          {/* 로딩 상태 - 초기 로딩만 */}
+          {!meal_error && isLoading && (
             <View className="flex-1 items-center justify-center py-20">
               <ActivityIndicator size="large" color="#3B82F6" />
               <Text className="text-gray-500 text-lg mt-4">불러오는 중...</Text>
             </View>
-          ) : !restaurant ? (
+          )}
+          
+          {/* 데이터 없음 */}
+          {!meal_error && !isLoading && !restaurant && (
             <View className="flex-1 items-center justify-center py-20">
               <Text className="text-gray-500 text-lg">데이터가 없습니다</Text>
             </View>
-          ) : (
-            MEAL_TYPES.map(mealType => {
-              const menus = getMenusByMealType(restaurant, mealType);
-              if (!menus || menus.length === 0) return null;
+          )}
+          
+          {/* 데이터 표시 */}
+          {!meal_error && !isLoading && restaurant && (
+            <>
+              {MEAL_TYPES.map(mealType => {
+                const menus = getMenusByMealType(restaurant, mealType);
+                if (!menus || menus.length === 0) return null;
 
-              return (
-                <CafeteriaSection
-                  key={mealType}
-                  sortModeType="time"
-                  restaurant={restaurant}
-                  mealType={mealType}
-                  menus={menus}
-                  latitude={Number(restaurant.latitude)}
-                  longitude={Number(restaurant.longitude)}
-                  viewName={restaurant.restaurant_name}
-                  auth={!!isAuthenticated}
-                  onShowLogin={onShowLogin}
-                />
-              );
-            })
+                return (
+                  <CafeteriaSection
+                    key={mealType}
+                    sortModeType="time"
+                    restaurant={restaurant}
+                    mealType={mealType}
+                    menus={menus}
+                    latitude={Number(restaurant.latitude)}
+                    longitude={Number(restaurant.longitude)}
+                    viewName={restaurant.restaurant_name}
+                    auth={!!isAuthenticated}
+                    onShowLogin={onShowLogin}
+                  />
+                );
+              })}
+            </>
           )}
         </ScrollView>
-        {/* 로딩 오버레이 - 데이터가 있지만 새로고침 중일 때 */}
-        {isFetching && hasData && (
+        {/* 백그라운드 새로고침 오버레이 */}
+        {isFetching && hasData && !isLoading && (
           <View className="absolute top-0 left-0 right-0 bottom-0 bg-white/50 items-center justify-center">
             <ActivityIndicator size="large" color="#3B82F6" />
           </View>
@@ -140,6 +150,7 @@ export default function CafeteriaList({
   // 장소순 정렬일 때
   const targetMealType = selectedTime;
 
+  // 항상 기본 레이아웃 렌더링
   return (
     <View className="flex-1 bg-[#F8FAFC] relative">
       <ScrollView 
@@ -153,44 +164,56 @@ export default function CafeteriaList({
           />
         }
       >
-        {meal_error ? (
+        {/* 에러 상태 */}
+        {meal_error && (
           <View className="flex-1 items-center justify-center py-20 px-4">
             <Text className="text-gray-500 text-lg">에러가 발생했어요.</Text>
             <Text className="text-gray-400 text-sm mt-2">{meal_error.message}</Text>
           </View>
-        ) : showLoading ? (
+        )}
+        
+        {/* 로딩 상태 - 초기 로딩만 */}
+        {!meal_error && isLoading && (
           <View className="flex-1 items-center justify-center py-20">
             <ActivityIndicator size="large" color="#3B82F6" />
             <Text className="text-gray-500 text-lg mt-4">불러오는 중...</Text>
           </View>
-        ) : !hasData ? (
+        )}
+        
+        {/* 데이터 없음 */}
+        {!meal_error && !isLoading && !hasData && (
           <View className="flex-1 items-center justify-center py-20">
             <Text className="text-gray-500 text-lg">메뉴 정보가 없습니다.</Text>
           </View>
-        ) : (
-          meal_data.restaurants.map(restaurant => {
-            const menus = getMenusByMealType(restaurant, targetMealType);
-            if (!menus || menus.length === 0) return null;
+        )}
+        
+        {/* 데이터 표시 */}
+        {!meal_error && !isLoading && hasData && (
+          <>
+            {meal_data.restaurants.map(restaurant => {
+              const menus = getMenusByMealType(restaurant, targetMealType);
+              if (!menus || menus.length === 0) return null;
 
-            return (
-              <CafeteriaSection
-                key={restaurant.restaurant_code}
-                sortModeType="location"
-                restaurant={restaurant}
-                mealType={targetMealType}
-                menus={menus}
-                latitude={Number(restaurant.latitude)}
-                longitude={Number(restaurant.longitude)}
-                viewName={restaurant.restaurant_name}
-                auth={!!isAuthenticated}
-                onShowLogin={onShowLogin}
-              />
-            );
-          })
+              return (
+                <CafeteriaSection
+                  key={restaurant.restaurant_code}
+                  sortModeType="location"
+                  restaurant={restaurant}
+                  mealType={targetMealType}
+                  menus={menus}
+                  latitude={Number(restaurant.latitude)}
+                  longitude={Number(restaurant.longitude)}
+                  viewName={restaurant.restaurant_name}
+                  auth={!!isAuthenticated}
+                  onShowLogin={onShowLogin}
+                />
+              );
+            })}
+          </>
         )}
       </ScrollView>
-      {/* 로딩 오버레이 - 데이터가 있지만 새로고침 중일 때 */}
-      {isFetching && hasData && (
+      {/* 백그라운드 새로고침 오버레이 */}
+      {isFetching && hasData && !isLoading && (
         <View className="absolute top-0 left-0 right-0 bottom-0 bg-white/50 items-center justify-center">
           <ActivityIndicator size="large" color="#3B82F6" />
         </View>
