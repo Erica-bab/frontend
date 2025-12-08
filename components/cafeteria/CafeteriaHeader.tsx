@@ -137,70 +137,72 @@ export default function CafeteriaHeader({
       </View>
 
       {/* tab */}
-      {sortModeType === 'time' ? (
-        // location tab (시간 기준 정렬일 때 식당 탭)
-        <View className="w-full flex-row justify-around">
-          {(['re12', 're11', 're15', 're13'] as RestaurantCode[]).map((locationCode) => {
-            const locationNames = {
-              're12': '학생',
-              're11': '교직원',
-              're15': '창업보육',
-              're13': '창의관',
-            };
-            
-            // 해당 식당의 모든 시간대 메뉴 개수 계산
-            const restaurant = meal_data?.restaurants.find(r => r.restaurant_code === locationCode);
-            const menuCount = restaurant 
-              ? (restaurant.조식?.length || 0) + (restaurant.중식?.length || 0) + (restaurant.석식?.length || 0)
-              : 0;
-            
-            return (
-              <Pressable
-                key={locationCode}
-                onPress={() => onChangeLocation(locationCode)}
-                className={`items-center ${TabClasses.baseBoxClass} ${selectedLocation === locationCode ? TabClasses.onBoxClass : ''}`}
-              >
-                <View className="h-4 mb-1 justify-center">
-                  <Text className={`text-xs ${selectedLocation === locationCode ? 'text-blue-400' : 'text-gray-400'}`}>
-                    {menuCount}개
+      <View className="w-full" style={{ minHeight: 60 }}>
+        {sortModeType === 'time' ? (
+          // location tab (시간 기준 정렬일 때 식당 탭)
+          <View className="w-full flex-row justify-around">
+            {(['re12', 're11', 're15', 're13'] as RestaurantCode[]).map((locationCode) => {
+              const locationNames = {
+                're12': '학생',
+                're11': '교직원',
+                're15': '창업보육',
+                're13': '창의관',
+              };
+              
+              // 해당 식당의 모든 시간대 메뉴 개수 계산
+              const restaurant = meal_data?.restaurants.find(r => r.restaurant_code === locationCode);
+              const menuCount = restaurant 
+                ? (restaurant.조식?.length || 0) + (restaurant.중식?.length || 0) + (restaurant.석식?.length || 0)
+                : 0;
+              
+              return (
+                <Pressable
+                  key={locationCode}
+                  onPress={() => onChangeLocation(locationCode)}
+                  className={`items-center ${TabClasses.baseBoxClass} ${selectedLocation === locationCode ? TabClasses.onBoxClass : ''}`}
+                >
+                  <View className="h-4 mb-1 justify-center">
+                    <Text className={`text-xs ${selectedLocation === locationCode ? 'text-blue-400' : 'text-gray-400'}`}>
+                      {menuCount}개
+                    </Text>
+                  </View>
+                  <Text className={selectedLocation === locationCode ? TabClasses.onTextClass : TabClasses.offTextClass}>
+                    {locationNames[locationCode]}
                   </Text>
-                </View>
-                <Text className={selectedLocation === locationCode ? TabClasses.onTextClass : TabClasses.offTextClass}>
-                  {locationNames[locationCode]}
-                </Text>
-              </Pressable>
-            );
-          })}
-        </View>
-      ) : (
-        // time tab (식당 기준 정렬일 때 시간대 탭)
-        <View className="w-full flex-row justify-around">
-          {(['조식', '중식', '석식'] as MealType[]).map((mealType) => {
-            // 모든 식당의 해당 시간대 메뉴 개수 계산
-            const menuCount = meal_data?.restaurants.reduce((total, restaurant) => {
-              const menus = getMenusByMealType(restaurant, mealType);
-              return total + (menus?.length || 0);
-            }, 0) || 0;
-            
-            return (
-              <Pressable
-                key={mealType}
-                onPress={() => onChangeTime(mealType)}
-                className={`items-center ${TabClasses.baseBoxClass} ${selectedTime === mealType ? TabClasses.onBoxClass : ''}`}
-              >
-                <View className="h-4 mb-1 justify-center">
-                  <Text className={`text-xs ${selectedTime === mealType ? 'text-blue-400' : 'text-gray-400'}`}>
-                    {menuCount}개
+                </Pressable>
+              );
+            })}
+          </View>
+        ) : (
+          // time tab (식당 기준 정렬일 때 시간대 탭)
+          <View className="w-full flex-row justify-around">
+            {(['조식', '중식', '석식'] as MealType[]).map((mealType) => {
+              // 모든 식당의 해당 시간대 메뉴 개수 계산
+              const menuCount = meal_data?.restaurants.reduce((total, restaurant) => {
+                const menus = getMenusByMealType(restaurant, mealType);
+                return total + (menus?.length || 0);
+              }, 0) || 0;
+              
+              return (
+                <Pressable
+                  key={mealType}
+                  onPress={() => onChangeTime(mealType)}
+                  className={`items-center ${TabClasses.baseBoxClass} ${selectedTime === mealType ? TabClasses.onBoxClass : ''}`}
+                >
+                  <View className="h-4 mb-1 justify-center">
+                    <Text className={`text-xs ${selectedTime === mealType ? 'text-blue-400' : 'text-gray-400'}`}>
+                      {menuCount}개
+                    </Text>
+                  </View>
+                  <Text className={selectedTime === mealType ? TabClasses.onTextClass : TabClasses.offTextClass}>
+                    {mealType}
                   </Text>
-                </View>
-                <Text className={selectedTime === mealType ? TabClasses.onTextClass : TabClasses.offTextClass}>
-                  {mealType}
-                </Text>
-              </Pressable>
-            );
-          })}
-        </View>
-      )}
+                </Pressable>
+              );
+            })}
+          </View>
+        )}
+      </View>
     </SafeAreaView>
   );
 }
