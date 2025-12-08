@@ -136,11 +136,9 @@ export default function SchoolRestaurantScreen() {
   useFocusEffect(
     useCallback(() => {
       // 화면이 포커스될 때마다 쿼리 새로고침
-      // refetchOnMount만으로는 부족할 수 있으므로 명시적으로 호출
-      if (!isLoading && !isFetching) {
-        refetch();
-      }
-    }, [refetch, isLoading, isFetching])
+      // React Query가 자체적으로 중복 요청을 방지하므로 조건 없이 호출
+      refetch();
+    }, [refetch])
   );
 
   // 오늘 날짜로 이동
