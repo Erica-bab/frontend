@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { View } from 'react-native';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useQueryClient } from '@tanstack/react-query';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import CafeteriaList from '@/components/cafeteria/CafeteriaList';
 import CafeteriaHeader from '@/components/cafeteria/CafeteriaHeader';
@@ -17,6 +18,7 @@ type SortType = 'time' | 'location';
 
 export default function SchoolRestaurantScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<any>>();
+  const queryClient = useQueryClient();
   const { refreshAuthState } = useAuth();
   const [sortModeType, setSortModeType] = useState<SortType>('time');
   const [selectedLocation, setSelectedLocation] = useState<RestaurantCode>('re12');
@@ -134,10 +136,11 @@ export default function SchoolRestaurantScreen() {
   // 화면이 포커스될 때마다 새로고침 (다른 탭에서 돌아올 때)
   useFocusEffect(
     useCallback(() => {
-      // 화면 포커스 시 데이터 새로고침
-      // refetch는 안정적인 함수이므로 의존성 배열에 포함
+      // 화면 포커스 시 쿼리 무효화 및 새로고침
+      // queryClient.invalidateQueries로 쿼리를 명시적으로 무효화하여 확실히 새로고침
+      queryClient.invalidateQueries({ queryKey: ['cafeteriaMenu'] });
       refetch();
-    }, [refetch])
+    }, [refetch, queryClient])
   );
 
   // 오늘 날짜로 이동
