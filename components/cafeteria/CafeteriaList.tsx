@@ -192,36 +192,37 @@ export default function CafeteriaList({
     }
 
     return (
-      <ScrollView 
-        className="flex-1 px-10 py-4 bg-[#F8FAFC]"
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={handleRefresh}
-            tintColor="#3B82F6"
-            colors={['#3B82F6']}
-          />
-        }
-      >
-        {MEAL_TYPES.map(mealType => {
-          const menus = getMenusByMealType(restaurant, mealType);
-          if (!menus || menus.length === 0) return null;
-
-          return (
-            <CafeteriaSection
-              key={mealType}
-              sortModeType="time"
-              restaurant={restaurant}
-              mealType={mealType}
-              menus={menus}
-              latitude={Number(restaurant.latitude)}
-              longitude={Number(restaurant.longitude)}
-              viewName={restaurant.restaurant_name}
-              auth={!!isAuthenticated}
-              onShowLogin={onShowLogin}
+      <View className="flex-1 bg-[#F8FAFC] relative">
+        <ScrollView 
+          className="flex-1 px-10 py-4"
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing || isFetching}
+              onRefresh={handleRefresh}
+              tintColor="#3B82F6"
+              colors={['#3B82F6']}
             />
-          );
-        })}
+          }
+        >
+          {MEAL_TYPES.map(mealType => {
+            const menus = getMenusByMealType(restaurant, mealType);
+            if (!menus || menus.length === 0) return null;
+
+            return (
+              <CafeteriaSection
+                key={mealType}
+                sortModeType="time"
+                restaurant={restaurant}
+                mealType={mealType}
+                menus={menus}
+                latitude={Number(restaurant.latitude)}
+                longitude={Number(restaurant.longitude)}
+                viewName={restaurant.restaurant_name}
+                auth={!!isAuthenticated}
+                onShowLogin={onShowLogin}
+              />
+            );
+          })}
         </ScrollView>
         {/* 로딩 오버레이 - 데이터가 있지만 새로고침 중일 때 */}
         {isFetching && !isLoading && (
