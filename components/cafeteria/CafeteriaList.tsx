@@ -64,8 +64,9 @@ export default function CafeteriaList({
      }, 500);
    };
 
-  // 로딩 중이거나 데이터가 없는 경우 처리
-  if (isLoading) {
+  // 로딩 중이지만 데이터가 없는 경우에만 로딩 화면 표시
+  // 데이터가 있으면 로딩 상태와 관계없이 데이터를 표시 (캐시된 데이터 활용)
+  if (isLoading && !meal_data) {
     return (
       <ScrollView 
         className="flex-1 px-10 py-4 bg-[#F8FAFC]"
