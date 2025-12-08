@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { View } from 'react-native';
-import { useNavigation, useFocusEffect } from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useQueryClient } from '@tanstack/react-query';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -133,15 +133,8 @@ export default function SchoolRestaurantScreen() {
   };
   const { data, isLoading, error, refetch } = useCafeteria(cafeteriaParams);
 
-  // 화면이 포커스될 때마다 새로고침 (다른 탭에서 돌아올 때)
-  useFocusEffect(
-    useCallback(() => {
-      // 화면 포커스 시 쿼리 새로고침
-      // refetchOnMount: 'always'가 이미 설정되어 있으므로 단순히 refetch만 호출
-      // 중복 호출을 피하여 상태 충돌 방지
-      refetch();
-    }, [refetch])
-  );
+  // refetchOnMount: 'always'가 이미 설정되어 있으므로 useFocusEffect에서 추가 refetch 불필요
+  // 추가 refetch는 상태 충돌을 일으킬 수 있으므로 제거
 
   // 오늘 날짜로 이동
   const goToToday = useCallback(() => {
