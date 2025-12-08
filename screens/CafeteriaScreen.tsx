@@ -129,7 +129,7 @@ export default function SchoolRestaurantScreen() {
     day: currentDate.getDate(),
     cafeteria_details: true,
   };
-  const { data, isLoading, error, refetch } = useCafeteria(cafeteriaParams);
+  const { data, isLoading, isFetching, error, refetch } = useCafeteria(cafeteriaParams);
 
   // refetchOnMount: 'always'가 이미 설정되어 있으므로 useFocusEffect에서 추가 refetch 불필요
   // 추가 refetch는 상태 충돌을 일으킬 수 있으므로 제거
@@ -167,6 +167,7 @@ export default function SchoolRestaurantScreen() {
         currentDate={currentDate}
         meal_data={data}
         isLoading={isLoading}
+        isFetching={isFetching}
         meal_error={error ?? null}
         onShowLogin={() => (navigation.navigate as any)('Login', { onSuccess: refreshAuthState })}
         onRefresh={handleRefresh}

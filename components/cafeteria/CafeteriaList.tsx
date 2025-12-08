@@ -17,6 +17,7 @@ interface CafeteriaListProps {
 
   meal_data?: CafeteriaResponse;
   isLoading: boolean;
+  isFetching?: boolean;
   meal_error: Error | null;
   onShowLogin: () => void;
   onRefresh?: () => void;
@@ -46,6 +47,7 @@ export default function CafeteriaList({
   currentDate,
   meal_data,
   isLoading,
+  isFetching = false,
   meal_error,
   onShowLogin,
   onRefresh,
@@ -64,9 +66,9 @@ export default function CafeteriaList({
      }, 500);
    };
 
-  // 로딩 중이지만 데이터가 없는 경우에만 로딩 화면 표시
-  // 데이터가 있으면 로딩 상태와 관계없이 데이터를 표시 (캐시된 데이터 활용)
-  if (isLoading && !meal_data) {
+  // 데이터가 있으면 무조건 표시 (로딩 상태 무시)
+  // 데이터가 없고 첫 로딩 중일 때만 로딩 화면 표시
+  if (!meal_data && isLoading) {
     return (
       <ScrollView 
         className="flex-1 px-10 py-4 bg-[#F8FAFC]"
