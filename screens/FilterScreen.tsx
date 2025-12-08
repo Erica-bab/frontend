@@ -31,6 +31,7 @@ export default function FilterScreen() {
   } || {};
 
   const snapPoints = useMemo(() => ['85%', '95%'], []);
+  const [isClosing, setIsClosing] = useState(false);
   const [operatingTimeMode, setOperatingTimeMode] = useState<'none' | 'operating' | 'manual'>('none');
   const [selectedDay, setSelectedDay] = useState<string>();
   const [selectedHour, setSelectedHour] = useState<string>();
@@ -168,7 +169,11 @@ export default function FilterScreen() {
   }, [selectedHour, operatingTimeMode]);
 
   const goBack = useCallback(() => {
-    navigation.goBack();
+    setIsClosing(true);
+    // 약간의 지연 후 실제로 닫기 (버튼이 먼저 사라지도록)
+    setTimeout(() => {
+      navigation.goBack();
+    }, 50);
   }, [navigation]);
 
   const handleReset = () => {
@@ -390,6 +395,12 @@ export default function FilterScreen() {
       snapPoints={snapPoints}
       enablePanDownToClose={true}
       onClose={goBack}
+      onChange={(index) => {
+        // 바텀시트가 닫히기 시작하면 (index가 -1이 되면) 버튼 숨기기
+        if (index === -1) {
+          setIsClosing(true);
+        }
+      }}
       backgroundStyle={styles.container}
       handleIndicatorStyle={styles.handleIndicator}
       enableDynamicSizing={false}
@@ -542,6 +553,7 @@ export default function FilterScreen() {
     </BottomSheet>
     
     {/* 하단 버튼 - 화면 하단 고정 (모달과 독립적) */}
+    {!isClosing && (
     <View 
       style={[
         styles.fixedButtonContainer, 
@@ -580,6 +592,7 @@ export default function FilterScreen() {
             </Button>
           </View>
     </View>
+    )}
   </>
   );
 }
