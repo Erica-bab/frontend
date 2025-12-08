@@ -65,12 +65,10 @@ export default function CafeteriaList({
      }, 500);
    };
 
-  // 조건식 제거: 화면은 무조건 렌더링, 내용만 상태에 따라 처리
+  // 화면은 무조건 렌더링, 내용만 상태에 따라 처리
   const isRefreshing = refreshing || isLoading || isFetching;
-  // meal_data가 없으면 아직 로딩 중이거나 데이터가 없는 상태
-  // isLoading이나 isFetching이 true이거나 meal_data가 undefined이면 로딩 중으로 간주
-  const isActuallyLoading = isLoading || isFetching || !meal_data;
   const hasData = meal_data && meal_data.restaurants && meal_data.restaurants.length > 0;
+  const showLoading = isLoading || isFetching || !meal_data;
 
   // 시간순 정렬일 때
   if (sortModeType === 'time') {
@@ -96,16 +94,14 @@ export default function CafeteriaList({
               <Text className="text-gray-500 text-lg">에러가 발생했어요.</Text>
               <Text className="text-gray-400 text-sm mt-2">{meal_error.message}</Text>
             </View>
-          ) : !hasData || !restaurant ? (
+          ) : showLoading ? (
             <View className="flex-1 items-center justify-center py-20">
-              {isActuallyLoading ? (
-                <>
-                  <ActivityIndicator size="large" color="#3B82F6" />
-                  <Text className="text-gray-500 text-lg mt-4">불러오는 중...</Text>
-                </>
-              ) : (
-                <Text className="text-gray-500 text-lg">데이터가 없습니다</Text>
-              )}
+              <ActivityIndicator size="large" color="#3B82F6" />
+              <Text className="text-gray-500 text-lg mt-4">불러오는 중...</Text>
+            </View>
+          ) : !restaurant ? (
+            <View className="flex-1 items-center justify-center py-20">
+              <Text className="text-gray-500 text-lg">데이터가 없습니다</Text>
             </View>
           ) : (
             MEAL_TYPES.map(mealType => {
@@ -129,7 +125,7 @@ export default function CafeteriaList({
             })
           )}
         </ScrollView>
-        {/* 로딩 오버레이 - 새로고침 중일 때 */}
+        {/* 로딩 오버레이 - 데이터가 있지만 새로고침 중일 때 */}
         {isFetching && hasData && (
           <View className="absolute top-0 left-0 right-0 bottom-0 bg-white/50 items-center justify-center">
             <ActivityIndicator size="large" color="#3B82F6" />
@@ -160,16 +156,14 @@ export default function CafeteriaList({
             <Text className="text-gray-500 text-lg">에러가 발생했어요.</Text>
             <Text className="text-gray-400 text-sm mt-2">{meal_error.message}</Text>
           </View>
+        ) : showLoading ? (
+          <View className="flex-1 items-center justify-center py-20">
+            <ActivityIndicator size="large" color="#3B82F6" />
+            <Text className="text-gray-500 text-lg mt-4">불러오는 중...</Text>
+          </View>
         ) : !hasData ? (
           <View className="flex-1 items-center justify-center py-20">
-            {isActuallyLoading ? (
-              <>
-                <ActivityIndicator size="large" color="#3B82F6" />
-                <Text className="text-gray-500 text-lg mt-4">불러오는 중...</Text>
-              </>
-            ) : (
-              <Text className="text-gray-500 text-lg">메뉴 정보가 없습니다.</Text>
-            )}
+            <Text className="text-gray-500 text-lg">메뉴 정보가 없습니다.</Text>
           </View>
         ) : (
           meal_data.restaurants.map(restaurant => {
@@ -193,7 +187,7 @@ export default function CafeteriaList({
           })
         )}
       </ScrollView>
-      {/* 로딩 오버레이 - 새로고침 중일 때 */}
+      {/* 로딩 오버레이 - 데이터가 있지만 새로고침 중일 때 */}
       {isFetching && hasData && (
         <View className="absolute top-0 left-0 right-0 bottom-0 bg-white/50 items-center justify-center">
           <ActivityIndicator size="large" color="#3B82F6" />
