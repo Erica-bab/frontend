@@ -13,6 +13,7 @@ import * as SplashScreen from 'expo-splash-screen';
 import CafeteriaScreen from './screens/CafeteriaScreen';
 import RestuarantScreen from './screens/Restaurant';
 import ProfileScreen from './screens/ProfileScreen';
+import CafeteriaHeader from './components/cafeteria/CafeteriaHeader';
 import FilterScreen from './screens/FilterScreen';
 import LoginScreen from './screens/LoginScreen';
 import RestaurantDetailScreen from './screens/RestaurantDetailScreen';
@@ -216,21 +217,7 @@ export default function App() {
       <SafeAreaProvider>
         <QueryClientProvider client={queryClient}>
           <BottomSheetModalProvider>
-            {isSplashVisible && (
-              <Animated.View
-                style={{
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
-                  backgroundColor: '#2563EB',
-                  opacity: splashOpacity,
-                  zIndex: 9999,
-                }}
-                pointerEvents="none"
-              />
-            )}
+            {/* 스플래시 화면이 보이는 동안에도 NavigationContainer를 미리 렌더링하여 레이아웃 계산 완료 */}
             {isAppReady && (
               <NavigationContainer linking={linking}>
               <Stack.Navigator 
@@ -316,6 +303,22 @@ export default function App() {
                 />
               </Stack.Navigator>
               </NavigationContainer>
+            )}
+            {/* 스플래시 화면 오버레이 - NavigationContainer 위에 표시 */}
+            {isSplashVisible && (
+              <Animated.View
+                style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  backgroundColor: '#2563EB',
+                  opacity: splashOpacity,
+                  zIndex: 9999,
+                }}
+                pointerEvents="none"
+              />
             )}
           </BottomSheetModalProvider>
         </QueryClientProvider>
