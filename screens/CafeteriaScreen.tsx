@@ -129,7 +129,12 @@ export default function SchoolRestaurantScreen() {
     day: currentDate.getDate(),
     cafeteria_details: true,
   };
-  const { data, isLoading, isFetching, error, refetch } = useCafeteria(cafeteriaParams);
+  const { data, isLoading, isFetching, error, refetch, status } = useCafeteria(cafeteriaParams);
+  
+  // 디버깅용 로그
+  useEffect(() => {
+    console.log('CafeteriaScreen - status:', status, 'isLoading:', isLoading, 'isFetching:', isFetching, 'hasData:', !!data);
+  }, [status, isLoading, isFetching, data]);
 
   // refetchOnMount: 'always'가 이미 설정되어 있으므로 useFocusEffect에서 추가 refetch 불필요
   // 추가 refetch는 상태 충돌을 일으킬 수 있으므로 제거

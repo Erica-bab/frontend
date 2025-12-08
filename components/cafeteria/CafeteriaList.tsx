@@ -54,6 +54,14 @@ export default function CafeteriaList({
 }: CafeteriaListProps) {
    const {isAuthenticated} = useAuth();
    const [refreshing, setRefreshing] = useState(false);
+   
+   // 디버깅용 로그
+   useEffect(() => {
+     console.log('CafeteriaList - meal_data:', !!meal_data, 'isLoading:', isLoading, 'isFetching:', isFetching);
+     if (meal_data) {
+       console.log('CafeteriaList - restaurants count:', meal_data.restaurants?.length);
+     }
+   }, [meal_data, isLoading, isFetching]);
 
    const handleRefresh = async () => {
      setRefreshing(true);
