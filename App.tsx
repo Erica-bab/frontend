@@ -47,6 +47,8 @@ function TabNavigator() {
           shadowRadius: 4,
         },
         animation: 'fade',
+        lazy: false, // 모든 탭을 미리 마운트하여 빠른 전환 보장
+        unmountOnBlur: false, // 탭이 blur되어도 unmount하지 않음
       }}
     >
       <Tab.Screen
