@@ -160,7 +160,7 @@ export default function CafeteriaHeader({
                 onPress={() => onChangeLocation(locationCode)}
                 className={`items-center ${TabClasses.baseBoxClass} ${selectedLocation === locationCode ? TabClasses.onBoxClass : ''}`}
               >
-                <View className="h-5 mb-1 justify-center min-h-[20px]">
+                <View className="h-5 mb-1 justify-center">
                   <Text className={`text-xs ${selectedLocation === locationCode ? 'text-blue-400' : 'text-gray-400'}`}>
                     {menuCount}개
                   </Text>
@@ -188,7 +188,7 @@ export default function CafeteriaHeader({
                 onPress={() => onChangeTime(mealType)}
                 className={`items-center ${TabClasses.baseBoxClass} ${selectedTime === mealType ? TabClasses.onBoxClass : ''}`}
               >
-                <View className="h-5 mb-1 justify-center min-h-[20px]">
+                <View className="h-5 mb-1 justify-center">
                   <Text className={`text-xs ${selectedTime === mealType ? 'text-blue-400' : 'text-gray-400'}`}>
                     {menuCount}개
                   </Text>
