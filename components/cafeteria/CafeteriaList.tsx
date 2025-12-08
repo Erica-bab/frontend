@@ -67,6 +67,9 @@ export default function CafeteriaList({
 
   // 조건식 제거: 화면은 무조건 렌더링, 내용만 상태에 따라 처리
   const isRefreshing = refreshing || isLoading || isFetching;
+  // meal_data가 없으면 아직 로딩 중이거나 데이터가 없는 상태
+  // isLoading이나 isFetching이 true이거나 meal_data가 undefined이면 로딩 중으로 간주
+  const isActuallyLoading = isLoading || isFetching || !meal_data;
   const hasData = meal_data && meal_data.restaurants && meal_data.restaurants.length > 0;
 
   // 시간순 정렬일 때
@@ -95,7 +98,7 @@ export default function CafeteriaList({
             </View>
           ) : !hasData || !restaurant ? (
             <View className="flex-1 items-center justify-center py-20">
-              {isLoading || isFetching ? (
+              {isActuallyLoading ? (
                 <>
                   <ActivityIndicator size="large" color="#3B82F6" />
                   <Text className="text-gray-500 text-lg mt-4">불러오는 중...</Text>
@@ -159,7 +162,7 @@ export default function CafeteriaList({
           </View>
         ) : !hasData ? (
           <View className="flex-1 items-center justify-center py-20">
-            {isLoading || isFetching ? (
+            {isActuallyLoading ? (
               <>
                 <ActivityIndicator size="large" color="#3B82F6" />
                 <Text className="text-gray-500 text-lg mt-4">불러오는 중...</Text>
