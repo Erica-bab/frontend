@@ -1,4 +1,4 @@
-import { View, Text, ScrollView, RefreshControl } from 'react-native';
+import { View, Text, ScrollView, RefreshControl, ActivityIndicator } from 'react-native';
 import { useState } from 'react';
 import CafeteriaSection from '@/components/cafeteria/CafeteriaSection';
 import {
@@ -92,23 +92,30 @@ export default function CafeteriaList({
   // 로딩 중이거나 데이터가 없을 때 표시
   if (!meal_data) {
     return (
-      <ScrollView 
-        className="flex-1 px-10 py-4 bg-[#F8FAFC]"
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing || isLoading}
-            onRefresh={handleRefresh}
-            tintColor="#3B82F6"
-            colors={['#3B82F6']}
-          />
-        }
-      >
-        <View className="flex-1 items-center justify-center py-20">
-          <Text className="text-gray-500 text-lg">
-            {isLoading ? '불러오는 중...' : '메뉴 정보가 없습니다.'}
-          </Text>
-        </View>
-      </ScrollView>
+      <View className="flex-1 bg-[#F8FAFC]">
+        <ScrollView 
+          className="flex-1 px-10 py-4"
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing || isLoading}
+              onRefresh={handleRefresh}
+              tintColor="#3B82F6"
+              colors={['#3B82F6']}
+            />
+          }
+        >
+          <View className="flex-1 items-center justify-center py-20">
+            {isLoading ? (
+              <>
+                <ActivityIndicator size="large" color="#3B82F6" />
+                <Text className="text-gray-500 text-lg mt-4">불러오는 중...</Text>
+              </>
+            ) : (
+              <Text className="text-gray-500 text-lg">메뉴 정보가 없습니다.</Text>
+            )}
+          </View>
+        </ScrollView>
+      </View>
     );
   }
 
@@ -215,7 +222,14 @@ export default function CafeteriaList({
             />
           );
         })}
-      </ScrollView>
+        </ScrollView>
+        {/* 로딩 오버레이 - 데이터가 있지만 새로고침 중일 때 */}
+        {isFetching && !isLoading && (
+          <View className="absolute top-0 left-0 right-0 bottom-0 bg-white/50 items-center justify-center">
+            <ActivityIndicator size="large" color="#3B82F6" />
+          </View>
+        )}
+      </View>
     );
   }
 
@@ -278,6 +292,13 @@ export default function CafeteriaList({
           />
         );
       })}
-    </ScrollView>
+      </ScrollView>
+      {/* 로딩 오버레이 - 데이터가 있지만 새로고침 중일 때 */}
+      {isFetching && !isLoading && (
+        <View className="absolute top-0 left-0 right-0 bottom-0 bg-white/50 items-center justify-center">
+          <ActivityIndicator size="large" color="#3B82F6" />
+        </View>
+      )}
+    </View>
   );
 }
