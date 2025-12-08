@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { View, Text, Pressable, ScrollView, Alert, AppState, AppStateStatus, ActivityIndicator } from 'react-native';
-import { useNavigation, useFocusEffect } from '@react-navigation/native';
+import { useNavigation, useFocusEffect, useIsFocused } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import * as Location from 'expo-location';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -23,6 +23,7 @@ const SORT_OPTIONS = ['위치순', '별점순', '댓글순', '가격순'];
 export default function RestuarantScreen() {
     const navigation = useNavigation<NativeStackNavigationProp<any>>();
     const queryClient = useQueryClient();
+    const isFocused = useIsFocused();
     const [filterParams, setFilterParams] = useState<Omit<RestaurantListParams, 'sort'>>({});
     // 운영시간 필터는 로컬에서 처리하므로 별도로 관리
     const [operatingTimeFilter, setOperatingTimeFilter] = useState<{ dayOfWeek?: string; hour?: string; minute?: string } | null>(null);
@@ -33,6 +34,44 @@ export default function RestuarantScreen() {
     const { data, isLoading, error, refetch } = useRestaurantListV2(filterParams);
     const { mutate: updateOperatingStatus } = useUpdateRestaurantOperatingStatus();
     const appState = useRef(AppState.currentState);
+
+    // 탭 재클릭 시 초기화 함수
+    const resetToInitial = useCallback(async () => {
+        // 필터 초기화
+        setFilterParams({});
+        setOperatingTimeFilter(null);
+        // 정렬 옵션 초기화 (저장된 값으로)
+        try {
+            const savedSort = await AsyncStorage.getItem('restaurantSortOption');
+            if (savedSort && SORT_OPTIONS.includes(savedSort)) {
+                setSortOption(savedSort);
+            } else {
+                setSortOption('위치순');
+            }
+        } catch (error) {
+            console.error('Failed to load sort option:', error);
+            setSortOption('위치순');
+        }
+        // 위치 새로고침
+        await requestLocationAndUpdate();
+        // 데이터 새로고침
+        refetch();
+        // 필터 스토리지 초기화
+        await AsyncStorage.removeItem('restaurantFilter');
+    }, [refetch]);
+
+    // 탭 재클릭 감지
+    useEffect(() => {
+        const unsubscribe = navigation.addListener('tabPress', (e) => {
+            if (isFocused) {
+                // 현재 탭이 활성화되어 있으면 초기화
+                e.preventDefault();
+                resetToInitial();
+            }
+        });
+
+        return unsubscribe;
+    }, [navigation, isFocused, resetToInitial]);
 
     const requestLocationAndUpdate = async () => {
         const { status } = await Location.requestForegroundPermissionsAsync();

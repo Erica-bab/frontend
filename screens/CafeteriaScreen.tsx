@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { View } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useIsFocused } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import CafeteriaList from '@/components/cafeteria/CafeteriaList';
@@ -17,11 +17,39 @@ type SortType = 'time' | 'location';
 
 export default function SchoolRestaurantScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<any>>();
+  const isFocused = useIsFocused();
   const { refreshAuthState } = useAuth();
   const [sortModeType, setSortModeType] = useState<SortType>('time');
   const [selectedLocation, setSelectedLocation] = useState<RestaurantCode>('re12');
   const [selectedTime, setSelectedTime] = useState<MealType>('조식');
   const [currentDate, setCurrentDate] = useState(new Date());
+
+  // 탭 재클릭 시 초기화 함수
+  const resetToInitial = useCallback(async () => {
+    // 필터 초기화
+    setSortModeType('time');
+    setSelectedLocation('re12');
+    setSelectedTime('조식');
+    setCurrentDate(new Date());
+    // 필터 스토리지 초기화
+    await AsyncStorage.removeItem('cafeteriaFilterSettings');
+    await AsyncStorage.removeItem('cafeteriaSortOption');
+    // 데이터 새로고침
+    refetch();
+  }, [refetch]);
+
+  // 탭 재클릭 감지
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('tabPress', (e) => {
+      if (isFocused) {
+        // 현재 탭이 활성화되어 있으면 초기화
+        e.preventDefault();
+        resetToInitial();
+      }
+    });
+
+    return unsubscribe;
+  }, [navigation, isFocused, resetToInitial]);
 
   // 저장된 필터 설정 불러오기
   useEffect(() => {
