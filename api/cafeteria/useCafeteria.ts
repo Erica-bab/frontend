@@ -40,10 +40,12 @@ export const useCafeteria = (params: CafeteriaParams) => {
       return data;
     },
     enabled: true, // 항상 쿼리 실행 보장
-    refetchOnMount: 'always', // 마운트 시 항상 새로고침 (캐시 무시)
+    refetchOnMount: true, // 마운트 시 캐시가 있으면 먼저 표시, 백그라운드에서 새로고침
     staleTime: 0, // 데이터를 즉시 stale로 처리하여 항상 최신 데이터 유지
     gcTime: 5 * 60 * 1000, // 캐시 유지 시간 (기존 cacheTime)
     refetchInterval: 5 * 60 * 1000, // 5분마다 자동 새로고침
+    // 캐시된 데이터를 즉시 표시하여 빠른 탭 전환 시에도 화면이 바로 보이도록 보장
+    placeholderData: (previousData) => previousData,
   });
 };
 
