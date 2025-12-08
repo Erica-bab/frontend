@@ -98,7 +98,7 @@ export default function CafeteriaHeader({
   };
 
   return (
-    <View className="w-full flex bg-white px-10 pb-2">
+    <View className="w-full flex bg-white px-10 pb-3">
       {/* sort */}
       <View className="flex-row justify-end -mr-4 mt-1">
         <ChangeSortButton
