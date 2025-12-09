@@ -51,6 +51,22 @@ export function Dropdown({ label, options, selectedValue, onSelect, placeholder 
           }}
         >
           <ScrollView>
+            {/* 초기화 버튼 */}
+            {selectedValue && (
+              <Pressable
+                onPress={() => {
+                  onSelect(undefined as any);
+                  if (onToggle) {
+                    onToggle();
+                  } else {
+                    setInternalIsOpen(false);
+                  }
+                }}
+                className="px-4 py-3 border-b border-gray-200 bg-gray-50"
+              >
+                <Text className="text-base text-red-500 font-medium">초기화</Text>
+              </Pressable>
+            )}
             {options.map((option) => (
               <Pressable
                 key={option}
@@ -69,22 +85,6 @@ export function Dropdown({ label, options, selectedValue, onSelect, placeholder 
                 </Text>
               </Pressable>
             ))}
-            {/* 초기화 버튼 */}
-            {selectedValue && (
-              <Pressable
-                onPress={() => {
-                  onSelect(undefined as any);
-                  if (onToggle) {
-                    onToggle();
-                  } else {
-                    setInternalIsOpen(false);
-                  }
-                }}
-                className="px-4 py-3 border-t border-gray-200 bg-gray-50"
-              >
-                <Text className="text-base text-red-500 font-medium">초기화</Text>
-              </Pressable>
-            )}
           </ScrollView>
         </View>
       )}
