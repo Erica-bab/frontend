@@ -84,80 +84,66 @@ export const useUserActivities = (params?: UserActivitiesParams) => {
   });
 };
 
-// 좋아요한 댓글 목록만 조회
-export const useLikedComments = (page: number = 1, limit: number = 100, enabled: boolean = true) => {
-  return useQuery<LikedCommentActivity[]>({
-    queryKey: ['user', 'liked-comments', page, limit],
+// 사용자 활동 데이터 통합 조회 (여러 category를 한 번에 가져옴)
+// 같은 엔드포인트를 여러 번 호출하는 것을 방지하기 위해 통합 훅 사용
+const useUserActivitiesData = (categories: string[], enabled: boolean = true) => {
+  return useQuery<UserActivitiesResponse>({
+    queryKey: ['user', 'activities', 'combined', categories.sort().join(',')],
     queryFn: async () => {
+      // 'all' category로 모든 데이터를 한 번에 가져옴
       const { data } = await apiClient.get<UserActivitiesResponse>('/users/me/activities', {
         params: {
-          category: 'liked_comments',
-          page,
-          limit,
+          category: 'all',
+          page: 1,
+          limit: 100,
         },
       });
-      return data.activities.liked_comments || [];
+      return data;
     },
     enabled,
     retry: false,
+    staleTime: 30000, // 30초간 캐시 유지 (같은 데이터를 여러 번 요청하는 것을 방지)
   });
+};
+
+// 좋아요한 댓글 목록만 조회
+export const useLikedComments = (page: number = 1, limit: number = 100, enabled: boolean = true) => {
+  const { data, ...rest } = useUserActivitiesData(['liked_comments'], enabled);
+  
+  return {
+    ...rest,
+    data: data?.activities.liked_comments || [],
+  };
 };
 
 // 별점 준 식당 목록 조회
 export const useMyFavorites = (page: number = 1, limit: number = 100, enabled: boolean = true) => {
-  return useQuery<FavoriteActivity[]>({
-    queryKey: ['user', 'favorites', page, limit],
-    queryFn: async () => {
-      const { data } = await apiClient.get<UserActivitiesResponse>('/users/me/activities', {
-        params: {
-          category: 'favorites',
-          page,
-          limit,
-        },
-      });
-      return data.activities.favorites || [];
-    },
-    enabled,
-    retry: false,
-  });
+  const { data, ...rest } = useUserActivitiesData(['favorites'], enabled);
+  
+  return {
+    ...rest,
+    data: data?.activities.favorites || [],
+  };
 };
 
 // 작성한 댓글 목록 조회
 export const useMyComments = (page: number = 1, limit: number = 100, enabled: boolean = true) => {
-  return useQuery<CommentActivity[]>({
-    queryKey: ['user', 'comments', page, limit],
-    queryFn: async () => {
-      const { data } = await apiClient.get<UserActivitiesResponse>('/users/me/activities', {
-        params: {
-          category: 'comments',
-          page,
-          limit,
-        },
-      });
-      return data.activities.comments || [];
-    },
-    enabled,
-    retry: false,
-  });
+  const { data, ...rest } = useUserActivitiesData(['comments'], enabled);
+  
+  return {
+    ...rest,
+    data: data?.activities.comments || [],
+  };
 };
 
 // 작성한 대댓글 목록 조회
 export const useMyReplies = (page: number = 1, limit: number = 100, enabled: boolean = true) => {
-  return useQuery<ReplyActivity[]>({
-    queryKey: ['user', 'replies', page, limit],
-    queryFn: async () => {
-      const { data } = await apiClient.get<UserActivitiesResponse>('/users/me/activities', {
-        params: {
-          category: 'replies',
-          page,
-          limit,
-        },
-      });
-      return data.activities.replies || [];
-    },
-    enabled,
-    retry: false,
-  });
+  const { data, ...rest } = useUserActivitiesData(['replies'], enabled);
+  
+  return {
+    ...rest,
+    data: data?.activities.replies || [],
+  };
 };
 
 // 북마크 활동 항목
@@ -189,27 +175,39 @@ export const useMyBookmarks = (page: number = 1, limit: number = 100, enabled: b
 };
 
 // 북마크 추가/삭제
+// 현재 북마크 상태를 알고 있다면 isBookmarked를 전달하여 체크 API 호출 생략 가능
 export const useToggleBookmark = () => {
   const queryClient = useQueryClient();
 
-  return useMutation<void, Error, number>({
-    mutationFn: async (restaurantId: number) => {
-      // 먼저 체크 API 호출
+  return useMutation<void, Error, { restaurantId: number; currentState?: boolean }>({
+    mutationFn: async ({ restaurantId, currentState }) => {
+      // 현재 상태를 알고 있다면 체크 API 호출 생략
+      if (currentState !== undefined) {
+        if (currentState) {
+          // 이미 북마크되어 있으면 삭제
+          await apiClient.delete(`/users/me/bookmarks/${restaurantId}`);
+        } else {
+          // 북마크 안되어 있으면 추가
+          await apiClient.post(`/users/me/bookmarks/${restaurantId}`);
+        }
+      } else {
+        // 현재 상태를 모르는 경우에만 체크 API 호출 (하위 호환성)
       const { data: checkData } = await apiClient.get<{ is_bookmarked: boolean }>(
         `/users/me/bookmarks/${restaurantId}/check`
       );
 
       if (checkData.is_bookmarked) {
-        // 이미 북마크되어 있으면 삭제
         await apiClient.delete(`/users/me/bookmarks/${restaurantId}`);
       } else {
-        // 북마크 안되어 있으면 추가
         await apiClient.post(`/users/me/bookmarks/${restaurantId}`);
+        }
       }
     },
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       // 북마크 목록 새로고침
       queryClient.invalidateQueries({ queryKey: ['user', 'bookmarks'] });
+      // 북마크 체크 쿼리도 업데이트
+      queryClient.setQueryData(['bookmark', 'check', variables.restaurantId], !variables.currentState);
     },
   });
 };

@@ -39,6 +39,7 @@ export const useCafeteria = (params: CafeteriaParams) => {
       );
       return data;
     },
+    refetchInterval: 5 * 60 * 1000, // 5분마다 자동 새로고침
   });
 };
 

@@ -205,6 +205,22 @@ export default function RestaurantStatusTag({ operatingStatus, businessHours, ra
     // 현재 시간을 기준으로 동적으로 다음 이벤트 텍스트 계산
     const nextEventText = getNextEventText(computedOperatingStatus, currentTime);
     
+    // statusLabel이 변경될 때 displayTextRef를 즉시 업데이트 (빈 텍스트 방지)
+    useEffect(() => {
+        // 토글 중이 아닐 때만 업데이트
+        if (!isTogglingRef.current) {
+            displayTextRef.current = statusLabel;
+        }
+    }, [statusLabel]);
+    
+    // computedOperatingStatus가 변경될 때도 displayTextRef 초기화 (앱 재접속 시 빈 텍스트 방지)
+    useEffect(() => {
+        // 토글 중이 아니고 displayTextRef가 비어있거나 statusLabel과 다를 때 업데이트
+        if (!isTogglingRef.current && (!displayTextRef.current || displayTextRef.current !== statusLabel)) {
+            displayTextRef.current = statusLabel;
+        }
+    }, [computedOperatingStatus, statusLabel]);
+    
     // 현재 시간을 주기적으로 업데이트 (1분마다)
     useEffect(() => {
         // 즉시 한 번 업데이트
@@ -303,7 +319,8 @@ export default function RestaurantStatusTag({ operatingStatus, businessHours, ra
         };
     }, [nextEventText, fadeAnim, statusLabel, computedOperatingStatus]);
 
-    const displayText = displayTextRef.current || statusLabel;
+    // displayTextRef가 비어있거나 유효하지 않을 때 statusLabel 사용 (빈 텍스트 방지)
+    const displayText = (displayTextRef.current && displayTextRef.current.trim()) ? displayTextRef.current : statusLabel;
 
     return (
         <View className="flex-row items-center" style={{ gap: 8 }}>

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, Pressable, ActivityIndicator, KeyboardAvoidingView, Platform, Alert, Share, Keyboard, TouchableWithoutFeedback } from 'react-native';
+import Animated, { useSharedValue, useAnimatedStyle, withTiming, FadeIn, FadeOut } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -29,9 +30,21 @@ type RestaurantTabType = 'home' | 'menu' | 'comments' | 'photos';
 export default function RestaurantDetailScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<any>>();
   const route = useRoute();
-  const { restaurantId, initialTab } = route.params as { restaurantId?: string; initialTab?: RestaurantTabType };
+  const { restaurantId, initialTab, openImageUploadModal: openImageUploadModalParam } = route.params as { 
+    restaurantId?: string; 
+    initialTab?: RestaurantTabType;
+    openImageUploadModal?: boolean;
+  };
   const [selectedTab, setSelectedTab] = useState<RestaurantTabType>(initialTab || 'home');
   const [commentText, setCommentText] = useState('');
+  const [shouldOpenImageUploadModal, setShouldOpenImageUploadModal] = useState(openImageUploadModalParam || false);
+
+  // route.params가 변경될 때 shouldOpenImageUploadModal 업데이트
+  useEffect(() => {
+    if (openImageUploadModalParam) {
+      setShouldOpenImageUploadModal(true);
+    }
+  }, [openImageUploadModalParam]);
 
   const { isAuthenticated, isLoading: isAuthLoading, refreshAuthState } = useAuth();
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
@@ -41,6 +54,23 @@ export default function RestaurantDetailScreen() {
   const { mutate: createComment, isPending: isCommentLoading } = useCreateComment(Number(restaurantId));
   const { refetch: refetchRestaurantImages } = useRestaurantImages(restaurant?.id || 0);
   const [showImageUploadModal, setShowImageUploadModal] = useState(false);
+
+  // openImageUploadModal 파라미터가 있으면 탭 변경 및 모달 열기
+  useEffect(() => {
+    if (shouldOpenImageUploadModal) {
+      // 사진 탭으로 이동
+      setSelectedTab('photos');
+      // restaurant가 로드되면 모달 열기
+      if (restaurant && !isLoading) {
+        // 약간의 지연을 두어 탭 전환이 완료된 후 모달 열기
+        const timer = setTimeout(() => {
+          setShowImageUploadModal(true);
+          setShouldOpenImageUploadModal(false); // 한 번만 실행되도록
+        }, 300);
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [shouldOpenImageUploadModal, restaurant, isLoading]);
 
   // 댓글 임시 저장을 위한 키
   const COMMENT_DRAFT_KEY = `comment_draft_${restaurantId}`;
@@ -110,17 +140,20 @@ export default function RestaurantDetailScreen() {
       return;
     }
 
-    toggleBookmark(Number(restaurantId), {
-      onSuccess: () => {
-        refetchBookmark();
-      },
-      onError: (err) => {
-        if ((err as AxiosError)?.response?.status === 403) {
-          (navigation.navigate as any)('Login', { onSuccess: refreshAuthState });
-        }
-        console.error('Failed to toggle bookmark:', err);
-      },
-    });
+    toggleBookmark(
+      { restaurantId: Number(restaurantId), currentState: isBookmarked },
+      {
+        onSuccess: () => {
+          refetchBookmark();
+        },
+        onError: (err) => {
+          if ((err as AxiosError)?.response?.status === 403) {
+            (navigation.navigate as any)('Login', { onSuccess: refreshAuthState });
+          }
+          console.error('Failed to toggle bookmark:', err);
+        },
+      }
+    );
   };
 
   // 공유 핸들러
@@ -199,83 +232,90 @@ export default function RestaurantDetailScreen() {
         >
           {/* 공통 헤더 부분 */}
           <View>
-            <View className='h-64'>
-              <NaverMapWebView
-                latitude={restaurant.location.latitude ?? 0}
-                longitude={restaurant.location.longitude ?? 0}
-                name={restaurant.name}
-              />
-            </View>
-            <View>
-              <View className="flex-row items-center m-4">
+        <View className='h-64'>
+          <NaverMapWebView
+            latitude={restaurant.location.latitude ?? 0}
+            longitude={restaurant.location.longitude ?? 0}
+            name={restaurant.name}
+          />
+        </View>
+          <View>
+            <View className="m-4">
+              <View className="flex-row items-center">
                 <Text className="text-xl text-blue-500">{restaurant.name}</Text>
                 {restaurant.category && formatCategory(restaurant.category) && (
                   <Text className="text-lg ml-1 text-gray-600">{formatCategory(restaurant.category)}</Text>
                 )}
               </View>
-              <View className='ml-4 mb-4'>
-                <RestaurantStatusTag
+              {restaurant.menu_summary?.average_price && (
+                <Text className="text-sm text-gray-500 mt-1">
+                  평균 {Math.round(restaurant.menu_summary.average_price).toLocaleString()}원
+                </Text>
+              )}
+            </View>
+            <View className='ml-4 mb-4'>
+              <RestaurantStatusTag
                   businessHours={restaurant.business_hours}
-                  rating={restaurant.rating.average}
-                  onRatingPress={() => setSelectedTab('comments')}
+                rating={restaurant.rating.average}
+                onRatingPress={() => setSelectedTab('comments')}
                   onStatusExpired={() => {
                     // 운영 상태는 클라이언트에서 계산하므로 새로고침 불필요
                     // 필요시 refetchRestaurant() 호출
                   }}
-                />
-              </View>
+              />
             </View>
-            <View className="flex-row border-t border-gray-200">
-              <Pressable
-                className='flex-1 items-center justify-center p-2 gap-1'
-                onPress={handleBookmarkPress}
-              >
-                <Icon
-                  name={isBookmarked ? 'bookmark' : 'bookmark1'}
-                  width={15}
-                  height={15}
-                  color={isBookmarked ? '#3B82F6' : '#000000'}
-                />
-                <Text>저장</Text>
-              </Pressable>
-              <Pressable className='flex-1 items-center justify-center p-2 gap-1' onPress={handleSharePress}>
-                <Icon width={15} name='share' />
-                <Text>공유</Text>
-              </Pressable>
-              <Pressable className='flex-1 items-center justify-center p-2 gap-1' onPress={handleEditPress}>
-                <Icon width={15} name='edit' />
-                <Text>수정</Text>
-              </Pressable>
-            </View>
-            <View className="border-t border-t-2 border-gray-200 mb-4">
-              <View className="w-full flex-row justify-around border-b border-gray-200">
-                <TextIconButton
-                  isOn={selectedTab === 'home'}
-                  onPress={() => setSelectedTab('home')}
-                  text="홈"
-                  baseBoxClass="-pb-4"
-                  offTextClass="text-[#000000] font-medium text-lg"
-                  onTextClass="text-[#2563EB] font-medium text-lg"
-                  onBoxClass="border-b-2 border-[#2563EB] -pb-2"
-                />
-                <TextIconButton
-                  isOn={selectedTab === 'menu'}
-                  onPress={() => setSelectedTab('menu')}
-                  text="메뉴"
-                  baseBoxClass="-pb-4"
-                  offTextClass="text-[#000000] font-medium text-lg"
-                  onTextClass="text-[#2563EB] font-medium text-lg"
-                  onBoxClass="border-b-2 border-[#2563EB] -pb-2"
-                />
-                <TextIconButton
-                  isOn={selectedTab === 'comments'}
-                  onPress={() => setSelectedTab('comments')}
-                  text="댓글"
-                  baseBoxClass="-pb-4"
-                  offTextClass="text-[#000000] font-medium text-lg"
-                  onTextClass="text-[#2563EB] font-medium text-lg"
-                  onBoxClass="border-b-2 border-[#2563EB] -pb-2"
-                />
+          </View>
+          <View className="flex-row border-t border-gray-200">
+            <Pressable
+              className='flex-1 items-center justify-center p-2 gap-1'
+              onPress={handleBookmarkPress}
+            >
+              <Icon
+                name={isBookmarked ? 'bookmark' : 'bookmark1'}
+                width={15}
+                height={15}
+                color={isBookmarked ? '#3B82F6' : '#000000'}
+              />
+              <Text>저장</Text>
+            </Pressable>
+            <Pressable className='flex-1 items-center justify-center p-2 gap-1' onPress={handleSharePress}>
+              <Icon width={15} name='share' />
+              <Text>공유</Text>
+            </Pressable>
+            <Pressable className='flex-1 items-center justify-center p-2 gap-1' onPress={handleEditPress}>
+              <Icon width={15} name='edit' />
+              <Text>수정</Text>
+            </Pressable>
+          </View>
+          <View className="border-t border-t-2 border-gray-200 mb-4">
+            <View className="w-full flex-row justify-around border-b border-gray-200">
+              <TextIconButton
+                isOn={selectedTab === 'home'}
+                onPress={() => setSelectedTab('home')}
+                text="홈"
+                baseBoxClass="-pb-4"
+                offTextClass="text-[#000000] font-medium text-lg"
+                onTextClass="text-[#2563EB] font-medium text-lg"
+                onBoxClass="border-b-2 border-[#2563EB] -pb-2"
+              />
+              <TextIconButton
+                isOn={selectedTab === 'menu'}
+                onPress={() => setSelectedTab('menu')}
+                text="메뉴"
+                baseBoxClass="-pb-4"
+                offTextClass="text-[#000000] font-medium text-lg"
+                onTextClass="text-[#2563EB] font-medium text-lg"
+                onBoxClass="border-b-2 border-[#2563EB] -pb-2"
+              />
+              <TextIconButton
+                isOn={selectedTab === 'comments'}
+                onPress={() => setSelectedTab('comments')}
+                text="댓글"
+                baseBoxClass="-pb-4"
+                offTextClass="text-[#000000] font-medium text-lg"
+                onTextClass="text-[#2563EB] font-medium text-lg"
+                onBoxClass="border-b-2 border-[#2563EB] -pb-2"
+              />
                 <TextIconButton
                   isOn={selectedTab === 'photos'}
                   onPress={() => setSelectedTab('photos')}
@@ -292,36 +332,48 @@ export default function RestaurantDetailScreen() {
           {/* 탭 콘텐츠 */}
           <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
             <View>
-              {selectedTab === 'home' && (() => {
-                // 클라이언트에서 거리 계산
-                const distance = userLocation && restaurant.location.latitude && restaurant.location.longitude
-                  ? calculateDistance(
-                      userLocation.lat,
-                      userLocation.lng,
-                      restaurant.location.latitude,
-                      restaurant.location.longitude
-                    )
-                  : null;
+              {selectedTab === 'home' && (
+                <Animated.View key="home" entering={FadeIn.duration(200)} exiting={FadeOut.duration(150)}>
+                  {(() => {
+                    // 클라이언트에서 거리 계산
+                    const distance = userLocation && restaurant.location.latitude && restaurant.location.longitude
+                      ? calculateDistance(
+                          userLocation.lat,
+                          userLocation.lng,
+                          restaurant.location.latitude,
+                          restaurant.location.longitude
+                        )
+                      : null;
 
-                return <RestaurantHomeTab restaurant={restaurant} distance={distance} />;
-              })()}
-              {selectedTab === 'menu' && <RestaurantMenuTab restaurant={restaurant} />}
+                    return <RestaurantHomeTab restaurant={restaurant} distance={distance} />;
+                  })()}
+                </Animated.View>
+              )}
+              {selectedTab === 'menu' && (
+                <Animated.View key="menu" entering={FadeIn.duration(200)} exiting={FadeOut.duration(150)}>
+                  <RestaurantMenuTab restaurant={restaurant} />
+                </Animated.View>
+              )}
               {selectedTab === 'comments' && (
-                <RestaurantCommentsTab
-                  restaurant={restaurant}
-                  onShowLogin={() => (navigation.navigate as any)('Login', { onSuccess: refreshAuthState })}
-                />
+                <Animated.View key="comments" entering={FadeIn.duration(200)} exiting={FadeOut.duration(150)}>
+                  <RestaurantCommentsTab
+                    restaurant={restaurant}
+                    onShowLogin={() => (navigation.navigate as any)('Login', { onSuccess: refreshAuthState })}
+                  />
+                </Animated.View>
               )}
               {selectedTab === 'photos' && (
-                <RestaurantPhotosTab
-                  restaurant={restaurant}
-                  onShowLogin={() => (navigation.navigate as any)('Login', { onSuccess: refreshAuthState })}
-                  onAddPhotoPress={() => setShowImageUploadModal(true)}
-                />
+                <Animated.View key="photos" entering={FadeIn.duration(200)} exiting={FadeOut.duration(150)}>
+                  <RestaurantPhotosTab
+                    restaurant={restaurant}
+                    onShowLogin={() => (navigation.navigate as any)('Login', { onSuccess: refreshAuthState })}
+                    onAddPhotoPress={() => setShowImageUploadModal(true)}
+                  />
+                </Animated.View>
               )}
             </View>
           </TouchableWithoutFeedback>
-        </ScrollView>
+      </ScrollView>
 
       {/* 댓글 입력창 - 하단 고정 */}
       {selectedTab === 'comments' && (

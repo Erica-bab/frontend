@@ -1,5 +1,5 @@
 import { useState, useCallback, useMemo, useEffect } from 'react';
-import { View, Text, Pressable, StyleSheet, Modal } from 'react-native';
+import { View, Text, Pressable, StyleSheet, Modal, Alert } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -22,7 +22,13 @@ export default function FilterScreen() {
   const navigation = useNavigation<any>();
   const route = useRoute();
   const insets = useSafeAreaInsets();
-  const { onApply } = route.params as { onApply?: (params: RestaurantListParams) => void } || {};
+  const { onApply, currentFilter } = route.params as { 
+    onApply?: (params: RestaurantListParams) => void;
+    currentFilter?: {
+      filterParams?: any;
+      operatingTimeFilter?: { dayOfWeek?: string; hour?: string; minute?: string } | null;
+    };
+  } || {};
 
   const snapPoints = useMemo(() => ['85%', '95%'], []);
   const [operatingTimeMode, setOperatingTimeMode] = useState<'none' | 'operating' | 'manual'>('none');
@@ -33,6 +39,17 @@ export default function FilterScreen() {
   const [selectedFoodTypes, setSelectedFoodTypes] = useState<string[]>([]);
   const [selectedAffiliates, setSelectedAffiliates] = useState<string[]>([]);
   const [selectedRestaurantTypes, setSelectedRestaurantTypes] = useState<string[]>([]);
+  
+  // 초기 필터 상태 저장 (비교용)
+  const [initialFilterState, setInitialFilterState] = useState<{
+    operatingTimeMode: 'none' | 'operating' | 'manual';
+    selectedDay?: string;
+    selectedHour?: string;
+    selectedMin?: string;
+    selectedFoodTypes: string[];
+    selectedAffiliates: string[];
+    selectedRestaurantTypes: string[];
+  } | null>(null);
 
   // 현재 시간을 가져와서 요일, 시간, 분으로 변환하는 함수
   const getCurrentTime = useCallback(() => {
@@ -60,6 +77,28 @@ export default function FilterScreen() {
         const savedFilter = await AsyncStorage.getItem('restaurantFilter');
         if (savedFilter) {
           const filter = JSON.parse(savedFilter);
+          
+          // 현재 적용된 필터 상태 확인
+          const hasCurrentFilter = currentFilter && (
+            (currentFilter.filterParams && Object.keys(currentFilter.filterParams).length > 0) ||
+            currentFilter.operatingTimeFilter !== null
+          );
+          
+          // 실제로 필터가 적용되지 않았는데 스토리지에 필터가 있으면 스토리지 초기화
+          if (!hasCurrentFilter) {
+            // 스토리지 초기화
+            await AsyncStorage.removeItem('restaurantFilter');
+            // UI도 초기화
+            setOperatingTimeMode('none');
+            setSelectedDay(undefined);
+            setSelectedHour(undefined);
+            setSelectedMin(undefined);
+            setSelectedFoodTypes([]);
+            setSelectedAffiliates([]);
+            setSelectedRestaurantTypes([]);
+            return;
+          }
+          
           const savedMode = filter.operatingTimeMode || 'none';
           
           // operatingTimeMode가 'operating'인데 시간 정보가 없으면 'none'으로 초기화
@@ -78,13 +117,45 @@ export default function FilterScreen() {
           setSelectedFoodTypes(filter.selectedFoodTypes || []);
           setSelectedAffiliates(filter.selectedAffiliates || []);
           setSelectedRestaurantTypes(filter.selectedRestaurantTypes || []);
+          
+          // 초기 필터 상태 저장
+          setInitialFilterState({
+            operatingTimeMode: savedMode === 'operating' && (!filter.selectedDay || !filter.selectedHour || !filter.selectedMin) ? 'none' : savedMode,
+            selectedDay: filter.selectedDay || undefined,
+            selectedHour: filter.selectedHour || undefined,
+            selectedMin: filter.selectedMin || undefined,
+            selectedFoodTypes: filter.selectedFoodTypes || [],
+            selectedAffiliates: filter.selectedAffiliates || [],
+            selectedRestaurantTypes: filter.selectedRestaurantTypes || [],
+          });
+        } else {
+          // 필터가 없을 때 초기 상태 저장
+          setInitialFilterState({
+            operatingTimeMode: 'none',
+            selectedDay: undefined,
+            selectedHour: undefined,
+            selectedMin: undefined,
+            selectedFoodTypes: [],
+            selectedAffiliates: [],
+            selectedRestaurantTypes: [],
+          });
         }
       } catch (error) {
         console.error('Failed to load filter:', error);
+        // 에러 발생 시에도 초기 상태 저장
+        setInitialFilterState({
+          operatingTimeMode: 'none',
+          selectedDay: undefined,
+          selectedHour: undefined,
+          selectedMin: undefined,
+          selectedFoodTypes: [],
+          selectedAffiliates: [],
+          selectedRestaurantTypes: [],
+        });
       }
     };
     loadSavedFilter();
-  }, []);
+  }, [currentFilter]);
 
   // 시간 선택 시 분 드롭다운 활성화
   useEffect(() => {
@@ -100,7 +171,8 @@ export default function FilterScreen() {
     navigation.goBack();
   }, [navigation]);
 
-  const handleReset = async () => {
+  const handleReset = () => {
+    // 필터 초기화
     setOperatingTimeMode('none');
     setSelectedDay(undefined);
     setSelectedHour(undefined);
@@ -109,12 +181,25 @@ export default function FilterScreen() {
     setSelectedAffiliates([]);
     setSelectedRestaurantTypes([]);
     
-    // 저장된 필터도 삭제
-    try {
-      await AsyncStorage.removeItem('restaurantFilter');
-    } catch (error) {
+    // 초기 상태 업데이트
+    setInitialFilterState({
+      operatingTimeMode: 'none',
+      selectedDay: undefined,
+      selectedHour: undefined,
+      selectedMin: undefined,
+      selectedFoodTypes: [],
+      selectedAffiliates: [],
+      selectedRestaurantTypes: [],
+    });
+    
+    // 저장된 필터도 삭제 (비동기, await 없이)
+    AsyncStorage.removeItem('restaurantFilter').catch(error => {
       console.error('Failed to remove filter:', error);
-    }
+    });
+    
+    // 바로 적용하고 모달 닫기
+    onApply?.({});
+    goBack();
   };
 
   // 운영중 버튼 클릭 시 현재 시간으로 설정 (토글)
@@ -152,13 +237,69 @@ export default function FilterScreen() {
     }
   };
 
+  // 필터가 선택되었는지 확인
+  const hasSelectedFilter = useMemo(() => {
+    return (
+      operatingTimeMode !== 'none' ||
+      selectedFoodTypes.length > 0 ||
+      selectedAffiliates.length > 0 ||
+      selectedRestaurantTypes.length > 0
+    );
+  }, [operatingTimeMode, selectedFoodTypes, selectedAffiliates, selectedRestaurantTypes]);
+
+  // 적용된 필터가 있는지 확인
+  const hasAppliedFilter = useMemo(() => {
+    return currentFilter && (
+      (currentFilter.filterParams && Object.keys(currentFilter.filterParams).length > 0) ||
+      currentFilter.operatingTimeFilter !== null
+    );
+  }, [currentFilter]);
+
+  // 초기화 버튼을 표시할지 결정
+  const showResetButton = hasSelectedFilter || hasAppliedFilter;
+
+  // 현재 필터 상태와 초기 필터 상태 비교
+  const hasFilterChanged = useMemo(() => {
+    if (!initialFilterState) return false;
+    
+    // 운영시간 모드 비교
+    if (operatingTimeMode !== initialFilterState.operatingTimeMode) return true;
+    
+    // 운영시간 모드가 'operating'이면 현재 시간으로 자동 설정되므로 비교 불필요
+    // 'manual'일 때만 비교
+    if (operatingTimeMode === 'manual') {
+      if (selectedDay !== initialFilterState.selectedDay) return true;
+      if (selectedHour !== initialFilterState.selectedHour) return true;
+      if (selectedMin !== initialFilterState.selectedMin) return true;
+    } else if (operatingTimeMode === 'operating') {
+      // operating 모드는 항상 현재 시간이므로 초기 상태와 다를 수 있음
+      // 하지만 사용자가 변경한 것이 아니므로 비교에서 제외
+      // 대신 다른 필터와 비교
+    }
+    
+    // 음식 종류 비교
+    if (selectedFoodTypes.length !== initialFilterState.selectedFoodTypes.length) return true;
+    if (!selectedFoodTypes.every(type => initialFilterState.selectedFoodTypes.includes(type))) return true;
+    
+    // 제휴 비교
+    if (selectedAffiliates.length !== initialFilterState.selectedAffiliates.length) return true;
+    if (!selectedAffiliates.every(aff => initialFilterState.selectedAffiliates.includes(aff))) return true;
+    
+    // 식당 종류 비교
+    if (selectedRestaurantTypes.length !== initialFilterState.selectedRestaurantTypes.length) return true;
+    if (!selectedRestaurantTypes.every(type => initialFilterState.selectedRestaurantTypes.includes(type))) return true;
+    
+    return false;
+  }, [initialFilterState, operatingTimeMode, selectedDay, selectedHour, selectedMin, selectedFoodTypes, selectedAffiliates, selectedRestaurantTypes]);
+
   const handleApply = async () => {
-    // 운영중 모드인 경우 현재 시간으로 업데이트
+    // 적용 시점의 필터 상태 계산 (운영중 모드인 경우 현재 시간으로 업데이트)
     let finalDay = selectedDay;
     let finalHour = selectedHour;
     let finalMin = selectedMin;
     
     if (operatingTimeMode === 'operating') {
+      // 운영중 모드: 적용 시점의 현재 시간 사용
       const currentTime = getCurrentTime();
       finalDay = currentTime.day;
       finalHour = currentTime.hour;
@@ -168,9 +309,42 @@ export default function FilterScreen() {
       finalDay = undefined;
       finalHour = undefined;
       finalMin = undefined;
+    } else if (operatingTimeMode === 'manual') {
+      // 수동 선택 모드에서 시간만 선택하고 요일이 없으면 경고
+      if (finalHour && !finalDay) {
+        Alert.alert('요일 선택 필요', '시간을 선택하려면 요일도 선택해주세요.');
+        return;
+      }
+      
+      // 분이 선택되지 않았으면 00분을 기본값으로 사용
+      if (finalDay && finalHour && !finalMin) {
+        finalMin = '00';
+      }
     }
 
-    // 필터 저장
+    // 적용 시점의 필터 상태 확인 (finalDay, finalHour, finalMin 사용)
+    const hasFilterAtApply = (
+      (finalDay !== undefined) ||
+      selectedFoodTypes.length > 0 ||
+      selectedAffiliates.length > 0 ||
+      selectedRestaurantTypes.length > 0
+    );
+
+    // 필터가 선택되지 않았을 때는 스토리지 삭제
+    if (!hasFilterAtApply) {
+      try {
+        await AsyncStorage.removeItem('restaurantFilter');
+      } catch (error) {
+        console.error('Failed to remove filter:', error);
+      }
+      
+      // 빈 params로 onApply 호출하여 필터 해제
+      onApply?.({});
+      goBack();
+      return;
+    }
+
+    // 필터 저장 (적용 시점의 상태 저장)
     try {
       const filterData = {
         operatingTimeMode,
@@ -186,6 +360,7 @@ export default function FilterScreen() {
       console.error('Failed to save filter:', error);
     }
 
+    // 적용 시점의 필터 상태로 params 생성
     const params = filterToParams({
       dayOfWeek: finalDay,
       hour: finalHour,
@@ -194,6 +369,17 @@ export default function FilterScreen() {
       affiliations: selectedAffiliates,
       subCategory: selectedRestaurantTypes[0],
     });
+    
+    // 운영시간 필터는 로컬에서 처리하지만, Restaurant.tsx에서 필터링하기 위해 params에 포함
+    // 요일만 선택한 경우도 포함
+    if (finalDay) {
+      params.day_of_week = finalDay;
+      if (finalHour && finalMin) {
+        params.time = `${finalHour}:${finalMin}`;
+      }
+    }
+    
+    // 적용 시점의 필터 상태 전달
     onApply?.(params);
     goBack();
   };
@@ -375,16 +561,24 @@ export default function FilterScreen() {
             backgroundColor: 'white',
             borderTopWidth: 1,
             borderTopColor: '#e5e7eb',
+            flexDirection: showResetButton ? 'row' : 'column',
+            gap: showResetButton ? 8 : 0,
           }
         ]}
       >
-        <Button variant="secondary" onPress={handleReset} className="flex-1">
-          초기화
-        </Button>
-        <Button onPress={handleApply} className="flex-1">
-          적용
-        </Button>
-      </View>
+            {showResetButton && (
+              <Button variant="secondary" onPress={handleReset} className="flex-1">
+                초기화
+              </Button>
+            )}
+            <Button 
+              onPress={handleApply} 
+              className={showResetButton ? "flex-1" : "w-full"}
+              disabled={!hasFilterChanged}
+            >
+              적용
+            </Button>
+          </View>
     </View>
   </>
   );
@@ -430,8 +624,7 @@ const styles = StyleSheet.create({
     paddingTop: 4,
   },
   buttonContainer: {
-    flexDirection: 'row',
-    gap: 8,
+    // flexDirection과 gap은 조건부로 설정됨
     paddingTop: 16,
     paddingBottom: 16,
     paddingHorizontal: 16,

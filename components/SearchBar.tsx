@@ -26,19 +26,25 @@ function SearchResultCard({ item }: { item: SearchResultItem }) {
 
   if (item.type === 'restaurant' && item.restaurant) {
     const restaurant = item.restaurant;
+    // restaurant.id가 유효한 숫자인지 확인
+    const rawId = restaurant.id;
+    const restaurantId = typeof rawId === 'number' && !isNaN(rawId) && rawId > 0 
+      ? rawId 
+      : (typeof rawId === 'string' ? Number(rawId) : NaN);
+    const isValidId = !isNaN(restaurantId) && restaurantId > 0;
     
     // 별점 전용 엔드포인트로 별점 주기적 새로고침
     const { data: ratingStats } = useRatingStats(
-      restaurant.id,
-      true,
+      isValidId ? restaurantId : 0,
+      isValidId,
       {
-        refetchInterval: 60000, // 1분마다 새로고침
+        refetchInterval: isValidId ? 60000 : undefined, // 1분마다 새로고침 (restaurantId가 있을 때만)
       }
     );
     
     // 최신 별점 사용 (서버에서 가져온 별점이 있으면 사용, 없으면 props의 rating 사용)
-    const currentRating = ratingStats?.average ?? restaurant.average_rating;
-    const currentRatingCount = ratingStats?.count ?? restaurant.rating_count;
+    const currentRating = ratingStats?.average ?? restaurant.average_rating ?? 0;
+    const currentRatingCount = ratingStats?.count ?? restaurant.rating_count ?? 0;
     
     // 운영 상태 레이블
     const statusLabels = {
@@ -70,7 +76,7 @@ function SearchResultCard({ item }: { item: SearchResultItem }) {
                 <Text className="text-sm text-gray-600">{statusText}</Text>
               )}
               <Text className="text-sm text-blue-500">
-                ★ {currentRating.toFixed(1)}
+                ★ {(currentRating || 0).toFixed(1)}
               </Text>
               <Text className="text-sm text-gray-400">
                 ({currentRatingCount})
@@ -90,19 +96,25 @@ function SearchResultCard({ item }: { item: SearchResultItem }) {
 
   if (item.type === 'menu' && item.menu && item.restaurant) {
     const restaurant = item.restaurant;
+    // restaurant.id가 유효한 숫자인지 확인
+    const rawId = restaurant.id;
+    const restaurantId = typeof rawId === 'number' && !isNaN(rawId) && rawId > 0 
+      ? rawId 
+      : (typeof rawId === 'string' ? Number(rawId) : NaN);
+    const isValidId = !isNaN(restaurantId) && restaurantId > 0;
     
     // 별점 전용 엔드포인트로 별점 주기적 새로고침
     const { data: ratingStats } = useRatingStats(
-      restaurant.id,
-      true,
+      isValidId ? restaurantId : 0,
+      isValidId,
       {
-        refetchInterval: 60000, // 1분마다 새로고침
+        refetchInterval: isValidId ? 60000 : undefined, // 1분마다 새로고침 (restaurantId가 있을 때만)
       }
     );
     
     // 최신 별점 사용 (서버에서 가져온 별점이 있으면 사용, 없으면 props의 rating 사용)
-    const currentRating = ratingStats?.average ?? restaurant.average_rating;
-    const currentRatingCount = ratingStats?.count ?? restaurant.rating_count;
+    const currentRating = ratingStats?.average ?? restaurant.average_rating ?? 0;
+    const currentRatingCount = ratingStats?.count ?? restaurant.rating_count ?? 0;
     
     // 운영 상태 레이블
     const statusLabels = {
@@ -139,7 +151,7 @@ function SearchResultCard({ item }: { item: SearchResultItem }) {
                 <Text className="text-sm text-gray-600">{statusText}</Text>
               )}
               <Text className="text-sm text-blue-500">
-                ★ {currentRating.toFixed(1)}
+                ★ {(currentRating || 0).toFixed(1)}
               </Text>
               <Text className="text-sm text-gray-400">
                 ({currentRatingCount})

@@ -23,6 +23,7 @@ import LocationIcon from '@/assets/icon/location.svg';
 import LunchIcon from '@/assets/icon/lunch.svg';
 import MailIcon from '@/assets/icon/mail.svg';
 import MeatballIcon from '@/assets/icon/meatball.svg';
+import MoneyIcon from '@/assets/icon/money.svg';
 import PaperIcon from '@/assets/icon/paper.svg';
 import PeopleIcon from '@/assets/icon/people.svg';
 import PickupIcon from '@/assets/icon/pickup.svg';
@@ -67,6 +68,7 @@ const icons = {
   lunch: LunchIcon,
   mail: MailIcon,
   meatball: MeatballIcon,
+  money: MoneyIcon,
   paper: PaperIcon,
   people: PeopleIcon,
   pickup: PickupIcon,

@@ -14,8 +14,8 @@ export default {
     userInterfaceStyle: "light",
     newArchEnabled: true,
     splash: {
-      image: "./assets/app/splash.png",
-      resizeMode: "contain",
+      image: "./assets/app/splash-image.png",
+      resizeMode: "cover",
       backgroundColor: "#2563EB"
     },
     ios: {
@@ -23,9 +23,14 @@ export default {
       supportsTablet: false,
       UIDeviceFamily: [1],
       bundleIdentifier: "com.efoo.app",
-      buildNumber: "20",
+      buildNumber: "1",
       usesAppleSignIn: true,
       displayName: "에푸",
+      splash: {
+        image: "./assets/app/splash-image.png",
+        resizeMode: "cover",
+        backgroundColor: "#2563EB"
+      },
       infoPlist: {
         ITSAppUsesNonExemptEncryption: false,
         NSLocationWhenInUseUsageDescription: "주변 맛집을 위치순으로 정렬하기 위해 위치 정보가 필요합니다.",
@@ -39,6 +44,11 @@ export default {
       }
     },
     android: {
+      splash: {
+        image: "./assets/app/splash-image.png",
+        resizeMode: "cover",
+        backgroundColor: "#2563EB"
+      },
       adaptiveIcon: {
         foregroundImage: "./assets/app/android-icon.png",
         backgroundColor: "#FFFFFF"
@@ -70,6 +80,20 @@ export default {
     plugins: [
       "expo-router",
       "expo-web-browser",
+      [
+        "expo-splash-screen",
+        {
+          image: "./assets/app/splash-image.png",
+          resizeMode: "cover",
+          backgroundColor: "#2563EB"
+        }
+      ],
+      [
+        "react-native-maps",
+        {
+          googleMapsApiKey: process.env.GOOGLE_MAPS_API_KEY
+        }
+      ],
       "expo-apple-authentication",
       [
         "expo-location",

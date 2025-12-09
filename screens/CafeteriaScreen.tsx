@@ -154,6 +154,7 @@ export default function SchoolRestaurantScreen() {
         onPrevDate={goPrevDay}
         onNextDate={goNextDay}
         onGoToToday={goToToday}
+        meal_data={data}
       />
 
       <CafeteriaList

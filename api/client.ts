@@ -39,34 +39,27 @@ apiClient.interceptors.request.use(
         if (config.data instanceof FormData) {
             // React Native에서는 Content-Type을 명시적으로 설정하지 않아야 함
             // XMLHttpRequest가 자동으로 multipart/form-data와 boundary를 설정함
-            // 모든 Content-Type 관련 헤더 제거
-            if (config.headers) {
-                delete config.headers['Content-Type'];
-                delete config.headers['content-type'];
-                delete config.headers['Content-type'];
-            }
-            
-            // transformRequest를 설정하여 FormData를 그대로 전달
-            // axios의 기본 transformRequest를 덮어씀
+            // transformRequest에서 Content-Type 헤더 제거
             config.transformRequest = [(data: any, headers: any) => {
-                // 헤더에서 Content-Type 완전히 제거
+                // 헤더에서 Content-Type 제거 (대소문자 구분 없이)
                 if (headers) {
                     delete headers['Content-Type'];
                     delete headers['content-type'];
-                    delete headers['Content-type'];
                 }
                 // FormData는 그대로 반환
                 return data;
             }];
         }
 
-        // 디버깅: 요청 로그
+        // 개발 환경에서만 요청 로그 출력
+        if (__DEV__) {
         console.log('API Request:', {
             url: config.url,
             method: config.method,
             data: config.data instanceof FormData ? '[FormData]' : config.data,
             headers: config.headers,
         });
+        }
 
         return config;
     },
@@ -78,22 +71,26 @@ apiClient.interceptors.request.use(
 
 apiClient.interceptors.response.use(
     (response: any) => {
-        // 디버깅: 응답 로그
+        // 개발 환경에서만 응답 로그 출력
+        if (__DEV__) {
         console.log('API Response:', {
             url: response.config.url,
             status: response.status,
             data: response.data,
         });
+        }
         return response;
     },
     async (error: any) => {
-        // 디버깅: 에러 로그
+        // 개발 환경에서만 에러 로그 출력 (에러는 항상 로깅하는 것이 좋지만, 프로덕션에서는 간소화)
+        if (__DEV__) {
         console.error('API Error:', {
             url: error.config?.url,
             status: error.response?.status,
             data: error.response?.data,
             message: error.message,
         });
+        }
         const originalRequest = error.config;
         // 401 에러이고, refresh 엔드포인트가 아니고, 아직 재시도하지 않은 경우
         if (error.response?.status === 401 && !originalRequest._retry && !originalRequest.url?.includes('/auth/refresh')) {

@@ -85,6 +85,7 @@ function formatDayHours(hours: BusinessHoursDay | null | undefined): string[] {
 
 export default function RestaurantHomeTab({ restaurant, distance }: RestaurantHomeTabProps) {
   const [isHoursExpanded, setIsHoursExpanded] = useState(false);
+  const [isAffiliationsExpanded, setIsAffiliationsExpanded] = useState(false);
   const dayOrder: DayKey[] = ['월', '화', '수', '목', '금', '토', '일'];
   const dayMap: DayKey[] = ['일', '월', '화', '수', '목', '금', '토'];
   const today = dayMap[new Date().getDay()];
@@ -179,9 +180,36 @@ export default function RestaurantHomeTab({ restaurant, distance }: RestaurantHo
         </View>
       )}
       {restaurant.affiliations && restaurant.affiliations.length > 0 && (
-        <View className='flex-row gap-4 mb-4 items-center'>
+        <View className='flex-row gap-4 mb-4 items-start'>
           <Icon width={20} name='pin' color="rgba(107, 114, 128, 1)"/>
-          <Text>제휴 · {restaurant.affiliations.map(a => a.college_name).join(' · ')}</Text>
+          <View className="flex-1">
+            <Pressable
+              className='flex-row items-center gap-1'
+              onPress={() => setIsAffiliationsExpanded(!isAffiliationsExpanded)}
+            >
+              <Text>
+                제휴 · {restaurant.affiliations.map(a => a.college_name).join(', ')}
+              </Text>
+              <Icon width={12} name={isAffiliationsExpanded ? 'upAngle' : 'downAngle'} />
+            </Pressable>
+
+            {isAffiliationsExpanded && (
+              <View className='mt-4 gap-4'>
+                {restaurant.affiliations.map((affiliation, idx) => (
+                  <View key={idx} className='gap-1'>
+                    <Text className='text-sm font-semibold text-gray-700'>
+                      {affiliation.college_name}
+                    </Text>
+                    {affiliation.description && (
+                      <Text className='text-sm text-gray-600'>
+                        {affiliation.description}
+                      </Text>
+                    )}
+                  </View>
+                ))}
+              </View>
+            )}
+          </View>
         </View>
       )}
     </View>

@@ -27,7 +27,10 @@ export default function BookmarkScreen() {
         {
           text: '예',
           onPress: () => {
-            toggleBookmark(restaurantId, {
+            // 북마크 목록에서 삭제하므로 현재 상태는 true
+            toggleBookmark(
+              { restaurantId, currentState: true },
+              {
               onSuccess: () => {
                 refetch();
               },
@@ -37,7 +40,8 @@ export default function BookmarkScreen() {
                 }
                 console.error('Failed to remove bookmark:', err);
               },
-            });
+              }
+            );
           },
         },
       ]

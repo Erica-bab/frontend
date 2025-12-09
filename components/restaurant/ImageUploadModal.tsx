@@ -182,11 +182,8 @@ export default function ImageUploadModal({
           }}
         >
           <View style={{ justifyContent: 'center' }}>
-            <View className="flex-row justify-between items-center mb-6">
+            <View className="mb-6">
               <Text className="text-xl font-bold">사진 추가</Text>
-              <Pressable onPress={handleClose}>
-                <Icon name="cancel" />
-              </Pressable>
             </View>
 
             {selectedImage ? (

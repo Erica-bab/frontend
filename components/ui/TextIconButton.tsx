@@ -1,5 +1,6 @@
-import React from "react";
-import { View, Text, TouchableOpacity, StyleProp, ViewStyle } from "react-native";
+import React, { useEffect } from "react";
+import { View, Text, StyleProp, ViewStyle, Pressable } from "react-native";
+import Animated, { useSharedValue, useAnimatedStyle, withSpring } from "react-native-reanimated";
 import Icon, { IconName } from "@/components/Icon";
 
 interface TextIconButtonProps {
@@ -45,31 +46,79 @@ export default function TextIconButton({
   const textClass = `${baseTextClass} ${isOn ? onTextClass : offTextClass}`;
   const iconColor = isOn ? onIconColor : offIconColor;
 
-  /* if (isOn) {
-    console.log(`${text} ON`);
-  } */
+  const scale = useSharedValue(1);
+  const opacity = useSharedValue(1);
+
+  useEffect(() => {
+    scale.value = withSpring(1, {
+      damping: 15,
+      stiffness: 300,
+    });
+    opacity.value = withSpring(1, {
+      damping: 15,
+      stiffness: 300,
+    });
+  }, [isOn]);
+
+  const animatedStyle = useAnimatedStyle(() => {
+    return {
+      transform: [{ scale: scale.value }],
+      opacity: opacity.value,
+    };
+  });
+
+  const handlePressIn = () => {
+    if (!disabled) {
+      scale.value = withSpring(0.95, {
+        damping: 15,
+        stiffness: 300,
+      });
+      opacity.value = withSpring(0.8, {
+        damping: 15,
+        stiffness: 300,
+      });
+    }
+  };
+
+  const handlePressOut = () => {
+    if (!disabled) {
+      scale.value = withSpring(1, {
+        damping: 15,
+        stiffness: 300,
+      });
+      opacity.value = withSpring(1, {
+        damping: 15,
+        stiffness: 300,
+      });
+    }
+  };
 
   return (
-    <TouchableOpacity
-      activeOpacity={0.7}
+    <Pressable
       onPress={onPress}
+      onPressIn={handlePressIn}
+      onPressOut={handlePressOut}
       disabled={disabled}
-      className={`flex-row items-center px-[8px] py-[8px] ${boxClass} ${
-        disabled ? "opacity-40" : ""
-      }`}
     >
-      {iconName && (
-        <View className="mr-[5px]">
-          <Icon
-            name={iconName}
-            size={iconSize}
-            color={iconColor}
-            style={iconStyle}
-          />
-        </View>
-      )}
+      <Animated.View
+        style={animatedStyle}
+        className={`flex-row items-center px-[8px] py-[8px] ${boxClass} ${
+          disabled ? "opacity-40" : ""
+        }`}
+      >
+        {iconName && (
+          <View className="mr-[5px]">
+            <Icon
+              name={iconName}
+              size={iconSize}
+              color={iconColor}
+              style={iconStyle}
+            />
+          </View>
+        )}
 
-      <Text className={textClass}>{text}</Text>
-    </TouchableOpacity>
+        <Text className={textClass}>{text}</Text>
+      </Animated.View>
+    </Pressable>
   );
 }

@@ -10,6 +10,7 @@ import { calculateDistance } from '@/utils/calculateDistance';
 import { useQueryClient } from '@tanstack/react-query';
 import { formatCategory } from '@/utils/formatCategory';
 import { calculateOperatingStatus } from '@/utils/operatingStatus';
+import { resolveImageUri } from '@/utils/image';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -111,12 +112,6 @@ export default function RouletteModal({
       setIsSpinning(false);
     }
   }, [visible]);
-
-  const resolveImageUri = (uri?: string | null) => {
-    if (!uri) return null;
-    const path = uri.startsWith('/') ? uri.slice(1) : uri;
-    return `https://에리카밥.com/${path}`;
-  };
 
   // 거리 계산
   const calculateRestaurantDistance = () => {

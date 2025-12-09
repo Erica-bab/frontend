@@ -1,7 +1,9 @@
 import React, { useEffect } from 'react';
-import { View, Text, ActivityIndicator, Image } from 'react-native';
+import { View, Text, ActivityIndicator } from 'react-native';
 import { RestaurantDetailResponse } from '@/api/restaurants/types';
 import { useRestaurantMenus } from '@/api/restaurants/useRestaurant';
+import { resolveImageUri } from '@/utils/image';
+import LazyImage from '@/components/ui/LazyImage';
 
 interface RestaurantMenuTabProps {
   restaurant: RestaurantDetailResponse;
@@ -11,12 +13,6 @@ export default function RestaurantMenuTab({ restaurant }: RestaurantMenuTabProps
   const { data: menuData, isLoading, error } = useRestaurantMenus(restaurant.id, {
     is_available: true,
   });
-
-  const resolveImageUri = (uri?: string | null) => {
-    if (!uri) return null;
-    const path = uri.startsWith('/') ? uri.slice(1) : uri;
-    return `https://에리카밥.com/${path}`;
-  };
 
   useEffect(() => {
     if (menuData) {
@@ -72,9 +68,11 @@ export default function RestaurantMenuTab({ restaurant }: RestaurantMenuTabProps
             const imageUri = resolveImageUri(rawImageUri);
             if (!imageUri) return null;
             return (
-              <Image
+              <LazyImage
                 source={{ uri: imageUri }}
-                className="w-16 h-16 rounded-lg bg-gray-500"
+                style={{ width: 64, height: 64 }}
+                className="rounded-lg bg-gray-500"
+                threshold={100}
               />
             );
           })()}

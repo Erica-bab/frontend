@@ -7,7 +7,9 @@
     "android": "expo run:android",
     "ios": "expo run:ios",
     "web": "expo start --web",
-    "icons": "node scripts/generate-icons.js"
+    "icons": "node scripts/generate-icons.js",
+    "fix-splash": "node scripts/fix-splash-screen.js",
+    "prebuild:ios": "expo prebuild --clean --platform ios && npm run fix-splash"
   },
   "dependencies": {
     "@gorhom/bottom-sheet": "^5.2.7",
@@ -30,6 +32,7 @@
     "expo-location": "^19.0.7",
     "expo-router": "~6.0.14",
     "expo-sharing": "~14.0.7",
+    "expo-splash-screen": "^31.0.12",
     "expo-status-bar": "~3.0.8",
     "expo-web-browser": "~15.0.9",
     "nativewind": "^4.2.1",

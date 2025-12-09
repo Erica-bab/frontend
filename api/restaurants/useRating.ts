@@ -18,13 +18,19 @@ interface RatingStatsResponse {
 
 // 별점 통계 조회 (사용자별 별점 포함)
 export const useRatingStats = (restaurantId: number, enabled: boolean = true, options?: { refetchInterval?: number }) => {
+  // restaurantId가 유효한 숫자인지 확인 (NaN 체크)
+  const isValidId = !isNaN(restaurantId) && restaurantId > 0;
+  
   return useQuery({
-    queryKey: ['ratingStats', restaurantId],
+    queryKey: ['ratingStats', isValidId ? restaurantId : null],
     queryFn: async () => {
+      if (!isValidId) {
+        throw new Error('Invalid restaurant ID');
+      }
       const { data } = await apiClient.get<RatingStatsResponse>(`/restaurants/${restaurantId}/ratings`);
       return data;
     },
-    enabled: enabled && !!restaurantId,
+    enabled: enabled && isValidId,
     refetchInterval: options?.refetchInterval,
   });
 };

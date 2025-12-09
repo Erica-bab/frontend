@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
@@ -6,6 +7,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import * as Linking from 'expo-linking';
+import * as SplashScreen from 'expo-splash-screen';
 
 import CafeteriaScreen from './screens/CafeteriaScreen';
 import RestuarantScreen from './screens/Restaurant';
@@ -35,6 +37,15 @@ function TabNavigator() {
         headerShown: false,
         tabBarActiveTintColor: '#2563EB',
         tabBarInactiveTintColor: '#000000',
+        tabBarStyle: {
+          borderTopWidth: 0,
+          elevation: 8,
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: -2 },
+          shadowOpacity: 0.1,
+          shadowRadius: 4,
+        },
+        animation: 'fade',
       }}
     >
       <Tab.Screen
@@ -78,7 +89,25 @@ function TabNavigator() {
   );
 }
 
+// 스플래시 스크린이 자동으로 숨겨지지 않도록 설정
+SplashScreen.preventAutoHideAsync();
+
 export default function App() {
+  useEffect(() => {
+    // 앱이 준비되면 1초 후에 스플래시 스크린 숨기기
+    const hideSplash = async () => {
+      try {
+        // 최소 1초는 표시 (네이티브 스플래시와 겹치는 시간 확보)
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        await SplashScreen.hideAsync();
+      } catch (error) {
+        console.warn('Splash screen hide error:', error);
+      }
+    };
+
+    hideSplash();
+  }, []);
+
   const linking = {
     prefixes: ['efoo://', 'https://에리카밥.com'],
     config: {
@@ -92,6 +121,31 @@ export default function App() {
         AddInfo: 'addinfo',
       },
     },
+    getStateFromPath(path: string, options?: any) {
+      // share/:restaurantId 패턴을 RestaurantDetail로 매핑
+      const shareMatch = path.match(/^share\/(\d+)$/);
+      if (shareMatch) {
+        const restaurantId = shareMatch[1];
+        return {
+          routes: [
+            {
+              name: 'Main',
+              state: {
+                routes: [{ name: 'Restaurant' }],
+                index: 0,
+              },
+            },
+            {
+              name: 'RestaurantDetail',
+              params: { restaurantId },
+            },
+          ],
+          index: 1,
+        };
+      }
+      // 기본 파싱을 위해 undefined 반환 (React Navigation이 자동으로 처리)
+      return undefined;
+    },
   };
 
   return (
@@ -100,7 +154,13 @@ export default function App() {
         <QueryClientProvider client={queryClient}>
           <BottomSheetModalProvider>
             <NavigationContainer linking={linking}>
-              <Stack.Navigator screenOptions={{ headerShown: false }}>
+              <Stack.Navigator 
+                screenOptions={{ 
+                  headerShown: false,
+                  animation: 'slide_from_right',
+                  animationDuration: 300,
+                }}
+              >
                 <Stack.Screen name="Main" component={TabNavigator} />
                 <Stack.Screen
                   name="Filter"
@@ -109,6 +169,7 @@ export default function App() {
                     headerShown: false,
                     presentation: 'transparentModal',
                     animation: 'slide_from_bottom',
+                    animationDuration: 250,
                   }}
                 />
                 <Stack.Screen
@@ -118,6 +179,7 @@ export default function App() {
                     headerShown: false,
                     presentation: 'transparentModal',
                     animation: 'slide_from_bottom',
+                    animationDuration: 250,
                   }}
                 />
                 <Stack.Screen
@@ -125,6 +187,8 @@ export default function App() {
                   component={RestaurantDetailScreen}
                   options={{
                     headerShown: false,
+                    animation: 'slide_from_right',
+                    animationDuration: 300,
                   }}
                 />
                 <Stack.Screen
@@ -132,6 +196,8 @@ export default function App() {
                   component={RestaurantEditScreen}
                   options={{
                     headerShown: false,
+                    animation: 'slide_from_right',
+                    animationDuration: 300,
                   }}
                 />
                 <Stack.Screen
@@ -139,6 +205,8 @@ export default function App() {
                   component={CommentDetailScreen}
                   options={{
                     headerShown: false,
+                    animation: 'slide_from_right',
+                    animationDuration: 300,
                   }}
                 />
                 <Stack.Screen
@@ -150,6 +218,8 @@ export default function App() {
                     headerStyle: { backgroundColor: '#3B82F6' },
                     headerTintColor: '#FFFFFF',
                     headerTitleStyle: { fontWeight: 'bold' },
+                    animation: 'slide_from_right',
+                    animationDuration: 300,
                   }}
                 />
                 <Stack.Screen
@@ -161,6 +231,8 @@ export default function App() {
                     headerStyle: { backgroundColor: '#3B82F6' },
                     headerTintColor: '#FFFFFF',
                     headerTitleStyle: { fontWeight: 'bold' },
+                    animation: 'slide_from_right',
+                    animationDuration: 300,
                   }}
                 />
               </Stack.Navigator>

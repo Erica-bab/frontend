@@ -7,7 +7,7 @@ import {
   RestaurantCode,
   MealType,
 } from '@/api/cafeteria/types';
-import { useCurrentUser, useAuth } from '@/api/auth/useAuth'
+import { useAuth } from '@/api/auth/useAuth'
 
 interface CafeteriaListProps {
   sortModeType: 'time' | 'location';
@@ -50,7 +50,6 @@ export default function CafeteriaList({
   onShowLogin,
   onRefresh,
 }: CafeteriaListProps) {
-   const {data, error} = useCurrentUser();
    const {isAuthenticated} = useAuth();
    const [refreshing, setRefreshing] = useState(false);
 

@@ -49,8 +49,13 @@ export default function CafeteriaLikeButton({
       { meal_id },
       {
         onSuccess: () => {
+          // 좋아요 상태 쿼리 무효화
           queryClient.invalidateQueries({
             queryKey: ['cafeteriaLike', meal_id],
+          });
+          // 메인 학식 메뉴 쿼리도 무효화하여 좋아요 수 업데이트
+          queryClient.invalidateQueries({
+            queryKey: ['cafeteriaMenu'],
           });
         },
         onError: (err) => {
