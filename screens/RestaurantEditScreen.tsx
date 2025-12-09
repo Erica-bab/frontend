@@ -514,9 +514,10 @@ export default function RestaurantEditScreen() {
                             <Dropdown
                               label="시간"
                               options={HOUR}
-                              selectedValue={parseTime(dayData.open_time)?.hour ? parseTime(dayData.open_time)!.hour + '시' : undefined}
+                              selectedValue={parseTime(dayData.open_time)?.hour || undefined}
                               onSelect={(value) => {
-                                const hour = value.replace('시', '');
+                                if (!value) return;
+                                const hour = value;
                                 const currentMin = parseTime(dayData.open_time)?.min || '00';
                                 updateTimeField(day, 'open_time', hour, currentMin);
                               }}
@@ -529,9 +530,10 @@ export default function RestaurantEditScreen() {
                             <Dropdown
                               label="분"
                               options={MIN}
-                              selectedValue={parseTime(dayData.open_time)?.min ? parseTime(dayData.open_time)!.min + '분' : undefined}
+                              selectedValue={parseTime(dayData.open_time)?.min || undefined}
                               onSelect={(value) => {
-                                const min = value.replace('분', '');
+                                if (!value) return;
+                                const min = value;
                                 const currentHour = parseTime(dayData.open_time)?.hour || '00';
                                 updateTimeField(day, 'open_time', currentHour, min);
                               }}
@@ -550,9 +552,10 @@ export default function RestaurantEditScreen() {
                             <Dropdown
                               label="시간"
                               options={HOUR}
-                              selectedValue={parseTime(dayData.close_time)?.hour ? parseTime(dayData.close_time)!.hour + '시' : undefined}
+                              selectedValue={parseTime(dayData.close_time)?.hour || undefined}
                               onSelect={(value) => {
-                                const hour = value.replace('시', '');
+                                if (!value) return;
+                                const hour = value;
                                 const currentMin = parseTime(dayData.close_time)?.min || '00';
                                 updateTimeField(day, 'close_time', hour, currentMin);
                               }}
@@ -565,9 +568,10 @@ export default function RestaurantEditScreen() {
                             <Dropdown
                               label="분"
                               options={MIN}
-                              selectedValue={parseTime(dayData.close_time)?.min ? parseTime(dayData.close_time)!.min + '분' : undefined}
+                              selectedValue={parseTime(dayData.close_time)?.min || undefined}
                               onSelect={(value) => {
-                                const min = value.replace('분', '');
+                                if (!value) return;
+                                const min = value;
                                 const currentHour = parseTime(dayData.close_time)?.hour || '00';
                                 updateTimeField(day, 'close_time', currentHour, min);
                               }}
@@ -587,9 +591,10 @@ export default function RestaurantEditScreen() {
                             <Dropdown
                               label="시간"
                               options={HOUR}
-                              selectedValue={parseTime(dayData.break_start)?.hour ? parseTime(dayData.break_start)!.hour + '시' : undefined}
+                              selectedValue={parseTime(dayData.break_start)?.hour || undefined}
                               onSelect={(value) => {
-                                const hour = value.replace('시', '');
+                                if (!value) return;
+                                const hour = value;
                                 const currentMin = parseTime(dayData.break_start)?.min || '00';
                                 updateTimeField(day, 'break_start', hour, currentMin);
                               }}
@@ -602,9 +607,10 @@ export default function RestaurantEditScreen() {
                             <Dropdown
                               label="분"
                               options={MIN}
-                              selectedValue={parseTime(dayData.break_start)?.min ? parseTime(dayData.break_start)!.min + '분' : undefined}
+                              selectedValue={parseTime(dayData.break_start)?.min || undefined}
                               onSelect={(value) => {
-                                const min = value.replace('분', '');
+                                if (!value) return;
+                                const min = value;
                                 const currentHour = parseTime(dayData.break_start)?.hour || '00';
                                 updateTimeField(day, 'break_start', currentHour, min);
                               }}
@@ -623,9 +629,10 @@ export default function RestaurantEditScreen() {
                             <Dropdown
                               label="시간"
                               options={HOUR}
-                              selectedValue={parseTime(dayData.break_end)?.hour ? parseTime(dayData.break_end)!.hour + '시' : undefined}
+                              selectedValue={parseTime(dayData.break_end)?.hour || undefined}
                               onSelect={(value) => {
-                                const hour = value.replace('시', '');
+                                if (!value) return;
+                                const hour = value;
                                 const currentMin = parseTime(dayData.break_end)?.min || '00';
                                 updateTimeField(day, 'break_end', hour, currentMin);
                               }}
@@ -638,9 +645,10 @@ export default function RestaurantEditScreen() {
                             <Dropdown
                               label="분"
                               options={MIN}
-                              selectedValue={parseTime(dayData.break_end)?.min ? parseTime(dayData.break_end)!.min + '분' : undefined}
+                              selectedValue={parseTime(dayData.break_end)?.min || undefined}
                               onSelect={(value) => {
-                                const min = value.replace('분', '');
+                                if (!value) return;
+                                const min = value;
                                 const currentHour = parseTime(dayData.break_end)?.hour || '00';
                                 updateTimeField(day, 'break_end', currentHour, min);
                               }}
@@ -660,9 +668,10 @@ export default function RestaurantEditScreen() {
                             <Dropdown
                               label="시간"
                               options={HOUR}
-                              selectedValue={parseTime(dayData.last_order)?.hour ? parseTime(dayData.last_order)!.hour + '시' : undefined}
+                              selectedValue={parseTime(dayData.last_order)?.hour || undefined}
                               onSelect={(value) => {
-                                const hour = value.replace('시', '');
+                                if (!value) return;
+                                const hour = value;
                                 const currentMin = parseTime(dayData.last_order)?.min || '00';
                                 updateTimeField(day, 'last_order', hour, currentMin);
                               }}
@@ -675,9 +684,10 @@ export default function RestaurantEditScreen() {
                             <Dropdown
                               label="분"
                               options={MIN}
-                              selectedValue={parseTime(dayData.last_order)?.min ? parseTime(dayData.last_order)!.min + '분' : undefined}
+                              selectedValue={parseTime(dayData.last_order)?.min || undefined}
                               onSelect={(value) => {
-                                const min = value.replace('분', '');
+                                if (!value) return;
+                                const min = value;
                                 const currentHour = parseTime(dayData.last_order)?.hour || '00';
                                 updateTimeField(day, 'last_order', currentHour, min);
                               }}
