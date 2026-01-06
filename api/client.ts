@@ -21,9 +21,6 @@ const notifyAuthError = () => {
 export const apiClient = axios.create({
     baseURL: API_BASE_URL,
     timeout: 30000,
-    headers: {
-        'Content-Type': 'application/json',
-    },
 });
     
 
@@ -35,20 +32,14 @@ apiClient.interceptors.request.use(
             config.headers.Authorization = `Bearer ${accessToken}`;
         }
 
-        // FormData인 경우 특별 처리
+        // FormData인 경우 Content-Type 설정하지 않음
         if (config.data instanceof FormData) {
-            // React Native에서는 Content-Type을 명시적으로 설정하지 않아야 함
-            // XMLHttpRequest가 자동으로 multipart/form-data와 boundary를 설정함
-            // transformRequest에서 Content-Type 헤더 제거
-            config.transformRequest = [(data: any, headers: any) => {
-                // 헤더에서 Content-Type 제거 (대소문자 구분 없이)
-                if (headers) {
-                    delete headers['Content-Type'];
-                    delete headers['content-type'];
-                }
-                // FormData는 그대로 반환
-                return data;
-            }];
+            // React Native가 자동으로 multipart/form-data 설정
+            delete config.headers['Content-Type'];
+            delete config.headers['content-type'];
+        } else {
+            // JSON 요청인 경우에만 Content-Type 설정
+            config.headers['Content-Type'] = 'application/json';
         }
 
         // 개발 환경에서만 요청 로그 출력

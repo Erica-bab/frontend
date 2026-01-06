@@ -14,7 +14,7 @@ export default {
     userInterfaceStyle: "light",
     newArchEnabled: true,
     splash: {
-      image: "./assets/app/splash-image.png",
+      image: "./assets/app/splash.png",
       resizeMode: "cover",
       backgroundColor: "#2563EB"
     },
@@ -36,16 +36,15 @@ export default {
         NSLocationWhenInUseUsageDescription: "주변 맛집을 위치순으로 정렬하기 위해 위치 정보가 필요합니다.",
         NSPhotoLibraryUsageDescription: "식당 사진을 추가하기 위해 갤러리 접근 권한이 필요합니다.",
         NSCameraUsageDescription: "식당 사진을 촬영하기 위해 카메라 접근 권한이 필요합니다.",
-        CFBundleDisplayName: "에푸",
-        ITSAppUsesNonExemptEncryption: false
+        CFBundleDisplayName: "에푸"
       },
       config: {
-        googleMapsApiKey: process.env.GOOGLE_MAPS_API_KEY
+        googleMapsApiKey: process.env.GOOGLE_MAPS_API_KEY || process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY
       }
     },
     android: {
       splash: {
-        image: "./assets/app/splash-image.png",
+        image: "./assets/app/splash.png",
         resizeMode: "cover",
         backgroundColor: "#2563EB"
       },
@@ -55,7 +54,7 @@ export default {
       },
       softwareKeyboardLayoutMode: "pan",
       label: "에푸",
-      versionCode: 6,
+      versionCode: 7,
       edgeToEdgeEnabled: true,
       predictiveBackGestureEnabled: false,
       permissions: [
@@ -69,7 +68,7 @@ export default {
       ],
       config: {
         googleMaps: {
-          apiKey: process.env.GOOGLE_MAPS_API_KEY
+          apiKey: process.env.GOOGLE_MAPS_API_KEY || process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY
         }
       },
       package: "com.efoo.app"
@@ -83,7 +82,7 @@ export default {
       [
         "expo-splash-screen",
         {
-          image: "./assets/app/splash-image.png",
+          image: "./assets/app/splash.png",
           resizeMode: "cover",
           backgroundColor: "#2563EB"
         }
@@ -91,7 +90,7 @@ export default {
       [
         "react-native-maps",
         {
-          googleMapsApiKey: process.env.GOOGLE_MAPS_API_KEY
+          googleMapsApiKey: process.env.GOOGLE_MAPS_API_KEY || process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY
         }
       ],
       "expo-apple-authentication",

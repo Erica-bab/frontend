@@ -1,10 +1,9 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { View, Text, Pressable, ScrollView, Alert, AppState, AppStateStatus, ActivityIndicator } from 'react-native';
-import { useNavigation, useFocusEffect } from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import * as Location from 'expo-location';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useQueryClient } from '@tanstack/react-query';
 import { AxiosError } from 'axios';
 import SearchBar from '@/components/SearchBar';
 import AdBanner from '@/components/ui/AdBanner';
@@ -22,7 +21,6 @@ const SORT_OPTIONS = ['위치순', '별점순', '가격순'];
 
 export default function RestuarantScreen() {
     const navigation = useNavigation<NativeStackNavigationProp<any>>();
-    const queryClient = useQueryClient();
     const [filterParams, setFilterParams] = useState<Omit<RestaurantListParams, 'sort'>>({});
     // 운영시간 필터는 로컬에서 처리하므로 별도로 관리
     const [operatingTimeFilter, setOperatingTimeFilter] = useState<{ dayOfWeek?: string; hour?: string; minute?: string } | null>(null);
@@ -82,25 +80,27 @@ export default function RestuarantScreen() {
 
     // 화면이 포커스될 때마다 새로고침 (자세히 보기에서 돌아올 때)
     // 별점과 댓글 변경사항을 반영하기 위해 리스트와 별점 쿼리 모두 무효화
-    useFocusEffect(
-        useCallback(() => {
-            // 리스트 쿼리 새로고침 (별점 포함)
-            refetch();
-            // 별점 통계 쿼리도 무효화하여 최신 별점 반영
-            queryClient.invalidateQueries({ queryKey: ['ratingStats'] });
-        }, [refetch, queryClient])
-    );
+    // QueryClient에서 자동 refetch 설정을 해제했으므로 명시적 refetch는 제거
+    // useFocusEffect(
+    //     useCallback(() => {
+    //         // 리스트 쿼리 새로고침 (별점 포함)
+    //         refetch();
+    //         // 별점 통계 쿼리도 무효화하여 최신 별점 반영
+    //         queryClient.invalidateQueries({ queryKey: ['ratingStats'] });
+    //     }, [refetch, queryClient])
+    // );
 
-    // 앱이 포그라운드로 돌아올 때 새로고침
+    // 앱이 포그라운드로 돌아올 때 위치만 새로고침
+    // QueryClient에서 자동 refetch를 비활성화했으므로 명시적 refetch 제거
     useEffect(() => {
         const subscription = AppState.addEventListener('change', async (nextAppState: AppStateStatus) => {
             if (
                 appState.current.match(/inactive|background/) &&
                 nextAppState === 'active'
             ) {
-                // 앱이 포그라운드로 돌아올 때 위치 새로고침 + 식당 정보 새로고침
+                // 앱이 포그라운드로 돌아올 때 위치만 새로고침
                 await requestLocationAndUpdate();
-                refetch();
+                // refetch() 제거 - QueryClient 설정으로 자동 관리
             }
             appState.current = nextAppState;
         });
@@ -108,7 +108,7 @@ export default function RestuarantScreen() {
         return () => {
             subscription.remove();
         };
-    }, [refetch]);
+    }, []);
 
     const handleFilterPress = () => {
         navigation.navigate('Filter', {

@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Platform } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { apiClient } from '../client';
 import * as FileSystem from 'expo-file-system/legacy';
 
@@ -54,7 +55,7 @@ export const useUploadRestaurantImage = (restaurantId: number) => {
     mutationFn: async ({ imageUri, displayOrder = 0 }: { imageUri: string; displayOrder?: number }) => {
       // FormData 생성
       const formData = new FormData();
-      
+
       // 파일 정보 가져오기
       const fileInfo = await FileSystem.getInfoAsync(imageUri);
       if (!fileInfo.exists) {
@@ -64,7 +65,7 @@ export const useUploadRestaurantImage = (restaurantId: number) => {
       // 파일명 추출 (URI에서 마지막 부분)
       const uriParts = imageUri.split('/');
       const filename = uriParts[uriParts.length - 1] || 'image.jpg';
-      
+
       // 확장자 추출 및 MIME 타입 결정
       const extension = filename.split('.').pop()?.toLowerCase() || 'jpg';
       const mimeTypeMap: Record<string, string> = {
@@ -76,20 +77,10 @@ export const useUploadRestaurantImage = (restaurantId: number) => {
       };
       const type = mimeTypeMap[extension] || 'image/jpeg';
 
-      // Android에서 file:// URI 문제 해결을 위해 실제 파일 경로 사용
-      // iOS는 file:// URI를 그대로 사용 가능하지만, Android는 content:// 또는 실제 경로 필요
-      let finalUri = imageUri;
-      
-      // Android에서 file:// URI인 경우 content:// URI로 변환 시도
-      if (imageUri.startsWith('file://')) {
-        // file:// URI를 그대로 사용하되, Android에서는 절대 경로로 변환
-        finalUri = imageUri.replace('file://', '');
-      }
-
       // React Native FormData 형식으로 파일 추가
-      // Android에서는 uri를 절대 경로로 사용
+      // fetch API는 file:// URI를 그대로 사용해야 함
       formData.append('image', {
-        uri: Platform.OS === 'android' ? finalUri : imageUri,
+        uri: imageUri,
         type: type,
         name: filename,
       } as any);
@@ -99,22 +90,35 @@ export const useUploadRestaurantImage = (restaurantId: number) => {
 
       // 개발 환경에서만 로그 출력
       if (__DEV__) {
-      console.log('Upload FormData:', {
-        imageUri,
-        finalUri,
-        filename,
-        type,
-        displayOrder,
-        platform: Platform.OS,
-      });
+        console.log('Upload FormData:', {
+          imageUri,
+          filename,
+          type,
+          displayOrder,
+          platform: Platform.OS,
+        });
       }
 
-      // multipart/form-data로 업로드
-      // interceptor에서 FormData인 경우 Content-Type을 자동으로 제거하므로 여기서는 설정하지 않음
-      const { data } = await apiClient.post<ImageUploadResponse>(
-        `/restaurants/${restaurantId}/images`,
-        formData
-      );
+      // React Native에서 FormData 업로드는 fetch 사용
+      // axios는 Content-Type을 잘못 설정함
+      const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL!;
+      const accessToken = await AsyncStorage.getItem('accessToken');
+
+      const response = await fetch(`${API_BASE_URL}/restaurants/${restaurantId}/images`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          // Content-Type은 설정하지 않음 - fetch가 자동으로 multipart/form-data 설정
+        },
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Upload failed: ${response.status} - ${errorText}`);
+      }
+
+      const data: ImageUploadResponse = await response.json();
       return data;
     },
     onSuccess: () => {
@@ -137,9 +141,8 @@ export const useDeleteRestaurantImage = (restaurantId: number) => {
       return data;
     },
     onSuccess: () => {
+      // 이미지 목록만 무효화 (전체 리스트 리로드 방지로 크래시 방지)
       queryClient.invalidateQueries({ queryKey: ['restaurant', restaurantId, 'images'] });
-      queryClient.invalidateQueries({ queryKey: ['restaurant', restaurantId] });
-      queryClient.invalidateQueries({ queryKey: ['restaurants'] });
     },
   });
 };

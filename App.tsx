@@ -28,7 +28,19 @@ import './global.css';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
-const queryClient = new QueryClient();
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60 * 5, // 5분간 데이터를 fresh로 간주
+      gcTime: 1000 * 60 * 30, // 30분간 캐시 유지
+      refetchOnWindowFocus: false, // 포커스 시 자동 리패치 비활성화
+      refetchOnMount: false, // 마운트 시 자동 리패치 비활성화
+      refetchOnReconnect: false, // 재연결 시 자동 리패치 비활성화
+      retry: 1, // 실패 시 1번만 재시도
+    },
+  },
+});
 
 function TabNavigator() {
   return (

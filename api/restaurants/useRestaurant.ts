@@ -96,11 +96,13 @@ export const useRestaurantListV2 = (params?: Omit<RestaurantListParams, 'sort'>)
   return useQuery({
     queryKey: ['restaurants-v2', params],
     queryFn: async () => {
-      const { data } = await apiClient.get<RestaurantListResponse>('/restaurants/v2', { params });
+      // 메모리 크래시 방지를 위해 limit 추가 (최대 30개)
+      // Android에서 스크롤 중 크래시 방지
+      const queryParams = { ...params, limit: 30 };
+      const { data } = await apiClient.get<RestaurantListResponse>('/restaurants/v2', { params: queryParams });
       return data;
     },
-    // 다른 사용자의 별점/댓글 변경사항을 반영하기 위해 5분마다 자동 새로고침
-    refetchInterval: 5 * 60 * 1000, // 5분 (300000ms)
+    // refetchInterval 제거 - 안정성을 위해 자동 새로고침 비활성화
   });
 };
 

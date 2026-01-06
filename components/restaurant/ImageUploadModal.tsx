@@ -2,6 +2,7 @@ import { useState, useMemo, useCallback } from 'react';
 import { View, Text, Pressable, Image, Alert, ActivityIndicator } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
+import * as ImageManipulator from 'expo-image-manipulator';
 import BottomSheetModal, { BottomSheetBackdrop, BottomSheetView } from '@gorhom/bottom-sheet';
 import { useUploadRestaurantImage } from '@/api/restaurants/useRestaurantImage';
 import { useAuth } from '@/api/auth/useAuth';
@@ -50,8 +51,8 @@ export default function ImageUploadModal({
       }
 
       // 이미지 선택 (모달은 열어둠)
-      // mediaTypes를 생략하면 기본값으로 이미지만 선택 가능
       const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ['images'],
         allowsEditing: true,
         aspect: [4, 3],
         quality: 0.8,
@@ -60,7 +61,14 @@ export default function ImageUploadModal({
       console.log('Image picker result:', result);
 
       if (!result.canceled && result.assets && result.assets[0]) {
-        setSelectedImage(result.assets[0].uri);
+        // 안드로이드 메모리 절약을 위해 이미지 리사이즈
+        const resized = await ImageManipulator.manipulateAsync(result.assets[0].uri, [
+          { resize: { width: 1200 } }
+        ], {
+          compress: 0.8,
+          format: ImageManipulator.SaveFormat.JPEG
+        });
+        setSelectedImage(resized.uri);
       }
     } catch (error) {
       console.error('Error picking image:', error);
@@ -70,31 +78,74 @@ export default function ImageUploadModal({
 
   const takePhoto = async () => {
     try {
+      console.log('📷 카메라 버튼 클릭됨');
+
       // 로그인 체크
       if (!isAuthenticated) {
+        console.log('❌ 로그인 안 됨');
         onClose();
         onShowLogin?.();
         return;
       }
 
-      // 권한 요청
-      const { status } = await ImagePicker.requestCameraPermissionsAsync();
-      if (status !== 'granted') {
+      console.log('✅ 로그인 확인');
+
+      // 권한 요청 - 먼저 현재 권한 상태 확인
+      console.log('🔐 카메라 권한 확인 중...');
+      const currentPermission = await ImagePicker.getCameraPermissionsAsync();
+      console.log('📋 현재 권한 상태:', currentPermission);
+
+      let finalStatus = currentPermission.status;
+
+      // 권한이 없으면 요청
+      if (currentPermission.status !== 'granted') {
+        console.log('🔐 카메라 권한 요청 시작...');
+        const { status } = await ImagePicker.requestCameraPermissionsAsync();
+        finalStatus = status;
+        console.log('📋 새로운 권한 상태:', status);
+      }
+
+      if (finalStatus !== 'granted') {
         Alert.alert('권한 필요', '사진을 촬영하려면 카메라 접근 권한이 필요합니다.');
         return;
       }
 
       // 사진 촬영 (모달은 열어둠)
-      const result = await ImagePicker.launchCameraAsync({
-        allowsEditing: true,
-        aspect: [4, 3],
-        quality: 0.8,
-      });
+      console.log('📸 카메라 앱 실행 중...');
 
-      console.log('Camera result:', result);
+      // Android에서 카메라 실행 (최소한의 옵션으로)
+      let result;
+      try {
+        result = await ImagePicker.launchCameraAsync({
+          mediaTypes: ['images'],
+          allowsEditing: false, // 편집 기능 끄기 (성능 문제 방지)
+          quality: 0.8,
+          exif: false, // EXIF 데이터 비활성화로 성능 개선
+        });
+        console.log('📸 Camera result:', result);
+      } catch (cameraError) {
+        console.error('❌ 카메라 실행 오류:', cameraError);
+        console.error('❌ Error stack:', cameraError instanceof Error ? cameraError.stack : 'No stack');
+        Alert.alert(
+          '카메라 실행 실패',
+          `카메라를 실행할 수 없습니다.\n${cameraError instanceof Error ? cameraError.message : '알 수 없는 오류'}`
+        );
+        return;
+      }
 
       if (!result.canceled && result.assets && result.assets[0]) {
-        setSelectedImage(result.assets[0].uri);
+        console.log('🖼️ 이미지 리사이즈 시작...');
+        // 안드로이드 메모리 절약을 위해 이미지 리사이즈
+        const resized = await ImageManipulator.manipulateAsync(result.assets[0].uri, [
+          { resize: { width: 1200 } }
+        ], {
+          compress: 0.8,
+          format: ImageManipulator.SaveFormat.JPEG
+        });
+        console.log('✅ 이미지 선택 완료:', resized.uri);
+        setSelectedImage(resized.uri);
+      } else {
+        console.log('❌ 카메라 취소됨');
       }
     } catch (error) {
       console.error('Error taking photo:', error);
@@ -102,7 +153,7 @@ export default function ImageUploadModal({
     }
   };
 
-  const handleUpload = () => {
+  const handleUpload = async () => {
     if (!selectedImage) {
       Alert.alert('알림', '사진을 선택해주세요.');
       return;
@@ -114,10 +165,22 @@ export default function ImageUploadModal({
       return;
     }
 
+    // 디버깅: FormData 직접 테스트
+    console.log('🧪 FormData 테스트 시작');
+    const testFormData = new FormData();
+    testFormData.append('test', 'value');
+    testFormData.append('image', {
+      uri: selectedImage,
+      type: 'image/jpeg',
+      name: 'test.jpg',
+    } as any);
+    console.log('🧪 FormData 생성 완료:', testFormData);
+
     uploadImage(
       { imageUri: selectedImage },
       {
         onSuccess: () => {
+          console.log('✅ 사진 업로드 성공');
           Alert.alert('완료', '사진이 업로드되었습니다.');
           setSelectedImage(null);
           onSuccess?.();
@@ -127,6 +190,7 @@ export default function ImageUploadModal({
           console.error('Upload error:', error);
           console.error('Error response:', error?.response);
           console.error('Error data:', error?.response?.data);
+          console.error('Error config:', error?.config);
           const message = getSafeErrorMessage(error, '사진 업로드에 실패했습니다.');
           Alert.alert('오류', message);
         },

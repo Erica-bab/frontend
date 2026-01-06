@@ -45,39 +45,58 @@ export default function RestaurantPhotosTab({ restaurant, onShowLogin, onAddPhot
 
   // 이미지 삭제 핸들러
   const handleDeleteImage = (imageId: number) => {
-    Alert.alert(
-      '사진 삭제',
-      '이 사진을 삭제하시겠습니까?',
-      [
-        {
-          text: '취소',
-          style: 'cancel',
-        },
-        {
-          text: '삭제',
-          style: 'destructive',
-          onPress: () => {
-            deleteImage(imageId, {
-              onSuccess: () => {
-                refetchImages();
-              },
-              onError: (error: any) => {
-                const message = getSafeErrorMessage(error, '사진 삭제에 실패했습니다.');
-                Alert.alert('오류', message);
-              },
-            });
+    // Alert.alert 대신 setTimeout으로 다음 프레임에 실행 (메모리 안정화)
+    setTimeout(() => {
+      Alert.alert(
+        '사진 삭제',
+        '이 사진을 삭제하시겠습니까?',
+        [
+          {
+            text: '취소',
+            style: 'cancel',
           },
-        },
-      ]
-    );
+          {
+            text: '삭제',
+            style: 'destructive',
+            onPress: () => {
+              deleteImage(imageId, {
+                onSuccess: () => {
+                  // 캐시 무효화는 useDeleteRestaurantImage의 onSuccess에서 자동 처리
+                },
+                onError: (error: any) => {
+                  const message = getSafeErrorMessage(error, '사진 삭제에 실패했습니다.');
+                  // 에러 Alert도 setTimeout으로 지연
+                  setTimeout(() => {
+                    Alert.alert('오류', message);
+                  }, 100);
+                },
+              });
+            },
+          },
+        ]
+      );
+    }, 100);
   };
 
   const images = imagesData?.images || [];
-  const imageUrls = images.map(img => ({
-    id: img.id,
-    url: resolveImageUri(img.image_url),
-    isMyUpload: isMyImage(img.id),
-  })).filter(item => item.url !== null);
+  const imageUrls = images.map(img => {
+    try {
+      const url = resolveImageUri(img.image_url);
+      const isMyUpload = isMyImage(img.id);
+      return {
+        id: img.id,
+        url,
+        isMyUpload,
+      };
+    } catch (error) {
+      console.error('❌ 이미지 매핑 에러:', error, img);
+      return {
+        id: img.id,
+        url: null,
+        isMyUpload: false,
+      };
+    }
+  }).filter(item => item.url !== null);
 
   if (isLoading) {
     return (
