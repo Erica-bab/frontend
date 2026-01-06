@@ -1,3 +1,4 @@
+import { memo } from "react"
 import { Pressable,Text } from "react-native"
 
 interface OptionButtonProps{
@@ -6,7 +7,7 @@ interface OptionButtonProps{
     isSelected?:boolean;
 }
 
-export function OptionBtn({onPress,text,isSelected}:OptionButtonProps){
+export const OptionBtn = memo(function OptionBtn({onPress,text,isSelected}:OptionButtonProps){
     return(
         <Pressable
             onPress={onPress}
@@ -20,4 +21,4 @@ export function OptionBtn({onPress,text,isSelected}:OptionButtonProps){
             <Text className={`text-center ${isSelected ? 'text-white' : 'text-black'}`}>{text}</Text>
         </Pressable>
     )
-}
+});

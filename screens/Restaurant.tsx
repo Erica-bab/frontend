@@ -1,60 +1,325 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import { View, Text, Pressable, ScrollView, Alert, AppState, AppStateStatus, ActivityIndicator } from 'react-native';
+import { View, Text, Pressable, Alert, AppState, AppStateStatus, ActivityIndicator, FlatList, TextInput, RefreshControl, Animated } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import * as Location from 'expo-location';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { AxiosError } from 'axios';
-import SearchBar from '@/components/SearchBar';
 import AdBanner from '@/components/ui/AdBanner';
 import RouletteModal from '@/components/ui/RouletteModal';
 import RestaurantCard from '@/components/restaurant/RestaurantCard';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRestaurantListV2, useUpdateRestaurantOperatingStatus } from '@/api/restaurants/useRestaurant';
-import { RestaurantListParams } from '@/api/restaurants/types';
+import { useRestaurantListV2, useRestaurantSearch } from '@/api/restaurants/useRestaurant';
+import { RestaurantListParams, SearchResultItem } from '@/api/restaurants/types';
 import Icon from '@/components/Icon';
 import { calculateDistance } from '@/utils/calculateDistance';
 import { isRestaurantOpenAt, hasOperatingHoursOnDay } from '@/utils/operatingStatus';
 import { getSafeErrorMessage } from '@/utils/errorHandler';
+import MapModal from '@/components/cafeteria/MapModal';
+import { formatCategory } from '@/utils/formatCategory';
+import { useRatingStats } from '@/api/restaurants/useRating';
 
 const SORT_OPTIONS = ['위치순', '별점순', '가격순'];
+const STICKY_THRESHOLD = 30;
 
-export default function RestuarantScreen() {
+// 검색 결과 아이템 컴포넌트
+function SearchResultCard({ item }: { item: SearchResultItem }) {
+  const navigation = useNavigation<NativeStackNavigationProp<any>>();
+
+  if (item.type === 'restaurant' && item.restaurant) {
+    const restaurant = item.restaurant;
+    const rawId = restaurant.id;
+    const restaurantId = typeof rawId === 'number' && !isNaN(rawId) && rawId > 0
+      ? rawId
+      : (typeof rawId === 'string' ? Number(rawId) : NaN);
+    const isValidId = !isNaN(restaurantId) && restaurantId > 0;
+
+    const { data: ratingStats } = useRatingStats(
+      isValidId ? restaurantId : 0,
+      isValidId,
+      {
+        refetchInterval: isValidId ? 60000 : undefined,
+      }
+    );
+
+    const currentRating = ratingStats?.average ?? restaurant.average_rating ?? 0;
+    const currentRatingCount = ratingStats?.count ?? restaurant.rating_count ?? 0;
+
+    const statusLabels = {
+      open: '영업중',
+      break_time: '브레이크타임',
+      order_end: '주문마감',
+      closed: '영업종료',
+    };
+    const statusText = restaurant.operating_status
+      ? statusLabels[restaurant.operating_status.current.type]
+      : null;
+
+    return (
+      <Pressable
+        className="p-4 border-b border-gray-100 bg-white"
+        onPress={() => navigation.navigate('RestaurantDetail', { restaurantId: restaurant.id })}
+      >
+        <View className="flex-row items-center">
+          <View className="flex-1">
+            <View className="flex-row items-center gap-2">
+              <Text className="text-base font-semibold">{restaurant.name}</Text>
+              <Text className="text-xs text-gray-500">{formatCategory(restaurant.category)}</Text>
+            </View>
+            <Text className="text-sm text-gray-500 mt-1">
+              {restaurant.location.address}
+            </Text>
+            <View className="flex-row items-center gap-2 mt-1">
+              {statusText && (
+                <Text className="text-sm text-gray-600">{statusText}</Text>
+              )}
+              <Text className="text-sm text-blue-500">
+                ★ {(currentRating || 0).toFixed(1)}
+              </Text>
+              <Text className="text-sm text-gray-400">
+                ({currentRatingCount})
+              </Text>
+            </View>
+            {restaurant.average_price && (
+              <Text className="text-sm text-gray-500 mt-1">
+                평균 {Math.round(restaurant.average_price).toLocaleString()}원
+              </Text>
+            )}
+          </View>
+          <Icon name="rightAngle" size={16} color="#9CA3AF" />
+        </View>
+      </Pressable>
+    );
+  }
+
+  if (item.type === 'menu' && item.menu && item.restaurant) {
+    const restaurant = item.restaurant;
+    const rawId = restaurant.id;
+    const restaurantId = typeof rawId === 'number' && !isNaN(rawId) && rawId > 0
+      ? rawId
+      : (typeof rawId === 'string' ? Number(rawId) : NaN);
+    const isValidId = !isNaN(restaurantId) && restaurantId > 0;
+
+    const { data: ratingStats } = useRatingStats(
+      isValidId ? restaurantId : 0,
+      isValidId,
+      {
+        refetchInterval: isValidId ? 60000 : undefined,
+      }
+    );
+
+    const currentRating = ratingStats?.average ?? restaurant.average_rating ?? 0;
+    const currentRatingCount = ratingStats?.count ?? restaurant.rating_count ?? 0;
+
+    const statusLabels = {
+      open: '영업중',
+      break_time: '브레이크타임',
+      order_end: '주문마감',
+      closed: '영업종료',
+    };
+    const statusText = restaurant.operating_status
+      ? statusLabels[restaurant.operating_status.current.type]
+      : null;
+
+    return (
+      <Pressable
+        className="p-4 border-b border-gray-100 bg-white"
+        onPress={() => navigation.navigate('RestaurantDetail', { restaurantId: restaurant.id })}
+      >
+        <View className="flex-row items-center">
+          <View className="flex-1">
+            <View className="flex-row items-center gap-2">
+              <Text className="text-xs bg-blue-100 text-blue-600 px-2 py-0.5 rounded">메뉴</Text>
+              <Text className="text-base font-semibold">{item.menu.name}</Text>
+            </View>
+            <Text className="text-sm text-gray-500 mt-1">
+              {restaurant.name}
+            </Text>
+            {item.menu.price && (
+              <Text className="text-sm text-gray-600 mt-1">
+                {item.menu.price.toLocaleString()}원
+              </Text>
+            )}
+            <View className="flex-row items-center gap-2 mt-1">
+              {statusText && (
+                <Text className="text-sm text-gray-600">{statusText}</Text>
+              )}
+              <Text className="text-sm text-blue-500">
+                ★ {(currentRating || 0).toFixed(1)}
+              </Text>
+              <Text className="text-sm text-gray-400">
+                ({currentRatingCount})
+              </Text>
+            </View>
+          </View>
+          <Icon name="rightAngle" size={16} color="#9CA3AF" />
+        </View>
+      </Pressable>
+    );
+  }
+
+  return null;
+}
+
+export default function RestaurantScreen() {
     const navigation = useNavigation<NativeStackNavigationProp<any>>();
     const [filterParams, setFilterParams] = useState<Omit<RestaurantListParams, 'sort'>>({});
-    // 운영시간 필터는 로컬에서 처리하므로 별도로 관리
     const [operatingTimeFilter, setOperatingTimeFilter] = useState<{ dayOfWeek?: string; hour?: string; minute?: string } | null>(null);
     const [sortOption, setSortOption] = useState<string>('위치순');
     const [isSortOpen, setIsSortOpen] = useState(false);
     const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
     const [showRouletteModal, setShowRouletteModal] = useState(false);
+    const [displayCount, setDisplayCount] = useState(20);
+
+    // SearchBar 통합: 검색 상태
+    const [scrollY] = useState(new Animated.Value(0));
+    const [searchText, setSearchText] = useState('');
+    const [searchQuery, setSearchQuery] = useState('');
+    const [locationText, setLocationText] = useState('현재위치');
+    const [showMapModal, setShowMapModal] = useState(false);
+    const [currentLocation, setCurrentLocation] = useState({ latitude: 0, longitude: 0 });
+    const [refreshing, setRefreshing] = useState(false);
+    const locationUpdateIntervalRef = useRef<NodeJS.Timeout | null>(null);
+    const lastGeocodedLocationRef = useRef<{ latitude: number; longitude: number } | null>(null);
+    const geocodeErrorRef = useRef<boolean>(false);
+
     const { data, isLoading, error, refetch } = useRestaurantListV2(filterParams);
-    const { mutate: updateOperatingStatus } = useUpdateRestaurantOperatingStatus();
     const appState = useRef(AppState.currentState);
 
-    const requestLocationAndUpdate = async () => {
-        const { status } = await Location.requestForegroundPermissionsAsync();
-        if (status === 'granted') {
-            const location = await Location.getCurrentPositionAsync({});
-            const coords = {
-                lat: location.coords.latitude,
-                lng: location.coords.longitude,
-            };
-            setUserLocation(coords);
-            return coords;
-        }
-        return null;
+    // 검색 API
+    const { data: searchData, isLoading: isSearching } = useRestaurantSearch({
+        q: searchQuery,
+        limit: 20,
+        lat: currentLocation.latitude !== 0 ? currentLocation.latitude : undefined,
+        lng: currentLocation.longitude !== 0 ? currentLocation.longitude : undefined,
+    });
+
+    const isSearchMode = searchQuery.length > 0;
+
+    // 두 좌표 간 거리 계산 (미터 단위)
+    const calculateDistanceBetweenCoords = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
+        const R = 6371000;
+        const dLat = (lat2 - lat1) * Math.PI / 180;
+        const dLon = (lon2 - lon1) * Math.PI / 180;
+        const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+            Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+            Math.sin(dLon / 2) * Math.sin(dLon / 2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        return R * c;
     };
 
-    // SearchBar에서 위치 업데이트 콜백
-    const handleLocationUpdate = useCallback((coords: { lat: number; lng: number }) => {
-        setUserLocation(coords);
-        // 위치순 정렬은 클라이언트에서 처리하므로 API 호출 불필요
+    // 위치 업데이트 로직
+    const updateLocation = useCallback(async (showRefreshIndicator = false, forceGeocode = false) => {
+        if (showRefreshIndicator) {
+            setRefreshing(true);
+        }
+        try {
+            const { status } = await Location.requestForegroundPermissionsAsync();
+            if (status === 'granted') {
+                const location = await Location.getCurrentPositionAsync({});
+                const coords = {
+                    latitude: location.coords.latitude,
+                    longitude: location.coords.longitude,
+                };
+                setCurrentLocation(coords);
+                setUserLocation({ lat: coords.latitude, lng: coords.longitude });
+
+                let shouldGeocode = forceGeocode ||
+                    !lastGeocodedLocationRef.current ||
+                    calculateDistanceBetweenCoords(
+                        coords.latitude,
+                        coords.longitude,
+                        lastGeocodedLocationRef.current.latitude,
+                        lastGeocodedLocationRef.current.longitude
+                    ) > 100;
+
+                if (geocodeErrorRef.current && !forceGeocode) {
+                    shouldGeocode = false;
+                }
+
+                if (shouldGeocode && !geocodeErrorRef.current) {
+                    try {
+                        const [address] = await Location.reverseGeocodeAsync({
+                            latitude: coords.latitude,
+                            longitude: coords.longitude,
+                        });
+
+                        if (address) {
+                            let addressText = '';
+
+                            if (address.formattedAddress) {
+                                const parts = address.formattedAddress.split(' ');
+                                const uniqueParts: string[] = [];
+                                const seen = new Set<string>();
+
+                                for (const part of parts) {
+                                    const trimmedPart = part.trim();
+                                    if (trimmedPart && !seen.has(trimmedPart)) {
+                                        seen.add(trimmedPart);
+                                        uniqueParts.push(trimmedPart);
+                                    }
+                                }
+
+                                addressText = uniqueParts.join(' ');
+                            } else {
+                                const addressParts = [
+                                    address.region,
+                                    address.city,
+                                    address.district,
+                                    address.subregion,
+                                    address.street,
+                                    address.streetNumber
+                                ].filter(Boolean);
+
+                                const uniqueParts: string[] = [];
+                                const seen = new Set<string>();
+
+                                for (const part of addressParts) {
+                                    if (part && !seen.has(part)) {
+                                        seen.add(part);
+                                        uniqueParts.push(part);
+                                    }
+                                }
+
+                                addressText = uniqueParts.join(' ');
+                            }
+
+                            if (addressText.length > 30) {
+                                addressText = addressText.substring(0, 30) + '...';
+                            }
+
+                            setLocationText(addressText || '현재위치');
+                            lastGeocodedLocationRef.current = coords;
+                            geocodeErrorRef.current = false;
+                        }
+                    } catch (geocodeError: any) {
+                        if (geocodeError?.message?.includes('rate limit') || geocodeError?.message?.includes('too many requests')) {
+                            console.warn('Geocoding rate limit exceeded. Skipping geocode for a while.');
+                            geocodeErrorRef.current = true;
+                            setTimeout(() => {
+                                geocodeErrorRef.current = false;
+                            }, 5 * 60 * 1000);
+                        } else {
+                            console.error('Failed to geocode location:', geocodeError);
+                        }
+                    }
+                }
+            }
+        } catch (error) {
+            console.error('Failed to get location:', error);
+        } finally {
+            if (showRefreshIndicator) {
+                setRefreshing(false);
+            }
+        }
     }, []);
+
+    const refreshLocation = useCallback(async () => {
+        await updateLocation(true, true);
+    }, [updateLocation]);
 
     useEffect(() => {
         (async () => {
-            // 저장된 정렬 옵션 불러오기
             let currentSort = '위치순';
             try {
                 const savedSort = await AsyncStorage.getItem('restaurantSortOption');
@@ -66,41 +331,32 @@ export default function RestuarantScreen() {
                 console.error('Failed to load sort option:', error);
             }
 
-            const coords = await requestLocationAndUpdate();
+            await updateLocation(false);
 
-            // 모든 정렬은 클라이언트에서 처리하므로 서버에 sort 파라미터 전송 안함
-            // 위치순은 좌표가 필요하지만, 서버에는 전송하지 않음 (클라이언트에서 계산)
-            if (currentSort === '위치순' && !coords) {
-                // 위치 권한 없으면 별점순으로 변경
+            if (currentSort === '위치순' && !userLocation) {
                 setSortOption('별점순');
                 await AsyncStorage.setItem('restaurantSortOption', '별점순');
             }
         })();
-    }, []);
 
-    // 화면이 포커스될 때마다 새로고침 (자세히 보기에서 돌아올 때)
-    // 별점과 댓글 변경사항을 반영하기 위해 리스트와 별점 쿼리 모두 무효화
-    // QueryClient에서 자동 refetch 설정을 해제했으므로 명시적 refetch는 제거
-    // useFocusEffect(
-    //     useCallback(() => {
-    //         // 리스트 쿼리 새로고침 (별점 포함)
-    //         refetch();
-    //         // 별점 통계 쿼리도 무효화하여 최신 별점 반영
-    //         queryClient.invalidateQueries({ queryKey: ['ratingStats'] });
-    //     }, [refetch, queryClient])
-    // );
+        locationUpdateIntervalRef.current = setInterval(() => {
+            updateLocation(false);
+        }, 60 * 1000);
 
-    // 앱이 포그라운드로 돌아올 때 위치만 새로고침
-    // QueryClient에서 자동 refetch를 비활성화했으므로 명시적 refetch 제거
+        return () => {
+            if (locationUpdateIntervalRef.current) {
+                clearInterval(locationUpdateIntervalRef.current);
+            }
+        };
+    }, [updateLocation]);
+
     useEffect(() => {
         const subscription = AppState.addEventListener('change', async (nextAppState: AppStateStatus) => {
             if (
                 appState.current.match(/inactive|background/) &&
                 nextAppState === 'active'
             ) {
-                // 앱이 포그라운드로 돌아올 때 위치만 새로고침
-                await requestLocationAndUpdate();
-                // refetch() 제거 - QueryClient 설정으로 자동 관리
+                await updateLocation(false);
             }
             appState.current = nextAppState;
         });
@@ -108,22 +364,33 @@ export default function RestuarantScreen() {
         return () => {
             subscription.remove();
         };
+    }, [updateLocation]);
+
+    const handleRefresh = useCallback(async () => {
+        await refreshLocation();
+        refetch();
+    }, [refreshLocation, refetch]);
+
+    const handleSearch = useCallback(() => {
+        if (searchText.trim()) {
+            setSearchQuery(searchText.trim());
+        }
+    }, [searchText]);
+
+    const handleClearSearch = useCallback(() => {
+        setSearchText('');
+        setSearchQuery('');
     }, []);
 
     const handleFilterPress = () => {
         navigation.navigate('Filter', {
-            // 현재 적용된 필터 상태 전달 (스토리지와 동기화 확인용)
             currentFilter: {
                 filterParams,
                 operatingTimeFilter,
             },
             onApply: (params: RestaurantListParams) => {
-                // sort, lat, lng, is_open_only, day_of_week, time 제거하고 필터 파라미터만 추출
-                // 운영시간 필터는 로컬에서 처리하므로 서버 파라미터에서 제외
                 const { sort, lat, lng, is_open_only, day_of_week, time, ...filterOnly } = params;
-                
-                // 운영시간 필터 정보 저장 (로컬 필터링용)
-                // 요일만 선택한 경우도 포함
+
                 if (day_of_week) {
                     const [hour, minute] = time ? time.split(':') : [undefined, undefined];
                     setOperatingTimeFilter({
@@ -134,44 +401,36 @@ export default function RestuarantScreen() {
                 } else {
                     setOperatingTimeFilter(null);
                 }
-                
-                // 필터가 비어있는지 확인 (모든 값이 없거나 빈 배열/문자열인지)
-                const hasOtherFilters = Object.keys(filterOnly).length > 0 && 
+
+                const hasOtherFilters = Object.keys(filterOnly).length > 0 &&
                     Object.values(filterOnly).some(value => {
                         if (Array.isArray(value)) return value.length > 0;
                         if (typeof value === 'string') return value.length > 0;
                         return value !== undefined && value !== null;
                     });
-                
+
                 const hasOperatingTimeFilter = !!day_of_week;
                 const hasAnyFilter = hasOtherFilters || hasOperatingTimeFilter;
-                
+
                 if (hasAnyFilter) {
-                    // 필터가 있으면 완전히 교체 (병합이 아닌 교체로 변경하여 이전 필터 제거)
-                    // filterToParams에서 생성된 모든 필터 필드를 명시적으로 설정
                     const newFilterParams: any = {};
-                    
-                    // categories가 있으면 설정, 없으면 undefined (명시적으로 제거)
+
                     if (filterOnly.categories) {
                         newFilterParams.categories = filterOnly.categories;
                     }
-                    
-                    // affiliations가 있으면 설정, 없으면 undefined (명시적으로 제거)
+
                     if (filterOnly.affiliations) {
                         newFilterParams.affiliations = filterOnly.affiliations;
                     }
-                    
-                    // sub_category가 있으면 설정, 없으면 undefined (명시적으로 제거)
+
                     if (filterOnly.sub_category) {
                         newFilterParams.sub_category = filterOnly.sub_category;
                     }
-                    
+
                     setFilterParams(newFilterParams);
                 } else {
-                    // 필터가 없으면 완전히 초기화
                     setFilterParams({});
                     setOperatingTimeFilter(null);
-                    // 스토리지도 함께 초기화
                     AsyncStorage.removeItem('restaurantFilter').catch(error => {
                         console.error('Failed to remove filter from storage:', error);
                     });
@@ -180,23 +439,23 @@ export default function RestuarantScreen() {
         });
     };
 
-    // 필터가 적용되었는지 확인 (sort 제외, 운영시간 필터 포함)
     const isFilterApplied = useMemo(() => {
         const hasOtherFilters = Object.keys(filterParams).some(key => key !== 'sort');
         const hasOperatingTimeFilter = operatingTimeFilter !== null;
         return hasOtherFilters || hasOperatingTimeFilter;
     }, [filterParams, operatingTimeFilter]);
 
-    // 클라이언트에서 운영시간 필터링 및 정렬된 식당 리스트
+    useEffect(() => {
+        setDisplayCount(20);
+    }, [filterParams, operatingTimeFilter, sortOption]);
+
     const sortedRestaurants = useMemo(() => {
         if (!data?.restaurants) return [];
-        
+
         let restaurants = [...data.restaurants];
-        
-        // 운영시간 필터 적용 (로컬 필터링)
+
         if (operatingTimeFilter?.dayOfWeek) {
             if (operatingTimeFilter.hour && operatingTimeFilter.minute) {
-                // 요일 + 시간 + 분 모두 선택한 경우: 해당 시간에 운영중인지 확인
                 const filterTime = `${operatingTimeFilter.hour}:${operatingTimeFilter.minute}`;
                 restaurants = restaurants.filter(restaurant => {
                     return isRestaurantOpenAt(
@@ -206,7 +465,6 @@ export default function RestuarantScreen() {
                     );
                 });
             } else {
-                // 요일만 선택한 경우: 해당 요일에 운영시간이 있는지만 확인
                 restaurants = restaurants.filter(restaurant => {
                     return hasOperatingHoursOnDay(
                         restaurant.business_hours,
@@ -215,9 +473,8 @@ export default function RestuarantScreen() {
                 });
             }
         }
-        
+
         if (sortOption === '위치순' && userLocation) {
-            // 거리순 정렬 (클라이언트에서 계산)
             return restaurants.sort((a, b) => {
                 const aDistance = a.location.latitude && a.location.longitude
                     ? calculateDistance(
@@ -238,16 +495,13 @@ export default function RestuarantScreen() {
                 return aDistance - bDistance;
             });
         } else if (sortOption === '별점순') {
-            // 별점순 정렬 (내림차순)
             return restaurants.sort((a, b) => {
                 if (a.average_rating === b.average_rating) {
-                    // 별점이 같으면 리뷰 수로 정렬 (내림차순)
                     return b.rating_count - a.rating_count;
                 }
                 return b.average_rating - a.average_rating;
             });
         } else if (sortOption === '가격순') {
-            // 가격순 정렬 (오름차순, 가격이 없는 경우 맨 뒤)
             return restaurants.sort((a, b) => {
                 const aPrice = a.average_price ?? null;
                 const bPrice = b.average_price ?? null;
@@ -257,20 +511,60 @@ export default function RestuarantScreen() {
                 return aPrice - bPrice;
             });
         }
-        
-        // 기본 정렬 (ID 내림차순)
+
         return restaurants;
     }, [data?.restaurants, sortOption, userLocation, operatingTimeFilter]);
 
-    return (
-        <SafeAreaView edges={['top']} className="flex-1 bg-white">
-            <SearchBar
-                onFilterPress={handleFilterPress}
-                isFilterApplied={isFilterApplied}
-                filterResultCount={sortedRestaurants.length}
-                onLocationUpdate={handleLocationUpdate}
-                onRefresh={refetch}
-            >
+    const displayedRestaurants = useMemo(() => {
+        return sortedRestaurants.slice(0, displayCount);
+    }, [sortedRestaurants, displayCount]);
+
+    const hasMore = sortedRestaurants.length > displayCount;
+
+    const handleLoadMore = useCallback(() => {
+        if (hasMore && !isLoading) {
+            setDisplayCount(prev => prev + 20);
+        }
+    }, [hasMore, isLoading]);
+
+    // FlatList 렌더 함수
+    const renderRestaurantItem = useCallback(({ item }: any) => {
+        const distance = userLocation && item.location.latitude && item.location.longitude
+            ? calculateDistance(
+                userLocation.lat,
+                userLocation.lng,
+                item.location.latitude,
+                item.location.longitude
+            )
+            : null;
+
+        return (
+            <RestaurantCard
+                key={item.id}
+                name={item.name}
+                category={item.category}
+                businessHours={item.business_hours}
+                rating={item.average_rating}
+                onStatusExpired={() => {}}
+                restaurantId={item.id.toString()}
+                thumbnailUrls={item.thumbnail_urls}
+                comment={item.popular_comment?.content}
+                distance={distance}
+            />
+        );
+    }, [userLocation]);
+
+    const renderSearchItem = useCallback(({ item, index }: any) => {
+        return <SearchResultCard key={`${item.type}-${index}`} item={item} />;
+    }, []);
+
+    const renderHeader = useCallback(() => {
+        if (isSearchMode) {
+            return null;
+        }
+
+        return (
+            <>
                 <AdBanner onRoulettePress={() => setShowRouletteModal(true)} />
                 <View className='self-end relative'>
                     <Pressable
@@ -289,135 +583,294 @@ export default function RestuarantScreen() {
                                 zIndex: 1000,
                             }}
                         >
-                            <ScrollView>
-                                {SORT_OPTIONS.map((option) => (
-                                    <Pressable
-                                        key={option}
-                                        onPress={async () => {
-                                            setSortOption(option);
-                                            setIsSortOpen(false);
+                            {SORT_OPTIONS.map((option) => (
+                                <Pressable
+                                    key={option}
+                                    onPress={async () => {
+                                        setSortOption(option);
+                                        setIsSortOpen(false);
 
-                                            // 정렬 옵션 저장
-                                            try {
-                                                await AsyncStorage.setItem('restaurantSortOption', option);
-                                            } catch (error) {
-                                                console.error('Failed to save sort option:', error);
-                                            }
+                                        try {
+                                            await AsyncStorage.setItem('restaurantSortOption', option);
+                                        } catch (error) {
+                                            console.error('Failed to save sort option:', error);
+                                        }
 
-                                            if (option === '위치순') {
-                                                let coords = userLocation;
-                                                if (!coords) {
-                                                    coords = await requestLocationAndUpdate();
-                                                }
-                                                if (!coords) {
-                                                    Alert.alert('위치 권한 필요', '위치순 정렬을 사용하려면 위치 권한이 필요합니다.');
-                                                    setSortOption('별점순');
-                                                    await AsyncStorage.setItem('restaurantSortOption', '별점순');
+                                        if (option === '위치순') {
+                                            let coords = userLocation;
+                                            if (!coords) {
+                                                const { status } = await Location.requestForegroundPermissionsAsync();
+                                                if (status === 'granted') {
+                                                    const location = await Location.getCurrentPositionAsync({});
+                                                    coords = {
+                                                        lat: location.coords.latitude,
+                                                        lng: location.coords.longitude,
+                                                    };
+                                                    setUserLocation(coords);
                                                 }
                                             }
-                                            // 모든 정렬은 클라이언트에서 처리하므로 서버 파라미터 변경 불필요
-                                        }}
-                                        className="px-4 py-3 border-b border-gray-100"
-                                    >
-                                        <Text className={`text-base ${sortOption === option ? 'font-bold text-blue-600' : 'text-black'}`}>
-                                            {option}
-                                        </Text>
-                                    </Pressable>
-                                ))}
-                            </ScrollView>
+                                            if (!coords) {
+                                                Alert.alert('위치 권한 필요', '위치순 정렬을 사용하려면 위치 권한이 필요합니다.');
+                                                setSortOption('별점순');
+                                                await AsyncStorage.setItem('restaurantSortOption', '별점순');
+                                            }
+                                        }
+                                    }}
+                                    className="px-4 py-3 border-b border-gray-100"
+                                >
+                                    <Text className={`text-base ${sortOption === option ? 'font-bold text-blue-600' : 'text-black'}`}>
+                                        {option}
+                                    </Text>
+                                </Pressable>
+                            ))}
                         </View>
                     )}
                 </View>
+                {sortedRestaurants.length > 0 && (
+                    <View className="px-4 py-2">
+                        <Text className="text-gray-600 text-sm">
+                            식당 {sortedRestaurants.length}개
+                        </Text>
+                    </View>
+                )}
+            </>
+        );
+    }, [isSearchMode, isSortOpen, sortOption, sortedRestaurants.length, displayedRestaurants.length, userLocation]);
 
-                {/* 로딩 상태 */}
-                {isLoading && (
-                    <View className="flex-1 items-center justify-center py-20">
+    const renderSearchHeader = useCallback(() => {
+        if (!isSearchMode || !searchData) return null;
+
+        return (
+            <View className="px-4 py-3 bg-gray-50">
+                <Text className="text-sm text-gray-600">
+                    "{searchData.query}" 검색 결과 {searchData.total}개
+                    {searchData.restaurants_count > 0 && ` (식당 ${searchData.restaurants_count}개`}
+                    {searchData.menus_count > 0 && `, 메뉴 ${searchData.menus_count}개`}
+                    {(searchData.restaurants_count > 0 || searchData.menus_count > 0) && ')'}
+                </Text>
+            </View>
+        );
+    }, [isSearchMode, searchData]);
+
+    const renderFooter = useCallback(() => {
+        if (isSearchMode) return null;
+
+        if (isLoading) {
+            return (
+                <View className="py-6 items-center">
+                    <ActivityIndicator size="large" color="#3B82F6" />
+                </View>
+            );
+        }
+
+        if (hasMore) {
+            return (
+                <View className="items-center py-6">
+                    <Pressable
+                        onPress={handleLoadMore}
+                        className="bg-blue-500 px-8 py-3 rounded-lg"
+                    >
+                        <Text className="text-white font-semibold text-base">
+                            더 보기 ({sortedRestaurants.length - displayCount}개 더 있음)
+                        </Text>
+                    </Pressable>
+                </View>
+            );
+        }
+
+        return null;
+    }, [isSearchMode, isLoading, hasMore, sortedRestaurants.length, displayCount, handleLoadMore]);
+
+    const renderEmpty = useCallback(() => {
+        if (isSearchMode) {
+            if (isSearching) {
+                return (
+                    <View className="p-8 items-center">
                         <ActivityIndicator size="large" color="#3B82F6" />
-                        <Text className="text-gray-600 mt-4 text-base">식당 정보를 불러오는 중...</Text>
+                        <Text className="text-gray-500 mt-2">검색 중...</Text>
                     </View>
-                )}
+                );
+            }
+            return (
+                <View className="p-8 items-center">
+                    <Text className="text-gray-500">검색 결과가 없습니다</Text>
+                </View>
+            );
+        }
 
-                {/* 에러 상태 */}
-                {error && !isLoading && (
-                    <View className="flex-1 items-center justify-center py-20 px-4">
-                        <Icon name="warnning" width={64} height={64} color="#EF4444" />
-                        <Text className="text-gray-900 font-semibold text-lg mt-4 text-center">
-                            {(() => {
-                                const axiosError = error as AxiosError;
-                                if (axiosError?.code === 'NETWORK_ERROR' || axiosError?.message?.includes('Network') || !axiosError?.response) {
-                                    return '네트워크 연결 오류';
-                                }
-                                if (axiosError?.response?.status === 500) {
-                                    return '서버 오류가 발생했습니다';
-                                }
-                                return '데이터를 불러오는데 실패했습니다';
-                            })()}
-                        </Text>
-                        <Text className="text-gray-500 text-sm mt-2 text-center">
-                            {getSafeErrorMessage(error, '잠시 후 다시 시도해주세요')}
-                        </Text>
-                        <Pressable
-                            onPress={() => refetch()}
-                            className="mt-6 bg-blue-500 px-6 py-3 rounded-lg"
+        if (error) {
+            return (
+                <View className="flex-1 items-center justify-center py-20 px-4">
+                    <Icon name="warnning" width={64} height={64} color="#EF4444" />
+                    <Text className="text-gray-900 font-semibold text-lg mt-4 text-center">
+                        {(() => {
+                            const axiosError = error as AxiosError;
+                            if (axiosError?.code === 'NETWORK_ERROR' || axiosError?.message?.includes('Network') || !axiosError?.response) {
+                                return '네트워크 연결 오류';
+                            }
+                            if (axiosError?.response?.status === 500) {
+                                return '서버 오류가 발생했습니다';
+                            }
+                            return '데이터를 불러오는데 실패했습니다';
+                        })()}
+                    </Text>
+                    <Text className="text-gray-500 text-sm mt-2 text-center">
+                        {getSafeErrorMessage(error, '잠시 후 다시 시도해주세요')}
+                    </Text>
+                    <Pressable
+                        onPress={() => refetch()}
+                        className="mt-6 bg-blue-500 px-6 py-3 rounded-lg"
+                    >
+                        <Text className="text-white font-semibold">다시 시도</Text>
+                    </Pressable>
+                </View>
+            );
+        }
+
+        return (
+            <View className="flex-1 items-center justify-center py-20 px-4">
+                <View className="w-16 h-16 rounded-full bg-gray-100 items-center justify-center mb-4">
+                    <Icon name="search" width={32} height={32} color="#9CA3AF" />
+                </View>
+                <Text className="text-gray-400 text-lg mt-2 text-center font-medium">
+                    {isFilterApplied ? '필터 조건에 맞는 식당이 없습니다' : '등록된 식당이 없습니다'}
+                </Text>
+                <Text className="text-gray-400 text-sm mt-2 text-center">
+                    {isFilterApplied ? '다른 조건으로 검색해보세요' : '첫 번째 식당을 등록해보세요'}
+                </Text>
+                {isFilterApplied && (
+                    <Pressable
+                        onPress={handleFilterPress}
+                        className="mt-6 bg-gray-100 px-6 py-3 rounded-lg"
+                    >
+                        <Text className="text-gray-700 font-semibold">필터 수정하기</Text>
+                    </Pressable>
+                )}
+            </View>
+        );
+    }, [isSearchMode, isSearching, error, isFilterApplied, refetch]);
+
+    const listData = isSearchMode ? (searchData?.results || []) : displayedRestaurants;
+
+    return (
+        <SafeAreaView edges={['top']} className="flex-1 bg-white">
+            {/* 위치 헤더 - 스크롤 시 사라지는 애니메이션 */}
+            <Animated.View
+                className='w-full px-5 py-1 bg-white'
+                style={{
+                    opacity: scrollY.interpolate({
+                        inputRange: [0, STICKY_THRESHOLD],
+                        outputRange: [1, 0],
+                        extrapolate: 'clamp',
+                    }),
+                    height: scrollY.interpolate({
+                        inputRange: [0, STICKY_THRESHOLD],
+                        outputRange: [40, 0],
+                        extrapolate: 'clamp',
+                    }),
+                }}
+            >
+                <View className='w-full flex-row justify-between items-center h-full'>
+                    <Pressable
+                        className="flex-row items-center justify-center h-full gap-2"
+                        onPress={() => setShowMapModal(true)}
+                        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                    >
+                        <Text
+                            className="text-md font-semibold text-neutral-900"
+                            numberOfLines={1}
+                            ellipsizeMode="tail"
                         >
-                            <Text className="text-white font-semibold">다시 시도</Text>
+                            {locationText.length > 40 ? `${locationText.substring(0, 40)}...` : locationText}
+                        </Text>
+                        <Icon name="dropdown" width={10} height={13} />
+                    </Pressable>
+                    <Pressable
+                        onPress={handleFilterPress}
+                        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                    >
+                        <Icon name={isFilterApplied ? "filterSelected" : "filter"} />
+                    </Pressable>
+                </View>
+            </Animated.View>
+
+            {/* 검색 바 - Sticky */}
+            <View className='w-full px-5 py-2 bg-white border-b border-b-gray-100'>
+                <View className='w-full rounded-full flex-row justify-between items-center px-4 py-2 bg-gray-100'>
+                    <TextInput
+                        placeholder="찾아라! 에리카의 맛집"
+                        className="flex-1 text-base"
+                        placeholderTextColor="#9CA3AF"
+                        value={searchText}
+                        onChangeText={setSearchText}
+                        onSubmitEditing={handleSearch}
+                        returnKeyType="search"
+                        style={{ lineHeight: 16, paddingVertical: 8, paddingHorizontal: 4 }}
+                        editable={true}
+                    />
+                    {searchText.length > 0 ? (
+                        <Pressable
+                            onPress={handleClearSearch}
+                            hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}
+                        >
+                            <Icon name="cancel" size={15} color="#9CA3AF" />
                         </Pressable>
-                    </View>
-                )}
+                    ) : (
+                        <Pressable
+                            onPress={handleSearch}
+                            hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}
+                        >
+                            <Icon name="search" width={35}/>
+                        </Pressable>
+                    )}
+                </View>
+            </View>
 
-                {/* 빈 상태 */}
-                {!isLoading && !error && sortedRestaurants.length === 0 && (
-                    <View className="flex-1 items-center justify-center py-20 px-4">
-                        <View className="w-16 h-16 rounded-full bg-gray-100 items-center justify-center mb-4">
-                            <Icon name="search" width={32} height={32} color="#9CA3AF" />
-                        </View>
-                        <Text className="text-gray-400 text-lg mt-2 text-center font-medium">
-                            {isFilterApplied ? '필터 조건에 맞는 식당이 없습니다' : '등록된 식당이 없습니다'}
-                        </Text>
-                        <Text className="text-gray-400 text-sm mt-2 text-center">
-                            {isFilterApplied ? '다른 조건으로 검색해보세요' : '첫 번째 식당을 등록해보세요'}
-                        </Text>
-                        {isFilterApplied && (
-                            <Pressable
-                                onPress={handleFilterPress}
-                                className="mt-6 bg-gray-100 px-6 py-3 rounded-lg"
-                            >
-                                <Text className="text-gray-700 font-semibold">필터 수정하기</Text>
-                            </Pressable>
-                        )}
-                    </View>
+            {/* FlatList - 메인 콘텐츠 */}
+            <FlatList
+                data={listData as any}
+                renderItem={isSearchMode ? renderSearchItem : renderRestaurantItem}
+                keyExtractor={(item: any, index) => isSearchMode ? `search-${index}` : `restaurant-${item.id}`}
+                ListHeaderComponent={
+                    <>
+                        {renderSearchHeader()}
+                        {renderHeader()}
+                    </>
+                }
+                ListFooterComponent={renderFooter}
+                ListEmptyComponent={renderEmpty}
+                onScroll={Animated.event(
+                    [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+                    { useNativeDriver: false }
                 )}
-                {sortedRestaurants.map((restaurant) => {
-                    // 클라이언트에서 거리 계산
-                    const distance = userLocation && restaurant.location.latitude && restaurant.location.longitude
-                        ? calculateDistance(
-                            userLocation.lat,
-                            userLocation.lng,
-                            restaurant.location.latitude,
-                            restaurant.location.longitude
-                        )
-                        : null;
+                scrollEventThrottle={16}
+                refreshControl={
+                    <RefreshControl
+                        refreshing={refreshing}
+                        onRefresh={handleRefresh}
+                        tintColor="#3B82F6"
+                        colors={['#3B82F6']}
+                    />
+                }
+                onEndReached={handleLoadMore}
+                onEndReachedThreshold={0.5}
+                initialNumToRender={10}
+                maxToRenderPerBatch={10}
+                windowSize={5}
+                removeClippedSubviews={true}
+                className="flex-1 bg-[rgba(248, 250, 252, 1)]"
+            />
 
-                    return (
-                        <RestaurantCard
-                            key={restaurant.id}
-                            name={restaurant.name}
-                            category={restaurant.category}
-                            businessHours={restaurant.business_hours}
-                            rating={restaurant.average_rating}
-                            onStatusExpired={() => {
-                                // 운영 상태는 클라이언트에서 계산하므로 새로고침 불필요
-                                // 필요시 refetch() 호출
-                            }}
-                            restaurantId={restaurant.id.toString()}
-                            thumbnailUrls={restaurant.thumbnail_urls}
-                            comment={restaurant.popular_comment?.content}
-                            distance={distance}
-                        />
-                    );
-                })}
-            </SearchBar>
-            
+            {/* 맵 모달 */}
+            <MapModal
+                visible={showMapModal}
+                setVisible={setShowMapModal}
+                location={locationText}
+                latitude={currentLocation.latitude}
+                longtitude={currentLocation.longitude}
+                viewName="현재 위치"
+            />
+
             {/* 룰렛 모달 */}
             <RouletteModal
                 visible={showRouletteModal}

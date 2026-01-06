@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, memo } from 'react';
 import { View, Text, Pressable } from 'react-native';
 import { ScrollView } from 'react-native-gesture-handler'; // ★ gesture-handler에서 가져오기
 
@@ -12,7 +12,7 @@ interface DropdownProps {
   onToggle?: () => void;
 }
 
-export function Dropdown({
+export const Dropdown = memo(function Dropdown({
   label,
   options,
   selectedValue,
@@ -95,4 +95,4 @@ export function Dropdown({
       )}
     </View>
   );
-}
+});

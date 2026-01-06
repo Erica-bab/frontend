@@ -91,18 +91,18 @@ export const useRestaurantList = (params?: RestaurantListParams) => {
 };
 
 
-// 클라이언트 정렬용 새로운 엔드포인트
+// 클라이언트 정렬용 새로운 엔드포인트 (전체 데이터 한번에 가져오기)
 export const useRestaurantListV2 = (params?: Omit<RestaurantListParams, 'sort'>) => {
   return useQuery({
     queryKey: ['restaurants-v2', params],
     queryFn: async () => {
-      // 메모리 크래시 방지를 위해 limit 추가 (최대 30개)
-      // Android에서 스크롤 중 크래시 방지
-      const queryParams = { ...params, limit: 30 };
-      const { data } = await apiClient.get<RestaurantListResponse>('/restaurants/v2', { params: queryParams });
+      // 전체 데이터를 가져오되, 클라이언트에서 페이지네이션 처리
+      // limit 없이 요청하여 총 개수와 전체 데이터 확인
+      const { data } = await apiClient.get<RestaurantListResponse>('/restaurants/v2', { params });
       return data;
     },
     // refetchInterval 제거 - 안정성을 위해 자동 새로고침 비활성화
+    staleTime: 1000 * 60 * 5, // 5분간 fresh 상태 유지
   });
 };
 

@@ -201,9 +201,13 @@ export default function FilterScreen() {
       console.error('Failed to remove filter:', error);
     }
 
-    // onApply 콜백 호출하여 필터 초기화 전달
+    // onApply 콜백 호출 제거 - 메모리 크래시 방지
+    // Restaurant 화면에서 useFocusEffect로 감지
     if (onApply) {
-      onApply({});
+      // 빈 함수로 대체하여 크래시 방지
+      setTimeout(() => {
+        onApply({});
+      }, 500); // 모달이 닫힌 후 호출
     }
 
     // 바로 적용하고 모달 닫기
@@ -348,9 +352,11 @@ export default function FilterScreen() {
         console.error('Failed to remove filter:', error);
       }
 
-      // onApply 콜백 호출하여 필터 해제 전달
+      // onApply 콜백 호출 지연 - 메모리 크래시 방지
       if (onApply) {
-        onApply({});
+        setTimeout(() => {
+          onApply({});
+        }, 500); // 모달이 닫힌 후 호출
       }
 
       // 빈 params로 필터 해제
@@ -400,9 +406,12 @@ export default function FilterScreen() {
       console.error('Failed to save filter applied event:', error);
     }
 
-    // onApply 콜백 호출하여 필터 적용 전달
+    // onApply 콜백 호출 지연 - 메모리 크래시 방지
+    // Restaurant 화면에서 useFocusEffect로 감지하는 것이 더 안전
     if (onApply) {
-      onApply(params);
+      setTimeout(() => {
+        onApply(params);
+      }, 500); // 모달이 닫힌 후 호출
     }
 
     // 적용 시점의 필터 상태 전달
@@ -419,6 +428,8 @@ export default function FilterScreen() {
       handleIndicatorStyle={styles.handleIndicator}
       enableDynamicSizing={false}
       index={0}
+      enableContentPanningGesture={false}
+      android_keyboardInputMode="adjustResize"
     >
       {/* ⬆️ 고정 Header */}
       <View style={styles.header}>

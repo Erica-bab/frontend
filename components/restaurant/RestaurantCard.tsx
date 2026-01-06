@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { View, Text, Pressable, Dimensions } from 'react-native';
 import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
 import Card from '@/components/ui/Card';
@@ -33,7 +34,7 @@ interface RestaurantCardProps {
   onStatusExpired?: () => void; // 상태가 만료되었을 때 호출되는 콜백
 }
 
-export default function RestaurantCard({ name, category, operatingStatus, businessHours, rating, comment, restaurantId, thumbnailUrls, distance, onStatusExpired }: RestaurantCardProps) {
+const RestaurantCard = memo(function RestaurantCard({ name, category, operatingStatus, businessHours, rating, comment, restaurantId, thumbnailUrls, distance, onStatusExpired }: RestaurantCardProps) {
   const navigation = useNavigation<NativeStackNavigationProp<any>>();
   const displayComment = comment || null;
   
@@ -236,4 +237,6 @@ export default function RestaurantCard({ name, category, operatingStatus, busine
       </Card>
     </Animated.View>
   );
-}
+});
+
+export default RestaurantCard;
