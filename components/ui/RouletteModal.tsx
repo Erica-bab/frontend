@@ -99,7 +99,7 @@ export default function RouletteModal({
   useEffect(() => {
     if (visible) {
       // 쿼리 데이터 초기화
-      queryClient.removeQueries({ queryKey: ['restaurants', 'menus', 'random'] });
+      queryClient.resetQueries({ queryKey: ['restaurants', 'menus', 'random'] });
       rotation.value = 0;
       setIsSpinning(false);
     }
@@ -152,9 +152,9 @@ export default function RouletteModal({
       >
         <Pressable
           className="bg-white rounded-2xl"
-          style={{ 
+          style={{
             width: SCREEN_WIDTH * 0.9,
-            height: SCREEN_HEIGHT * 0.7,
+            height: SCREEN_HEIGHT * 0.8,
           }}
           onPress={(e) => {
             e.stopPropagation();

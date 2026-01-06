@@ -179,9 +179,11 @@ export default function RestaurantScreen() {
     const [showMapModal, setShowMapModal] = useState(false);
     const [currentLocation, setCurrentLocation] = useState({ latitude: 0, longitude: 0 });
     const [refreshing, setRefreshing] = useState(false);
+    const [showScrollToTop, setShowScrollToTop] = useState(false);
     const locationUpdateIntervalRef = useRef<NodeJS.Timeout | null>(null);
     const lastGeocodedLocationRef = useRef<{ latitude: number; longitude: number } | null>(null);
     const geocodeErrorRef = useRef<boolean>(false);
+    const flatListRef = useRef<FlatList>(null);
 
     const { data, isLoading, error, refetch } = useRestaurantListV2(filterParams);
     const appState = useRef(AppState.currentState);
@@ -315,7 +317,7 @@ export default function RestaurantScreen() {
     }, []);
 
     const refreshLocation = useCallback(async () => {
-        await updateLocation(true, true);
+        await updateLocation(false, true); // showRefreshIndicator를 false로 변경 (handleRefresh에서 관리)
     }, [updateLocation]);
 
     useEffect(() => {
@@ -367,8 +369,17 @@ export default function RestaurantScreen() {
     }, [updateLocation]);
 
     const handleRefresh = useCallback(async () => {
-        await refreshLocation();
-        refetch();
+        setRefreshing(true);
+        try {
+            // 데이터 새로고침을 먼저 실행 (더 빠른 응답성)
+            await refetch();
+            // 위치 업데이트는 백그라운드로 실행
+            refreshLocation().catch(err => console.error('Location refresh error:', err));
+        } catch (error) {
+            console.error('Refresh error:', error);
+        } finally {
+            setRefreshing(false);
+        }
     }, [refreshLocation, refetch]);
 
     const handleSearch = useCallback(() => {
@@ -526,6 +537,23 @@ export default function RestaurantScreen() {
             setDisplayCount(prev => prev + 20);
         }
     }, [hasMore, isLoading]);
+
+    // 스크롤 위치 추적 (위로가기 버튼 표시용) - scrollY 값 모니터링
+    useEffect(() => {
+        const listenerId = scrollY.addListener(({ value }) => {
+            const shouldShow = value > 200;
+            // 값이 실제로 변경될 때만 state 업데이트 (불필요한 리렌더링 방지)
+            setShowScrollToTop(prev => prev !== shouldShow ? shouldShow : prev);
+        });
+        return () => {
+            scrollY.removeListener(listenerId);
+        };
+    }, [scrollY]);
+
+    // 위로 스크롤
+    const scrollToTop = useCallback(() => {
+        flatListRef.current?.scrollToOffset({ offset: 0, animated: true });
+    }, []);
 
     // FlatList 렌더 함수
     const renderRestaurantItem = useCallback(({ item }: any) => {
@@ -828,6 +856,7 @@ export default function RestaurantScreen() {
 
             {/* FlatList - 메인 콘텐츠 */}
             <FlatList
+                ref={flatListRef}
                 data={listData as any}
                 renderItem={isSearchMode ? renderSearchItem : renderRestaurantItem}
                 keyExtractor={(item: any, index) => isSearchMode ? `search-${index}` : `restaurant-${item.id}`}
@@ -860,6 +889,23 @@ export default function RestaurantScreen() {
                 removeClippedSubviews={true}
                 className="flex-1 bg-[rgba(248, 250, 252, 1)]"
             />
+
+            {/* 위로가기 버튼 */}
+            {showScrollToTop && (
+                <Pressable
+                    onPress={scrollToTop}
+                    className="absolute bottom-6 right-6 w-10 h-10 bg-white rounded-full items-center justify-center shadow-lg"
+                    style={{
+                        shadowColor: '#000',
+                        shadowOffset: { width: 0, height: 1 },
+                        shadowOpacity: 0.25,
+                        shadowRadius: 3.84,
+                        elevation: 5,
+                    }}
+                >
+                    <Icon name="upAngle" width={20} height={20} color="#FFFFFF" />
+                </Pressable>
+            )}
 
             {/* 맵 모달 */}
             <MapModal

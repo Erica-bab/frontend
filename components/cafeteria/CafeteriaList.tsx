@@ -55,13 +55,13 @@ export default function CafeteriaList({
 
    const handleRefresh = async () => {
      setRefreshing(true);
-     if (onRefresh) {
-       await onRefresh();
-     }
-     // Simulate a network request or a delay for the refresh indicator
-     setTimeout(() => {
+     try {
+       if (onRefresh) {
+         await onRefresh();
+       }
+     } finally {
        setRefreshing(false);
-     }, 500);
+     }
    };
 
   if (isLoading) {

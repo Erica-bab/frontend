@@ -129,7 +129,16 @@ export default function RestaurantCommentsTab({ restaurant, onShowLogin }: Resta
   }, [commentsData?.comments, sortOption]);
 
   return (
-    <View>
+    <ScrollView
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={handleRefresh}
+          tintColor="#3B82F6"
+          colors={['#3B82F6']}
+        />
+      }
+    >
       {/* 별점 섹션 */}
       <View className="p-4 border-b border-gray-200 items-center">
         <StarRating rating={optimisticRating} onRate={handleRating} isLoading={isRatingLoading} />
@@ -209,6 +218,6 @@ export default function RestaurantCommentsTab({ restaurant, onShowLogin }: Resta
           />
         ))
       )}
-    </View>
+    </ScrollView>
   );
 }

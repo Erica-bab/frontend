@@ -45,7 +45,7 @@ export default {
     android: {
       splash: {
         image: "./assets/app/splash.png",
-        resizeMode: "cover",
+        resizeMode: "contain",
         backgroundColor: "#2563EB"
       },
       adaptiveIcon: {

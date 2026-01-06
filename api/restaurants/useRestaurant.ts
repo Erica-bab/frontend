@@ -101,8 +101,8 @@ export const useRestaurantListV2 = (params?: Omit<RestaurantListParams, 'sort'>)
       const { data } = await apiClient.get<RestaurantListResponse>('/restaurants/v2', { params });
       return data;
     },
-    // refetchInterval 제거 - 안정성을 위해 자동 새로고침 비활성화
-    staleTime: 1000 * 60 * 5, // 5분간 fresh 상태 유지
+    staleTime: 1000 * 60 * 2, // 2분간 fresh 상태 유지 (일반적인 경우 캐시 활용)
+    gcTime: 1000 * 60 * 5, // 5분간 캐시 유지 (메모리에만)
   });
 };
 
