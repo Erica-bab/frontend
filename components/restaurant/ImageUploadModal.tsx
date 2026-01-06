@@ -62,12 +62,38 @@ export default function ImageUploadModal({
 
       if (!result.canceled && result.assets && result.assets[0]) {
         // 안드로이드 메모리 절약을 위해 이미지 리사이즈
-        const resized = await ImageManipulator.manipulateAsync(result.assets[0].uri, [
-          { resize: { width: 1200 } }
-        ], {
-          compress: 0.8,
-          format: ImageManipulator.SaveFormat.JPEG
-        });
+        // 큰 이미지를 단계적으로 리사이즈하여 메모리 부족 방지
+        const asset = result.assets[0];
+        const originalWidth = asset.width || 4000;
+
+        // 원본이 매우 크면 (4000px 이상) 두 단계로 리사이즈
+        let resized;
+        if (originalWidth > 4000) {
+          // 1단계: 절반으로 축소
+          const intermediate = await ImageManipulator.manipulateAsync(asset.uri, [
+            { resize: { width: Math.floor(originalWidth / 2) } }
+          ], {
+            compress: 0.9,
+            format: ImageManipulator.SaveFormat.JPEG
+          });
+
+          // 2단계: 최종 크기로 축소
+          resized = await ImageManipulator.manipulateAsync(intermediate.uri, [
+            { resize: { width: 1200 } }
+          ], {
+            compress: 0.7,
+            format: ImageManipulator.SaveFormat.JPEG
+          });
+        } else {
+          // 원본이 작으면 바로 리사이즈
+          resized = await ImageManipulator.manipulateAsync(asset.uri, [
+            { resize: { width: 1200 } }
+          ], {
+            compress: 0.7,
+            format: ImageManipulator.SaveFormat.JPEG
+          });
+        }
+
         setSelectedImage(resized.uri);
       }
     } catch (error) {
@@ -136,12 +162,44 @@ export default function ImageUploadModal({
       if (!result.canceled && result.assets && result.assets[0]) {
         console.log('🖼️ 이미지 리사이즈 시작...');
         // 안드로이드 메모리 절약을 위해 이미지 리사이즈
-        const resized = await ImageManipulator.manipulateAsync(result.assets[0].uri, [
-          { resize: { width: 1200 } }
-        ], {
-          compress: 0.8,
-          format: ImageManipulator.SaveFormat.JPEG
-        });
+        // 큰 이미지를 단계적으로 리사이즈하여 메모리 부족 방지
+        const asset = result.assets[0];
+        const originalWidth = asset.width || 4000;
+
+        // 원본이 매우 크면 (4000px 이상) 두 단계로 리사이즈
+        let resized;
+        if (originalWidth > 4000) {
+          console.log(`📏 큰 이미지 감지 (${originalWidth}px) - 단계별 리사이즈 시작`);
+
+          // 1단계: 절반으로 축소
+          const intermediate = await ImageManipulator.manipulateAsync(asset.uri, [
+            { resize: { width: Math.floor(originalWidth / 2) } }
+          ], {
+            compress: 0.9,
+            format: ImageManipulator.SaveFormat.JPEG
+          });
+          console.log('✅ 1단계 리사이즈 완료');
+
+          // 2단계: 최종 크기로 축소
+          resized = await ImageManipulator.manipulateAsync(intermediate.uri, [
+            { resize: { width: 1200 } }
+          ], {
+            compress: 0.7,
+            format: ImageManipulator.SaveFormat.JPEG
+          });
+          console.log('✅ 2단계 리사이즈 완료');
+        } else {
+          console.log(`📏 일반 이미지 (${originalWidth}px) - 직접 리사이즈`);
+          // 원본이 작으면 바로 리사이즈
+          resized = await ImageManipulator.manipulateAsync(asset.uri, [
+            { resize: { width: 1200 } }
+          ], {
+            compress: 0.7,
+            format: ImageManipulator.SaveFormat.JPEG
+          });
+          console.log('✅ 리사이즈 완료');
+        }
+
         console.log('✅ 이미지 선택 완료:', resized.uri);
         setSelectedImage(resized.uri);
       } else {

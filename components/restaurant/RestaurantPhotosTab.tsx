@@ -186,10 +186,11 @@ export default function RestaurantPhotosTab({ restaurant, onShowLogin, onAddPhot
               <Pressable
                 onPress={() => handleDeleteImage(item.id)}
                 disabled={isDeleting}
-                className="absolute top-2 right-2 w-7 h-7 bg-black/60 rounded-full items-center justify-center"
+                className="absolute top-2 right-2 w-9 h-9 bg-black/60 rounded-full items-center justify-center"
                 style={{ opacity: isDeleting ? 0.5 : 1 }}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
               >
-                <Text className="text-white text-base font-bold">×</Text>
+                <Text className="text-white text-lg font-bold">×</Text>
               </Pressable>
             )}
           </View>
