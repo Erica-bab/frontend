@@ -95,11 +95,15 @@ export default function CommentItem({
             )}
           </View>
           <View className="flex-row gap-3">
-            <Pressable className="flex-row gap-1 items-center" onPress={handleLikePress}>
-              <Icon 
-                name="good" 
-                size={16} 
-                color={isLiked ? "#3B82F6" : "#6B7280"} 
+            <Pressable
+              className="flex-row gap-1 items-center"
+              onPress={handleLikePress}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            >
+              <Icon
+                name="good"
+                size={16}
+                color={isLiked ? "#3B82F6" : "#6B7280"}
               />
               <Text className={isLiked ? "text-blue-500" : "text-gray-600"}>
                 {likeCount}

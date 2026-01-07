@@ -104,26 +104,50 @@ export default function RestaurantCommentsTab({ restaurant, onShowLogin }: Resta
     }
   }, [refetchComments, refetchRatingStats, refetchLikedComments, refetchMyComments, refetchMyReplies, isAuthenticated]);
 
+  // 댓글 삭제 후 데이터 새로고침
+  const handleCommentUpdate = useCallback(async () => {
+    await refetchComments();
+    if (isAuthenticated) {
+      await Promise.all([
+        refetchMyComments(),
+        refetchMyReplies(),
+      ]);
+    }
+  }, [refetchComments, refetchMyComments, refetchMyReplies, isAuthenticated]);
+
   // 댓글 정렬
   const sortedComments = useMemo(() => {
     const comments = commentsData?.comments ?? [];
     return [...comments].sort((a, b) => {
-      switch (sortOption) {
-        case 'recent':
-          // 최근순: 생성일 내림차순 (최신 댓글이 위)
-          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
-        
-        case 'oldest':
-          // 오래된순: 생성일 오름차순 (옛날 댓글이 위)
-          return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
-        
-        case 'likes':
-        default:
-          // 좋아요순: 좋아요 수 내림차순, 같으면 옛날 댓글순
-          if (a.like_count !== b.like_count) {
-            return b.like_count - a.like_count;
-          }
-          return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+      try {
+        switch (sortOption) {
+          case 'recent':
+            // 최근순: 생성일 내림차순 (최신 댓글이 위)
+            const timeB = a.created_at ? new Date(b.created_at).getTime() : 0;
+            const timeA = a.created_at ? new Date(a.created_at).getTime() : 0;
+            return timeB - timeA;
+
+          case 'oldest':
+            // 오래된순: 생성일 오름차순 (옛날 댓글이 위)
+            const oldTimeA = a.created_at ? new Date(a.created_at).getTime() : 0;
+            const oldTimeB = b.created_at ? new Date(b.created_at).getTime() : 0;
+            return oldTimeA - oldTimeB;
+
+          case 'likes':
+          default:
+            // 좋아요순: 좋아요 수 내림차순, 같으면 옛날 댓글순
+            const likeA = a.like_count ?? 0;
+            const likeB = b.like_count ?? 0;
+            if (likeA !== likeB) {
+              return likeB - likeA;
+            }
+            const fallbackTimeA = a.created_at ? new Date(a.created_at).getTime() : 0;
+            const fallbackTimeB = b.created_at ? new Date(b.created_at).getTime() : 0;
+            return fallbackTimeA - fallbackTimeB;
+        }
+      } catch (error) {
+        console.error('Comment sorting error:', error);
+        return 0;
       }
     });
   }, [commentsData?.comments, sortOption]);
@@ -214,6 +238,7 @@ export default function RestaurantCommentsTab({ restaurant, onShowLogin }: Resta
             myCommentIds={myCommentIds}
             onLikeToggle={refetchLikedComments}
             onShowLogin={onShowLogin}
+            onUpdateSuccess={handleCommentUpdate}
             showReplyButton
           />
         ))

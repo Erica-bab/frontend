@@ -125,6 +125,7 @@ export function useCommentActions({
             onPress: () => {
               deleteComment(comment.id, {
                 onSuccess: () => {
+                  onUpdateSuccess?.();
                   Alert.alert('완료', '댓글이 삭제되었습니다.');
                 },
                 onError: (error: any) => {

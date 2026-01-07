@@ -1,107 +1,161 @@
-import { View, Text, Pressable, ScrollView, Linking, Alert, ActivityIndicator } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
-import Icon from '@/components/Icon';
-import { useLogout, useCurrentUser, useDeleteAccount } from '@/api/auth/useAuth';
-import { useAuth } from '@/api/auth/useAuth';
-import { getSafeErrorMessage } from '@/utils/errorHandler';
+import {
+  View,
+  Text,
+  Pressable,
+  ScrollView,
+  Linking,
+  Alert,
+  ActivityIndicator,
+} from "react-native";
+import { useNavigation } from "@react-navigation/native";
+import Icon from "@/components/Icon";
+import {
+  useLogout,
+  useCurrentUser,
+  useDeleteAccount,
+} from "@/api/auth/useAuth";
+import { useAuth } from "@/api/auth/useAuth";
+import { getSafeErrorMessage } from "@/utils/errorHandler";
 
 const MENU_ITEMS = [
   // { icon: 'chat' as const, label: '쓴 댓글 보기', action: 'comments' },
-  { icon: 'bookmark1' as const, label: '북마크', action: 'bookmark' },
-  { icon: 'mail' as const, label: '문의하기', action: 'contact' },
-  { icon: 'paper' as const, label: '서비스 이용약관', action: 'terms' },
-  { icon: 'docs' as const, label: '개인정보 처리방침', action: 'privacy' },
-  { icon: 'people' as const, label: '만든사람', action: 'about' },
+  { icon: "bookmark1" as const, label: "북마크", action: "bookmark" },
+  { icon: "mail" as const, label: "문의하기", action: "contact" },
+  { icon: "paper" as const, label: "서비스 이용약관", action: "terms" },
+  { icon: "docs" as const, label: "개인정보 처리방침", action: "privacy" },
+  { icon: "people" as const, label: "만든사람", action: "about" },
 ];
 
 export default function ProfileScreen() {
   const navigation = useNavigation();
-  const { isAuthenticated, refreshAuthState } = useAuth();
+  const {
+    isAuthenticated,
+    refreshAuthState,
+    isLoading: isAuthLoading,
+  } = useAuth();
   const { mutate: logout, isPending: isLoggingOut } = useLogout();
-  const { mutate: deleteAccount, isPending: isDeletingAccount } = useDeleteAccount();
+  const { mutate: deleteAccount, isPending: isDeletingAccount } =
+    useDeleteAccount();
   const { data: currentUser, isLoading: isLoadingUser } = useCurrentUser();
+
+  // 디버깅 로그
+  console.log("ProfileScreen render:", {
+    isAuthenticated,
+    isAuthLoading,
+    isLoadingUser,
+    isLoggingOut,
+    hasCurrentUser: !!currentUser,
+  });
 
   // 프로필 정보 동적 생성
   const getProfileInfo = () => {
     if (!currentUser) return [];
-    
+
     const info = [];
-    
+
     // 유형
-    const userType = currentUser.student_year && currentUser.college ? '학생' : '기타(비공개)';
-    info.push({ label: '유형', value: userType });
-    
+    const userType =
+      currentUser.student_year && currentUser.college ? "학생" : "기타(비공개)";
+    info.push({ label: "유형", value: userType });
+
     // 학번 (학생인 경우만)
     if (currentUser.student_year) {
-      info.push({ label: '학번', value: currentUser.student_year });
+      info.push({ label: "학번", value: currentUser.student_year });
     }
-    
+
     // 단과대 (학생인 경우만)
     if (currentUser.college?.name) {
-      info.push({ label: '단과대', value: currentUser.college.name });
+      info.push({ label: "단과대", value: currentUser.college.name });
     }
-    
+
     return info;
   };
 
   const handleUpdateInfo = () => {
-    navigation.navigate('AddInfo' as never);
+    navigation.navigate("AddInfo" as never);
   };
 
   const handleLogout = () => {
-    Alert.alert(
-      '로그아웃',
-      '정말 로그아웃하시겠습니까?',
-      [
-        {
-          text: '취소',
-          style: 'cancel',
-        },
-        {
-          text: '로그아웃',
-          style: 'destructive',
-          onPress: () => {
-            logout(undefined, {
-              onSuccess: () => {
-                refreshAuthState();
-                Alert.alert('로그아웃 완료', '로그아웃되었습니다.');
-              },
-              onError: (error) => {
-                // 에러가 발생해도 로컬 토큰은 삭제되었으므로 상태 갱신
-                refreshAuthState();
-                console.error('로그아웃 에러:', error);
-                Alert.alert('로그아웃 완료', '로그아웃되었습니다.');
-              },
-            });
-          },
-        },
-      ]
-    );
-  };
+    console.log("🔴 handleLogout called");
+    console.log("isLoggingOut:", isLoggingOut);
+    console.log("isAuthenticated:", isAuthenticated);
 
+    // 이미 로그아웃 중이면 무시
+    if (isLoggingOut) {
+      console.log("Already logging out, skipping...");
+      return;
+    }
+
+    // 인증 상태가 확실하지 않으면 무시
+    if (isAuthenticated !== true) {
+      console.log("Not authenticated, skipping logout");
+      return;
+    }
+
+    console.log("🔴 Showing logout alert");
+    // Alert를 약간 지연시켜서 렌더링 충돌 방지
+    setTimeout(() => {
+      try {
+        Alert.alert("로그아웃", "정말 로그아웃하시겠습니까?", [
+          {
+            text: "취소",
+            style: "cancel",
+            onPress: () => console.log("Logout cancelled"),
+          },
+          {
+            text: "로그아웃",
+            style: "destructive",
+            onPress: () => {
+              console.log("🔴 Logout confirmed, calling logout mutation");
+              logout(undefined, {
+                onSuccess: () => {
+                  console.log("🔴 Logout success");
+                  refreshAuthState();
+                  Alert.alert("로그아웃 완료", "로그아웃되었습니다.");
+                },
+                onError: (error) => {
+                  console.log("🔴 Logout error");
+                  // 에러가 발생해도 로컬 토큰은 삭제되었으므로 상태 갱신
+                  refreshAuthState();
+                  console.error("로그아웃 에러:", error);
+                  Alert.alert("로그아웃 완료", "로그아웃되었습니다.");
+                },
+              });
+            },
+          },
+        ]);
+        console.log("🔴 Alert.alert called successfully");
+      } catch (error) {
+        console.error("🔴 Error showing alert:", error);
+      }
+    }, 100);
+  };
 
   const handleDeleteAccount = () => {
     Alert.alert(
-      '계정 삭제',
-      '정말 계정을 삭제하시겠습니까? 삭제된 계정은 복구할 수 없으며, 모든 데이터가 삭제됩니다.',
+      "계정 삭제",
+      "정말 계정을 삭제하시겠습니까? 삭제된 계정은 복구할 수 없으며, 모든 데이터가 삭제됩니다.",
       [
         {
-          text: '취소',
-          style: 'cancel',
+          text: "취소",
+          style: "cancel",
         },
         {
-          text: '삭제',
-          style: 'destructive',
+          text: "삭제",
+          style: "destructive",
           onPress: () => {
             deleteAccount(undefined, {
               onSuccess: () => {
                 refreshAuthState();
-                Alert.alert('계정 삭제 완료', '계정이 삭제되었습니다.');
+                Alert.alert("계정 삭제 완료", "계정이 삭제되었습니다.");
               },
               onError: (error) => {
-                console.error('계정 삭제 에러:', error);
-                const message = getSafeErrorMessage(error, '계정 삭제에 실패했습니다. 다시 시도해주세요.');
-                Alert.alert('오류', message);
+                console.error("계정 삭제 에러:", error);
+                const message = getSafeErrorMessage(
+                  error,
+                  "계정 삭제에 실패했습니다. 다시 시도해주세요."
+                );
+                Alert.alert("오류", message);
               },
             });
           },
@@ -112,71 +166,73 @@ export default function ProfileScreen() {
 
   const handleMenuPress = async (action: string) => {
     switch (action) {
-      case 'bookmark':
-        navigation.navigate('Bookmark' as never);
+      case "bookmark":
+        navigation.navigate("Bookmark" as never);
         break;
-      case 'comments':
+      case "comments":
         // TODO: 댓글 화면 구현
-        console.log('댓글 보기');
+        console.log("댓글 보기");
         break;
-      case 'contact':
+      case "contact":
         try {
-          const url = 'https://에리카밥.com/about/contact';
+          const url = "https://에리카밥.com/about/contact";
           const canOpen = await Linking.canOpenURL(url);
           if (canOpen) {
             await Linking.openURL(url);
           } else {
-            console.error('Cannot open URL:', url);
+            console.error("Cannot open URL:", url);
           }
         } catch (error) {
-          console.error('Failed to open contact link:', error);
+          console.error("Failed to open contact link:", error);
         }
         break;
-      case 'terms':
+      case "terms":
         try {
-          const url = 'https://에리카밥.com/about/services';
+          const url = "https://에리카밥.com/about/services";
           const canOpen = await Linking.canOpenURL(url);
           if (canOpen) {
             await Linking.openURL(url);
           } else {
-            console.error('Cannot open URL:', url);
+            console.error("Cannot open URL:", url);
           }
         } catch (error) {
-          console.error('Failed to open terms link:', error);
+          console.error("Failed to open terms link:", error);
         }
         break;
-      case 'privacy':
+      case "privacy":
         try {
-          const url = 'https://에리카밥.com/about/privacy';
+          const url = "https://에리카밥.com/about/privacy";
           const canOpen = await Linking.canOpenURL(url);
           if (canOpen) {
             await Linking.openURL(url);
           } else {
-            console.error('Cannot open URL:', url);
+            console.error("Cannot open URL:", url);
           }
         } catch (error) {
-          console.error('Failed to open privacy link:', error);
+          console.error("Failed to open privacy link:", error);
         }
         break;
-      case 'about':
+      case "about":
         try {
-          const url = 'https://에리카밥.com/about/developer';
+          const url = "https://에리카밥.com/about/developer";
           const canOpen = await Linking.canOpenURL(url);
           if (canOpen) {
             await Linking.openURL(url);
           } else {
-            console.error('Cannot open URL:', url);
+            console.error("Cannot open URL:", url);
           }
         } catch (error) {
-          console.error('Failed to open about link:', error);
+          console.error("Failed to open about link:", error);
         }
         break;
     }
   };
   return (
     <View className="flex-1">
-      <ScrollView className="flex-1 p-4"
-      contentContainerStyle={{ paddingBottom: 50 }}>
+      <ScrollView
+        className="flex-1 p-4"
+        contentContainerStyle={{ paddingBottom: 50 }}
+      >
         <View className="items-center pt-10 pb-4">
           <Text className="text-xl font-bold">오늘도 한 끼 행복하게</Text>
           <Text className="text-xl font-bold">
@@ -184,7 +240,6 @@ export default function ProfileScreen() {
             <Text>가 함께 합니다!</Text>
           </Text>
         </View>
-
 
         <View className="px-4 gap-2">
           <View className="bg-gray-200 h-px" />
@@ -196,7 +251,12 @@ export default function ProfileScreen() {
           ) : isAuthenticated && getProfileInfo().length > 0 ? (
             <>
               {getProfileInfo().map((item, index) => (
-                <View key={item.label} className={index === 0 && getProfileInfo().length === 1 ? 'py-4' : ''}>
+                <View
+                  key={item.label}
+                  className={
+                    index === 0 && getProfileInfo().length === 1 ? "py-4" : ""
+                  }
+                >
                   <View className="p-1">
                     <View className="flex-row justify-between items-start">
                       <View className="flex-row flex-1 items-center">
@@ -217,7 +277,7 @@ export default function ProfileScreen() {
           ) : isAuthenticated ? (
             <View className="p-4">
               <Text className="text-gray-500 mb-2">정보가 없습니다.</Text>
-              <Pressable 
+              <Pressable
                 className="bg-blue-100 px-4 py-2 rounded-full self-start"
                 onPress={handleUpdateInfo}
               >
@@ -226,7 +286,9 @@ export default function ProfileScreen() {
             </View>
           ) : (
             <View className="p-4">
-              <Text className="text-gray-500">로그인 후 정보를 확인할 수 있습니다.</Text>
+              <Text className="text-gray-500">
+                로그인 후 정보를 확인할 수 있습니다.
+              </Text>
             </View>
           )}
           <View className="bg-gray-200 h-px" />
@@ -251,30 +313,36 @@ export default function ProfileScreen() {
 
         <View className="flex-row justify-between p-2">
           <Text className="text-gray-400 text-sm">앱버전</Text>
-          <Text className="text-gray-400 text-sm">{require('../package.json').version}</Text>
+          <Text className="text-gray-400 text-sm">
+            {require("../package.json").version}
+          </Text>
         </View>
 
         {/* 로그인/로그아웃 버튼 */}
         <View className="mt-4">
           {isAuthenticated ? (
             <>
-            <Pressable
-              className="bg-blue-500 p-3 rounded-lg"
-              onPress={handleLogout}
-              disabled={isLoggingOut}
-            >
-              {isLoggingOut ? (
-                <ActivityIndicator size="small" color="#FFFFFF" />
-              ) : (
-                <Text className="text-white text-center font-medium">로그아웃</Text>
-              )}
-            </Pressable>
+              <Pressable
+                className="bg-blue-500 p-3 rounded-lg"
+                onPress={handleLogout}
+                disabled={isLoggingOut}
+              >
+                {isLoggingOut ? (
+                  <ActivityIndicator size="small" color="#FFFFFF" />
+                ) : (
+                  <Text className="text-white text-center font-medium">
+                    로그아웃
+                  </Text>
+                )}
+              </Pressable>
               <Pressable
                 className="mt-2 items-center"
                 onPress={handleDeleteAccount}
                 disabled={isDeletingAccount}
               >
-                <Text className={`text-xs ${isDeletingAccount ? 'text-gray-300' : 'text-gray-400'}`}>
+                <Text
+                  className={`text-xs ${isDeletingAccount ? "text-gray-300" : "text-gray-400"}`}
+                >
                   계정 삭제
                 </Text>
               </Pressable>
@@ -282,7 +350,7 @@ export default function ProfileScreen() {
           ) : (
             <Pressable
               className="bg-blue-500 p-3 rounded-lg"
-              onPress={() => (navigation.navigate as any)('Login', { onSuccess: refreshAuthState })}
+              onPress={() => (navigation.navigate as any)("Login")}
             >
               <Text className="text-white text-center font-medium">로그인</Text>
             </Pressable>

@@ -5,9 +5,9 @@ export default {
     version: "1.0.0",
     scheme: "com.efoo.app",
     extra: {
-      "eas": {
-        "projectId": "b0ac8133-210a-4ac9-8d22-eede5468405b"
-      }
+      eas: {
+        projectId: "b0ac8133-210a-4ac9-8d22-eede5468405b",
+      },
     },
     orientation: "portrait",
     icon: "./assets/app/ios-icon.png",
@@ -16,7 +16,7 @@ export default {
     splash: {
       image: "./assets/app/splash.png",
       resizeMode: "cover",
-      backgroundColor: "#2563EB"
+      backgroundColor: "#2563EB",
     },
     ios: {
       icon: "./assets/app/ios-icon.png",
@@ -29,28 +29,33 @@ export default {
       splash: {
         image: "./assets/app/splash-image.png",
         resizeMode: "cover",
-        backgroundColor: "#2563EB"
+        backgroundColor: "#2563EB",
       },
       infoPlist: {
         ITSAppUsesNonExemptEncryption: false,
-        NSLocationWhenInUseUsageDescription: "주변 맛집을 위치순으로 정렬하기 위해 위치 정보가 필요합니다.",
-        NSPhotoLibraryUsageDescription: "식당 사진을 추가하기 위해 갤러리 접근 권한이 필요합니다.",
-        NSCameraUsageDescription: "식당 사진을 촬영하기 위해 카메라 접근 권한이 필요합니다.",
-        CFBundleDisplayName: "에푸"
+        NSLocationWhenInUseUsageDescription:
+          "주변 맛집을 위치순으로 정렬하기 위해 위치 정보가 필요합니다.",
+        NSPhotoLibraryUsageDescription:
+          "식당 사진을 추가하기 위해 갤러리 접근 권한이 필요합니다.",
+        NSCameraUsageDescription:
+          "식당 사진을 촬영하기 위해 카메라 접근 권한이 필요합니다.",
+        CFBundleDisplayName: "에푸",
       },
       config: {
-        googleMapsApiKey: process.env.GOOGLE_MAPS_API_KEY || process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY
-      }
+        googleMapsApiKey:
+          process.env.GOOGLE_MAPS_API_KEY ||
+          process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY,
+      },
     },
     android: {
       splash: {
         image: "./assets/app/splash.png",
         resizeMode: "contain",
-        backgroundColor: "#2563EB"
+        backgroundColor: "#2563EB",
       },
       adaptiveIcon: {
         foregroundImage: "./assets/app/android-icon.png",
-        backgroundColor: "#FFFFFF"
+        backgroundColor: "#FFFFFF",
       },
       softwareKeyboardLayoutMode: "pan",
       label: "에푸",
@@ -64,17 +69,19 @@ export default {
         "READ_MEDIA_IMAGES",
         "WRITE_EXTERNAL_STORAGE",
         "ACCESS_FINE_LOCATION",
-        "ACCESS_COARSE_LOCATION"
+        "ACCESS_COARSE_LOCATION",
       ],
       config: {
         googleMaps: {
-          apiKey: process.env.GOOGLE_MAPS_API_KEY || process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY
-        }
+          apiKey:
+            process.env.GOOGLE_MAPS_API_KEY ||
+            process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY,
+        },
       },
-      package: "com.efoo.app"
+      package: "com.efoo.app",
     },
     web: {
-      favicon: "./assets/app/ios-icon.png"
+      favicon: "./assets/app/ios-icon.png",
     },
     plugins: [
       "expo-router",
@@ -84,29 +91,34 @@ export default {
         {
           image: "./assets/app/splash.png",
           resizeMode: "cover",
-          backgroundColor: "#2563EB"
-        }
+          backgroundColor: "#2563EB",
+        },
       ],
       [
         "react-native-maps",
         {
-          googleMapsApiKey: process.env.GOOGLE_MAPS_API_KEY || process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY
-        }
+          googleMapsApiKey:
+            process.env.GOOGLE_MAPS_API_KEY ||
+            process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY,
+        },
       ],
       "expo-apple-authentication",
       [
         "expo-location",
         {
-          locationWhenInUsePermission: "주변 맛집을 위치순으로 정렬하기 위해 위치 정보가 필요합니다."
-        }
+          locationWhenInUsePermission:
+            "주변 맛집을 위치순으로 정렬하기 위해 위치 정보가 필요합니다.",
+        },
       ],
       [
         "expo-image-picker",
         {
-          photosPermission: "식당 사진을 추가하기 위해 갤러리 접근 권한이 필요합니다.",
-          cameraPermission: "식당 사진을 촬영하기 위해 카메라 접근 권한이 필요합니다."
-        }
-      ]
-    ]
-  }
+          photosPermission:
+            "식당 사진을 추가하기 위해 갤러리 접근 권한이 필요합니다.",
+          cameraPermission:
+            "식당 사진을 촬영하기 위해 카메라 접근 권한이 필요합니다.",
+        },
+      ],
+    ],
+  },
 };

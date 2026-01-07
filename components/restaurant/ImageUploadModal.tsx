@@ -276,7 +276,6 @@ export default function ImageUploadModal({
 
   return (
     <BottomSheetModal
-      key={selectedImage ? 'with-image' : 'without-image'}
       index={visible ? 0 : -1}
       snapPoints={snapPoints}
       enablePanDownToClose={true}

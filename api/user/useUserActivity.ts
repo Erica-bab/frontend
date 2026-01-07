@@ -95,7 +95,7 @@ const useUserActivitiesData = (categories: string[], enabled: boolean = true) =>
         params: {
           category: 'all',
           page: 1,
-          limit: 100,
+          limit: 100, // 서버 제한 고려하여 100으로 복원
         },
       });
       return data;

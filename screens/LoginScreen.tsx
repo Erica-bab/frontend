@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { View, Text, Pressable, ActivityIndicator, Platform, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useNavigation, useRoute } from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import { useGoogleSignIn } from '@/services/googleAuth';
@@ -10,20 +10,16 @@ import { useAppleSignIn } from '@/services/appleAuth';
 export default function LoginScreen() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
-  const route = useRoute();
-  const { onSuccess } = route.params as { onSuccess?: () => void } || {};
 
   const snapPoints = useMemo(() => ['45%'], []);
 
   const handleAuthSuccess = (user?: any) => {
-    navigation.goBack();
-
-    // requires_setup이 true이면 AddInfo 화면으로 이동
+    // requires_setup이 true이면 AddInfo 화면으로 이동, 아니면 뒤로가기
     if (user && user.requires_setup === true) {
       navigation.navigate('AddInfo' as never);
+    } else {
+      navigation.goBack();
     }
-
-    onSuccess?.();
   };
 
   const { signIn: googleSignIn, isLoading: isGoogleLoading, isReady: isGoogleReady, isError: isGoogleError, error: googleError } = useGoogleSignIn(handleAuthSuccess);
@@ -56,6 +52,7 @@ export default function LoginScreen() {
       index={0}
       backdropComponent={({ style }) => (
         <Pressable
+          style={style}
           onPress={handleClose}
         />
       )}

@@ -1,7 +1,7 @@
 import * as AppleAuthentication from 'expo-apple-authentication';
 import { useEffect, useRef } from 'react';
 import { Platform } from 'react-native';
-import { useAppleLogin } from '@/api/auth/useAuth';
+import { useAppleLogin, notifyAuthStateChange } from '@/api/auth/useAuth';
 import { useQueryClient } from '@tanstack/react-query';
 
 export const useAppleSignIn = (onSuccess?: (user?: any) => void) => {

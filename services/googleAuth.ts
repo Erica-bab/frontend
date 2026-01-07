@@ -3,8 +3,7 @@ import * as WebBrowser from 'expo-web-browser';
 import { makeRedirectUri } from 'expo-auth-session';
 import { useEffect, useRef } from 'react';
 import { Platform } from 'react-native';
-import { useGoogleLogin } from '@/api/auth/useAuth';
-import { useQueryClient } from '@tanstack/react-query';
+import { useGoogleLogin, notifyAuthStateChange } from '@/api/auth/useAuth';
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -14,7 +13,6 @@ const GOOGLE_ANDROID_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_I
 
 export const useGoogleSignIn = (onSuccess?: (user?: any) => void) => {
   const { mutate: googleLogin, isPending, isError, error } = useGoogleLogin();
-  const queryClient = useQueryClient();
   const isProcessing = useRef(false);
 
   const redirectUri = makeRedirectUri({
@@ -32,21 +30,45 @@ export const useGoogleSignIn = (onSuccess?: (user?: any) => void) => {
   });
 
   useEffect(() => {
-    if (isProcessing.current) return;
-    if (!response) return;
+    if (!response) {
+      console.log('📭 No response yet');
+      return;
+    }
 
+    console.log('📨 Response received:', response.type);
+
+    // response가 새로운 객체일 때는 이전 처리 상태를 무시하고 새로 시작
     if (response.type === 'error') {
       console.error('OAuth error:', response.error);
+      isProcessing.current = false;
       return;
     }
 
     if (response.type === 'dismiss' || response.type === 'cancel') {
-      return;
+      console.log('🚫 User dismissed or cancelled');
+      // Android에서는 로그인 성공 후에도 dismiss가 올 수 있으므로
+      // params에 id_token이 있으면 success로 처리
+      const params = (response as any).params;
+      if (params?.id_token) {
+        console.log('✨ Dismiss but has id_token, treating as success');
+        // success 처리로 fallthrough
+      } else {
+        isProcessing.current = false;
+        return;
+      }
     }
 
     if (response.type === 'success') {
+      // 이미 처리 중인 동일한 response는 skip
+      if (isProcessing.current) {
+        console.log('⏭️ Already processing this response, skipping...');
+        return;
+      }
+
+      console.log('🔄 Starting to process success response');
       isProcessing.current = true;
       const { id_token } = response.params;
+      console.log('🎫 id_token extracted:', !!id_token);
 
       console.log('=== Google OAuth Debug ===');
       console.log('Platform:', Platform.OS);
@@ -78,6 +100,7 @@ export const useGoogleSignIn = (onSuccess?: (user?: any) => void) => {
           {
             onSuccess: (data) => {
               console.log('✅ Backend login success');
+              notifyAuthStateChange(); // 전역 auth state 업데이트
               onSuccess?.(data.user);
               isProcessing.current = false;
             },
@@ -102,11 +125,26 @@ export const useGoogleSignIn = (onSuccess?: (user?: any) => void) => {
         isProcessing.current = false;
       }
     }
-  }, [response]);
+  }, [response, googleLogin, onSuccess]);
 
   const signIn = async () => {
-    if (!request) return;
-    await promptAsync();
+    if (!request) {
+      console.log('❌ Request not ready yet');
+      return;
+    }
+    console.log('🚀 Calling promptAsync...');
+
+    try {
+      const result = await Promise.race([
+        promptAsync(),
+        new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('promptAsync timeout after 30s')), 30000)
+        )
+      ]);
+      console.log('📬 promptAsync result:', JSON.stringify(result, null, 2));
+    } catch (error) {
+      console.error('❌ promptAsync error:', error);
+    }
   };
 
   return {
