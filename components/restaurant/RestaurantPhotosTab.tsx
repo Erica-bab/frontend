@@ -45,37 +45,32 @@ export default function RestaurantPhotosTab({ restaurant, onShowLogin, onAddPhot
 
   // 이미지 삭제 핸들러
   const handleDeleteImage = (imageId: number) => {
-    // Alert.alert 대신 setTimeout으로 다음 프레임에 실행 (메모리 안정화)
-    setTimeout(() => {
-      Alert.alert(
-        '사진 삭제',
-        '이 사진을 삭제하시겠습니까?',
-        [
-          {
-            text: '취소',
-            style: 'cancel',
+    Alert.alert(
+      '사진 삭제',
+      '이 사진을 삭제하시겠습니까?',
+      [
+        {
+          text: '취소',
+          style: 'cancel',
+        },
+        {
+          text: '삭제',
+          style: 'destructive',
+          onPress: () => {
+            deleteImage(imageId, {
+              onSuccess: () => {
+                // 캐시 무효화는 useDeleteRestaurantImage의 onSuccess에서 자동 처리
+              },
+              onError: (error: any) => {
+                const message = getSafeErrorMessage(error, '사진 삭제에 실패했습니다.');
+                Alert.alert('오류', message);
+              },
+            });
           },
-          {
-            text: '삭제',
-            style: 'destructive',
-            onPress: () => {
-              deleteImage(imageId, {
-                onSuccess: () => {
-                  // 캐시 무효화는 useDeleteRestaurantImage의 onSuccess에서 자동 처리
-                },
-                onError: (error: any) => {
-                  const message = getSafeErrorMessage(error, '사진 삭제에 실패했습니다.');
-                  // 에러 Alert도 setTimeout으로 지연
-                  setTimeout(() => {
-                    Alert.alert('오류', message);
-                  }, 100);
-                },
-              });
-            },
-          },
-        ]
-      );
-    }, 100);
+        },
+      ],
+      { cancelable: true }
+    );
   };
 
   const images = imagesData?.images || [];
@@ -173,7 +168,10 @@ export default function RestaurantPhotosTab({ restaurant, onShowLogin, onAddPhot
               }}
               className="relative rounded-lg overflow-hidden bg-gray-200"
             >
-            <Pressable onPress={() => setSelectedImage(item.url!)}>
+            <Pressable
+              onPress={() => setSelectedImage(item.url!)}
+              disabled={isDeleting}
+            >
               <LazyImage
                 source={{ uri: item.url! }}
                 style={{ width: '100%', height: '100%' }}
@@ -184,10 +182,16 @@ export default function RestaurantPhotosTab({ restaurant, onShowLogin, onAddPhot
             {/* 본인이 업로드한 이미지에만 삭제 버튼 표시 */}
             {item.isMyUpload && (
               <Pressable
-                onPress={() => handleDeleteImage(item.id)}
+                onPress={(e) => {
+                  e.stopPropagation();
+                  handleDeleteImage(item.id);
+                }}
                 disabled={isDeleting}
                 className="absolute top-2 right-2 w-9 h-9 bg-black/60 rounded-full items-center justify-center"
-                style={{ opacity: isDeleting ? 0.5 : 1 }}
+                style={{
+                  opacity: isDeleting ? 0.5 : 1,
+                  zIndex: 10,
+                }}
                 hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
               >
                 <Text className="text-white text-lg font-bold">×</Text>

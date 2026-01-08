@@ -20,9 +20,16 @@ export default function CommentDetailScreen() {
   const { commentId, restaurantId } = route.params as { commentId?: number; restaurantId?: number };
   const [replyText, setReplyText] = useState('');
 
-  const { isAuthenticated, isLoading: isAuthLoading, refreshAuthState } = useAuth();
-  
-  // 댓글 목록 조회
+  const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
+
+  // 댓글 목록 조회 - restaurantId가 없으면 0 사용하되 로그 출력
+  if (!restaurantId) {
+    console.error('❌ CommentsDetailScreen: restaurantId가 없습니다', { commentId, restaurantId });
+  }
+  if (!commentId) {
+    console.error('❌ CommentsDetailScreen: commentId가 없습니다', { commentId, restaurantId });
+  }
+
   const { data: commentsData, isLoading: isCommentsLoading, refetch: refetchComments } = useComments(restaurantId || 0);
   
   // Pull-to-refresh 상태
@@ -37,17 +44,33 @@ export default function CommentDetailScreen() {
   
   // 원댓글과 대댓글 찾기
   const comment = commentsData?.comments.find(c => c.id === commentId);
+
+  // 댓글을 찾지 못한 경우 로그
+  if (!comment && commentsData) {
+    console.error('❌ 댓글을 찾을 수 없음', {
+      commentId,
+      availableCommentIds: commentsData.comments.map(c => c.id)
+    });
+  }
+
   // 백엔드는 원댓글의 replies 배열에 대댓글을 포함시켜 반환함
   // 대댓글을 오래된 순(오름차순)으로 정렬
   const replies = (comment?.replies || [])
     .filter(reply => reply && reply.user)
-    .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+    .sort((a, b) => {
+      try {
+        return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+      } catch (error) {
+        console.error('날짜 정렬 오류:', error);
+        return 0;
+      }
+    });
 
   const { mutate: createComment, isPending: isCreatingReply } = useCreateComment(restaurantId || 0);
   const { mutate: deleteComment } = useDeleteComment(restaurantId || 0);
 
   const handleShowLogin = () => {
-    (navigation.navigate as any)('Login', { onSuccess: refreshAuthState });
+    (navigation.navigate as any)('Login');
   };
 
   const handleSubmitReply = () => {
@@ -129,8 +152,8 @@ export default function CommentDetailScreen() {
     <SafeAreaView className="flex-1 bg-white" edges={['top', 'bottom']}>
       <KeyboardAvoidingView
         className="flex-1"
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 10 : 0}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        keyboardVerticalOffset={0}
       >
         {/* 헤더 */}
         <View className="flex-row items-center p-4 border-b border-gray-200">
@@ -141,8 +164,9 @@ export default function CommentDetailScreen() {
           <View style={{ width: 24 }} />
         </View>
 
-        <ScrollView 
+        <ScrollView
           className="flex-1"
+          contentContainerStyle={{ paddingBottom: 100 }}
           refreshControl={
             <RefreshControl
               refreshing={refreshing}
@@ -157,13 +181,16 @@ export default function CommentDetailScreen() {
           ) : !comment ? (
             <View className="p-8 items-center">
               <Text className="text-gray-500">댓글을 찾을 수 없습니다.</Text>
+              <Text className="text-xs text-gray-400 mt-2">
+                댓글 ID: {commentId}
+              </Text>
             </View>
           ) : (
             <>
               {/* 원본 댓글 */}
-              {comment && comment.user && comment.id && (
-                <CommentItem 
-                  comment={comment} 
+              {comment && comment.user && comment.id ? (
+                <CommentItem
+                  comment={comment}
                   restaurantId={restaurantId || 0}
                   onDelete={handleDeleteComment}
                   onUpdateSuccess={() => {
@@ -176,43 +203,48 @@ export default function CommentDetailScreen() {
                   onLikeToggle={refetchLikedComments}
                   onShowLogin={handleShowLogin}
                 />
+              ) : (
+                <View className="p-8 items-center">
+                  <Text className="text-gray-500">댓글 데이터가 올바르지 않습니다.</Text>
+                </View>
               )}
 
               {/* 답글 목록 */}
-              {replies
-                .filter(reply => reply && reply.id && reply.user && reply.content)
-                .map((reply) => (
-                  <ReplyItem 
-                    key={reply.id} 
-                    comment={reply} 
-                    restaurantId={restaurantId || 0}
-                    onDelete={handleDeleteComment}
-                    onUpdateSuccess={() => {
-                      refetchComments();
-                      refetchMyComments();
-                      refetchMyReplies();
-                    }}
-                    likedCommentIds={likedCommentIds}
-                    myCommentIds={myCommentIds}
-                    onLikeToggle={refetchLikedComments}
-                    onShowLogin={handleShowLogin}
-                  />
-                ))}
+              {replies.length > 0 &&
+                replies
+                  .filter(reply => reply && reply.id && reply.user && reply.content)
+                  .map((reply) => {
+                    try {
+                      return (
+                        <ReplyItem
+                          key={reply.id}
+                          comment={reply}
+                          restaurantId={restaurantId || 0}
+                          onDelete={handleDeleteComment}
+                          onUpdateSuccess={() => {
+                            refetchComments();
+                            refetchMyComments();
+                            refetchMyReplies();
+                          }}
+                          likedCommentIds={likedCommentIds}
+                          myCommentIds={myCommentIds}
+                          onLikeToggle={refetchLikedComments}
+                          onShowLogin={handleShowLogin}
+                        />
+                      );
+                    } catch (error) {
+                      console.error('답글 렌더링 오류:', error, reply);
+                      return null;
+                    }
+                  })}
             </>
           )}
         </ScrollView>
 
-        {/* 답글 입력 */}
+        {/* 답글 입력 - 키보드 위에 자동 위치 */}
         <CommentInput
           commentText={replyText}
-          onChangeText={(text) => {
-            // 인증 상태 로딩 중이면 팝업 표시하지 않음
-            if (!isAuthLoading && !isAuthenticated && text.length > 0) {
-              handleShowLogin();
-              return;
-            }
-            setReplyText(text);
-          }}
+          onChangeText={setReplyText}
           onSubmit={handleSubmitReply}
           isLoading={isCreatingReply}
           placeholder="답글을 입력하세요"

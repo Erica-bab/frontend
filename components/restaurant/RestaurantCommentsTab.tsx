@@ -29,11 +29,11 @@ interface RestaurantCommentsTabProps {
 
 export default function RestaurantCommentsTab({ restaurant, onShowLogin }: RestaurantCommentsTabProps) {
   const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
-  // 댓글 탭에서 45초마다 자동 새로고침 (30초-1분 사이)
+  // 댓글 탭에서는 자동 새로고침 비활성화 (pull-to-refresh 사용)
   const { data: commentsData, isLoading: isCommentsLoading, refetch: refetchComments } = useComments(
     restaurant.id,
     undefined,
-    { refetchInterval: 45 * 1000 } // 45초마다 새로고침
+    { refetchInterval: false } // 자동 새로고침 비활성화로 메모리 누수 방지
   );
   const { mutate: createOrUpdateRating, isPending: isRatingLoading } = useCreateOrUpdateRating(restaurant.id);
   const { refetch: refetchLikedComments } = useLikedComments(1, 100, isAuthenticated === true);
@@ -162,6 +162,10 @@ export default function RestaurantCommentsTab({ restaurant, onShowLogin }: Resta
           colors={['#3B82F6']}
         />
       }
+      // Android 스크롤 터치 최적화 - 빠른 응답
+      keyboardShouldPersistTaps="handled"
+      nestedScrollEnabled={false}
+      scrollEnabled={true}
     >
       {/* 별점 섹션 */}
       <View className="p-4 border-b border-gray-200 items-center">
@@ -177,45 +181,56 @@ export default function RestaurantCommentsTab({ restaurant, onShowLogin }: Resta
 
       {/* 댓글 정렬 옵션 */}
       {!isCommentsLoading && sortedComments.length > 0 && (
-        <View className="px-4 py-2 border-b border-gray-200 flex-row justify-end">
-          <View className="relative">
-            <Pressable
-              className="flex-row gap-1 items-center px-3 py-1"
-              onPress={() => setIsSortOpen(!isSortOpen)}
-            >
-              <Text className="text-sm text-gray-600">
-                {COMMENT_SORT_OPTIONS.find(opt => opt.value === sortOption)?.label || '정렬'}
-              </Text>
-              <Icon name="dropdown" width={10} height={13} />
-            </Pressable>
-            {isSortOpen && (
-              <View
-                className="absolute top-full right-0 mt-1 bg-white rounded-lg overflow-hidden"
-                style={{
-                  borderWidth: 1,
-                  borderColor: 'rgba(226, 232, 240, 1)',
-                  zIndex: 1000,
-                  minWidth: 100,
-                }}
+        <>
+          <View className="px-4 py-2 border-b border-gray-200 flex-row justify-end">
+            <View className="relative">
+              <Pressable
+                className="flex-row gap-1 items-center px-3 py-1"
+                onPress={() => setIsSortOpen(!isSortOpen)}
               >
-                {COMMENT_SORT_OPTIONS.map((option) => (
-                  <Pressable
-                    key={option.value}
-                    onPress={() => {
-                      setSortOption(option.value);
-                      setIsSortOpen(false);
-                    }}
-                    className="px-4 py-3 border-b border-gray-100"
-                  >
-                    <Text className={`text-sm ${sortOption === option.value ? 'font-bold text-blue-600' : 'text-black'}`}>
-                      {option.label}
-                    </Text>
-                  </Pressable>
-                ))}
-              </View>
-            )}
+                <Text className="text-sm text-gray-600">
+                  {COMMENT_SORT_OPTIONS.find(opt => opt.value === sortOption)?.label || '정렬'}
+                </Text>
+                <Icon name="dropdown" width={10} height={13} />
+              </Pressable>
+              {isSortOpen && (
+                <View
+                  className="absolute top-full right-0 mt-1 bg-white rounded-lg overflow-hidden"
+                  style={{
+                    borderWidth: 1,
+                    borderColor: 'rgba(226, 232, 240, 1)',
+                    zIndex: 1000,
+                    minWidth: 100,
+                  }}
+                >
+                  {COMMENT_SORT_OPTIONS.map((option) => (
+                    <Pressable
+                      key={option.value}
+                      onPress={() => {
+                        setSortOption(option.value);
+                        setIsSortOpen(false);
+                      }}
+                      className="px-4 py-3 border-b border-gray-100"
+                    >
+                      <Text className={`text-sm ${sortOption === option.value ? 'font-bold text-blue-600' : 'text-black'}`}>
+                        {option.label}
+                      </Text>
+                    </Pressable>
+                  ))}
+                </View>
+              )}
+            </View>
           </View>
-        </View>
+
+          {/* 드롭다운 열릴 때 배경 클릭으로 닫기 */}
+          {isSortOpen && (
+            <Pressable
+              className="absolute inset-0 z-[999]"
+              onPress={() => setIsSortOpen(false)}
+              style={{ backgroundColor: 'transparent' }}
+            />
+          )}
+        </>
       )}
 
       {/* 댓글 목록 */}

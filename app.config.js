@@ -57,7 +57,7 @@ export default {
         foregroundImage: "./assets/app/android-icon.png",
         backgroundColor: "#FFFFFF",
       },
-      softwareKeyboardLayoutMode: "pan",
+      softInputMode: "adjustPan",
       label: "에푸",
       versionCode: 7,
       edgeToEdgeEnabled: true,

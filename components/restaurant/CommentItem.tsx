@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { View, Text, Pressable } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -21,10 +22,10 @@ interface CommentItemProps {
   onReplyPress?: () => void;
 }
 
-export default function CommentItem({ 
-  comment, 
-  restaurantId, 
-  likedCommentIds, 
+function CommentItem({
+  comment,
+  restaurantId,
+  likedCommentIds,
   myCommentIds,
   onLikeToggle,
   onShowLogin,
@@ -161,4 +162,17 @@ export default function CommentItem({
     </>
   );
 }
+
+// 메모이제이션으로 불필요한 리렌더링 방지
+export default memo(CommentItem, (prevProps, nextProps) => {
+  // comment 내용이 같고, 좋아요/내댓글 상태가 같으면 리렌더링 스킵
+  return (
+    prevProps.comment.id === nextProps.comment.id &&
+    prevProps.comment.content === nextProps.comment.content &&
+    prevProps.comment.like_count === nextProps.comment.like_count &&
+    prevProps.likedCommentIds === nextProps.likedCommentIds &&
+    prevProps.myCommentIds === nextProps.myCommentIds &&
+    prevProps.restaurantId === nextProps.restaurantId
+  );
+});
 

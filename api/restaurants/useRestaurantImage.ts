@@ -121,8 +121,10 @@ export const useUploadRestaurantImage = (restaurantId: number) => {
       const data: ImageUploadResponse = await response.json();
       return data;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['restaurant', restaurantId, 'images'] });
+    onSuccess: async () => {
+      // 이미지 목록 즉시 새로고침 (업로드 직후 삭제 버튼 표시 위해)
+      await queryClient.refetchQueries({ queryKey: ['restaurant', restaurantId, 'images'] });
+      // 나머지 데이터 무효화
       queryClient.invalidateQueries({ queryKey: ['restaurant', restaurantId] });
       queryClient.invalidateQueries({ queryKey: ['restaurants'] });
     },
@@ -140,9 +142,11 @@ export const useDeleteRestaurantImage = (restaurantId: number) => {
       );
       return data;
     },
-    onSuccess: () => {
-      // 이미지 목록만 무효화 (전체 리스트 리로드 방지로 크래시 방지)
-      queryClient.invalidateQueries({ queryKey: ['restaurant', restaurantId, 'images'] });
+    onSuccess: async () => {
+      // 이미지 목록 즉시 새로고침 (삭제 직후 UI 즉시 업데이트)
+      await queryClient.refetchQueries({ queryKey: ['restaurant', restaurantId, 'images'] });
+      // 나머지 데이터 무효화
+      queryClient.invalidateQueries({ queryKey: ['restaurant', restaurantId] });
     },
   });
 };

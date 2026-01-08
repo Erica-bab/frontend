@@ -308,7 +308,8 @@ export default function RestaurantScreen() {
                 }
             }
         } catch (error) {
-            console.error('Failed to get location:', error);
+            // 위치 권한이 없거나 위치를 가져올 수 없는 경우 조용히 처리
+            // console.log('Location not available:', error);
         } finally {
             if (showRefreshIndicator) {
                 setRefreshing(false);

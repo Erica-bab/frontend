@@ -91,13 +91,20 @@ export default function RestaurantDetailScreen() {
     }
   }, [restaurantId]);
 
-  // 댓글 텍스트 변경 시 임시 저장
+  // 댓글 텍스트 변경 시 임시 저장 (디바운싱 적용)
   useEffect(() => {
-    if (restaurantId && commentText) {
-      AsyncStorage.setItem(COMMENT_DRAFT_KEY, commentText).catch(error => {
-        console.error('Failed to save comment draft:', error);
-      });
-    }
+    if (!restaurantId) return;
+
+    // 타이핑 멈춘 후 500ms 뒤에 저장
+    const timeoutId = setTimeout(() => {
+      if (commentText) {
+        AsyncStorage.setItem(COMMENT_DRAFT_KEY, commentText).catch(error => {
+          console.error('Failed to save comment draft:', error);
+        });
+      }
+    }, 500);
+
+    return () => clearTimeout(timeoutId);
   }, [commentText, restaurantId]);
 
   // 현재 위치 가져오기
@@ -113,7 +120,9 @@ export default function RestaurantDetailScreen() {
           });
         }
       } catch (error) {
-        console.error('Failed to get location:', error);
+        // 위치 권한이 없거나 위치를 가져올 수 없는 경우 조용히 처리
+        // console.error로 로그를 남기면 계속 로그가 쌓이므로 필요시에만 활성화
+        // console.log('Location not available:', error);
       }
     })();
   }, []);
@@ -136,7 +145,7 @@ export default function RestaurantDetailScreen() {
 
     // 로그인 안되어 있으면 로그인 화면으로
     if (!isAuthLoading && !isAuthenticated) {
-      (navigation.navigate as any)('Login', { onSuccess: refreshAuthState });
+      (navigation.navigate as any)('Login');
       return;
     }
 
@@ -148,7 +157,7 @@ export default function RestaurantDetailScreen() {
         },
         onError: (err) => {
           if ((err as AxiosError)?.response?.status === 403) {
-            (navigation.navigate as any)('Login', { onSuccess: refreshAuthState });
+            (navigation.navigate as any)('Login');
           }
           console.error('Failed to toggle bookmark:', err);
         },
@@ -177,7 +186,7 @@ export default function RestaurantDetailScreen() {
   // 수정 핸들러
   const handleEditPress = () => {
     if (!isAuthenticated) {
-      (navigation.navigate as any)('Login', { onSuccess: refreshAuthState });
+      (navigation.navigate as any)('Login');
       return;
     }
     navigation.navigate('RestaurantEdit', { restaurantId: Number(restaurantId) });
@@ -204,11 +213,7 @@ export default function RestaurantDetailScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-white" edges={['top', 'bottom']}>
-      <KeyboardAvoidingView
-        className="flex-1"
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        keyboardVerticalOffset={0}
-      >
+      <View className="flex-1">
         {/* 뒤로가기 버튼 - 화면 고정 */}
         <Pressable
           className='absolute top-0 p-2 m-2 z-10 bg-white rounded-full'
@@ -225,10 +230,15 @@ export default function RestaurantDetailScreen() {
         </Pressable>
 
         {/* 전체 ScrollView로 감싸기 */}
-        <ScrollView 
+        <ScrollView
           className="flex-1"
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
+          // Android 터치 최적화 - 입력창 클릭 즉시 반응
+          removeClippedSubviews={false}
+          scrollEventThrottle={16}
+          // 댓글 탭일 때 하단 패딩 추가 (입력창 공간 확보)
+          contentContainerStyle={selectedTab === 'comments' ? { paddingBottom: 120 } : undefined}
         >
           {/* 공통 헤더 부분 */}
           <View>
@@ -330,92 +340,155 @@ export default function RestaurantDetailScreen() {
           </View>
 
           {/* 탭 콘텐츠 */}
-          <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+          {selectedTab === 'comments' ? (
+            // 댓글 탭: TouchableWithoutFeedback 없이 렌더링 (키보드 포커스 방해 방지)
             <View>
-              {selectedTab === 'home' && (
-                <Animated.View key="home" entering={FadeIn.duration(200)} exiting={FadeOut.duration(150)}>
-                  {(() => {
-                    // 클라이언트에서 거리 계산
-                    const distance = userLocation && restaurant.location.latitude && restaurant.location.longitude
-                      ? calculateDistance(
-                          userLocation.lat,
-                          userLocation.lng,
-                          restaurant.location.latitude,
-                          restaurant.location.longitude
-                        )
-                      : null;
-
-                    return <RestaurantHomeTab restaurant={restaurant} distance={distance} />;
-                  })()}
-                </Animated.View>
-              )}
-              {selectedTab === 'menu' && (
-                <Animated.View key="menu" entering={FadeIn.duration(200)} exiting={FadeOut.duration(150)}>
-                  <RestaurantMenuTab restaurant={restaurant} />
-                </Animated.View>
-              )}
-              {selectedTab === 'comments' && (
-                <Animated.View key="comments" entering={FadeIn.duration(200)} exiting={FadeOut.duration(150)}>
-                  <RestaurantCommentsTab
-                    restaurant={restaurant}
-                    onShowLogin={() => (navigation.navigate as any)('Login', { onSuccess: refreshAuthState })}
-                  />
-                </Animated.View>
-              )}
-              {selectedTab === 'photos' && (
-                <Animated.View key="photos" entering={FadeIn.duration(200)} exiting={FadeOut.duration(150)}>
-                  <RestaurantPhotosTab
-                    restaurant={restaurant}
-                    onShowLogin={() => (navigation.navigate as any)('Login', { onSuccess: refreshAuthState })}
-                    onAddPhotoPress={() => setShowImageUploadModal(true)}
-                  />
-                </Animated.View>
-              )}
+              <Animated.View key="comments" entering={FadeIn.duration(200)} exiting={FadeOut.duration(150)}>
+                <RestaurantCommentsTab
+                  restaurant={restaurant}
+                  onShowLogin={() => (navigation.navigate as any)('Login')}
+                />
+              </Animated.View>
             </View>
-          </TouchableWithoutFeedback>
+          ) : (
+            // 다른 탭들: TouchableWithoutFeedback으로 키보드 닫기
+            <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+              <View>
+                {selectedTab === 'home' && (
+                  <Animated.View key="home" entering={FadeIn.duration(200)} exiting={FadeOut.duration(150)}>
+                    {(() => {
+                      // 클라이언트에서 거리 계산
+                      const distance = userLocation && restaurant.location.latitude && restaurant.location.longitude
+                        ? calculateDistance(
+                            userLocation.lat,
+                            userLocation.lng,
+                            restaurant.location.latitude,
+                            restaurant.location.longitude
+                          )
+                        : null;
+
+                      return <RestaurantHomeTab restaurant={restaurant} distance={distance} />;
+                    })()}
+                  </Animated.View>
+                )}
+                {selectedTab === 'menu' && (
+                  <Animated.View key="menu" entering={FadeIn.duration(200)} exiting={FadeOut.duration(150)}>
+                    <RestaurantMenuTab restaurant={restaurant} />
+                  </Animated.View>
+                )}
+                {selectedTab === 'photos' && (
+                  <Animated.View key="photos" entering={FadeIn.duration(200)} exiting={FadeOut.duration(150)}>
+                    <RestaurantPhotosTab
+                      restaurant={restaurant}
+                      onShowLogin={() => (navigation.navigate as any)('Login')}
+                      onAddPhotoPress={() => setShowImageUploadModal(true)}
+                    />
+                  </Animated.View>
+                )}
+              </View>
+            </TouchableWithoutFeedback>
+          )}
       </ScrollView>
 
-      {/* 댓글 입력창 - 하단 고정 */}
+      {/* 댓글 입력창 - 하단 고정 (Android는 OS가 자동 처리, iOS만 KeyboardAvoidingView 사용) */}
       {selectedTab === 'comments' && (
-        <CommentInput
-          commentText={commentText}
-          onChangeText={(text) => {
-            // 인증 상태 로딩 중이면 팝업 표시하지 않음
-            if (!isAuthLoading && !isAuthenticated && text.length > 0) {
-              (navigation.navigate as any)('Login', { onSuccess: refreshAuthState });
-              return;
-            }
-            setCommentText(text);
-          }}
-          onSubmit={() => {
-            // 인증 상태 로딩 중이면 팝업 표시하지 않음
-            if (!isAuthLoading && !isAuthenticated) {
-              (navigation.navigate as any)('Login', { onSuccess: refreshAuthState });
-              return;
-            }
-            if (!commentText.trim()) return;
-            createComment(
-              { content: commentText.trim() },
-              {
-                onSuccess: async () => {
-                  setCommentText('');
-                  // 임시 저장 삭제
-                  try {
-                    await AsyncStorage.removeItem(COMMENT_DRAFT_KEY);
-                  } catch (error) {
-                    console.error('Failed to remove comment draft:', error);
+        Platform.OS === 'ios' ? (
+          <KeyboardAvoidingView
+            behavior="padding"
+            keyboardVerticalOffset={80}
+          >
+            <CommentInput
+              commentText={commentText}
+              onChangeText={(text) => {
+                // 입력 시에는 로그인 체크 하지 않음 (키보드 포커스 방해 방지)
+                setCommentText(text);
+              }}
+              onSubmit={() => {
+                try {
+                  // 인증 상태 로딩 중이면 팝업 표시하지 않음
+                  if (!isAuthLoading && !isAuthenticated) {
+                    (navigation.navigate as any)('Login');
+                    return;
                   }
-                  // 댓글 작성 후 유저 액티비티 새로고침 (자기 댓글 강조 및 수정 버튼 표시용)
-                  if (isAuthenticated) {
-                    refetchMyComments();
-                    refetchMyReplies();
+                  if (!commentText.trim()) return;
+                  createComment(
+                    { content: commentText.trim() },
+                    {
+                      onSuccess: async () => {
+                        setCommentText('');
+                        // 임시 저장 삭제
+                        try {
+                          await AsyncStorage.removeItem(COMMENT_DRAFT_KEY);
+                        } catch (error) {
+                          console.error('Failed to remove comment draft:', error);
+                        }
+                        // 댓글 작성 후 유저 액티비티 새로고침 (자기 댓글 강조 및 수정 버튼 표시용)
+                        if (isAuthenticated) {
+                          refetchMyComments();
+                          refetchMyReplies();
+                        }
+                      },
+                      onError: (error: any) => {
+                        console.error('댓글 작성 오류:', error);
+                        Alert.alert('오류', '댓글 작성 중 오류가 발생했습니다.');
+                      },
+                    }
+                  );
+                } catch (error) {
+                  console.error('댓글 제출 오류:', error);
+                }
+              }}
+              isLoading={isCommentLoading}
+            />
+          </KeyboardAvoidingView>
+        ) : (
+          // Android: KeyboardAvoidingView 사용 안 함 (OS가 자동 처리)
+          <View>
+            <CommentInput
+              commentText={commentText}
+              onChangeText={(text) => {
+                // 입력 시에는 로그인 체크 하지 않음 (키보드 포커스 방해 방지)
+                setCommentText(text);
+              }}
+              onSubmit={() => {
+                try {
+                  // 인증 상태 로딩 중이면 팝업 표시하지 않음
+                  if (!isAuthLoading && !isAuthenticated) {
+                    (navigation.navigate as any)('Login');
+                    return;
                   }
-                },
-              }
-            );
-          }}
-          isLoading={isCommentLoading}
-        />
+                  if (!commentText.trim()) return;
+                  createComment(
+                    { content: commentText.trim() },
+                    {
+                      onSuccess: async () => {
+                        setCommentText('');
+                        // 임시 저장 삭제
+                        try {
+                          await AsyncStorage.removeItem(COMMENT_DRAFT_KEY);
+                        } catch (error) {
+                          console.error('Failed to remove comment draft:', error);
+                        }
+                        // 댓글 작성 후 유저 액티비티 새로고침 (자기 댓글 강조 및 수정 버튼 표시용)
+                        if (isAuthenticated) {
+                          refetchMyComments();
+                          refetchMyReplies();
+                        }
+                      },
+                      onError: (error: any) => {
+                        console.error('댓글 작성 오류:', error);
+                        Alert.alert('오류', '댓글 작성 중 오류가 발생했습니다.');
+                      },
+                    }
+                  );
+                } catch (error) {
+                  console.error('댓글 제출 오류:', error);
+                }
+              }}
+              isLoading={isCommentLoading}
+            />
+          </View>
+        )
       )}
 
       {/* 사진 추가 모달 - 최상위 레벨에서 렌더링 */}
@@ -429,11 +502,11 @@ export default function RestaurantDetailScreen() {
           }}
           onShowLogin={() => {
             setShowImageUploadModal(false);
-            (navigation.navigate as any)('Login', { onSuccess: refreshAuthState });
+            (navigation.navigate as any)('Login');
           }}
         />
       )}
-      </KeyboardAvoidingView>
+      </View>
     </SafeAreaView>
   );
 }

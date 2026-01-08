@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { View, Text, Pressable } from 'react-native';
 import { CommentItem as CommentItemType } from '@/api/restaurants/types';
 import Icon from '@/components/Icon';
@@ -17,10 +18,10 @@ interface ReplyItemProps {
   onUpdateSuccess?: () => void;
 }
 
-export default function ReplyItem({ 
-  comment, 
-  restaurantId, 
-  likedCommentIds, 
+function ReplyItem({
+  comment,
+  restaurantId,
+  likedCommentIds,
   myCommentIds,
   onLikeToggle,
   onShowLogin,
@@ -143,4 +144,16 @@ export default function ReplyItem({
     </>
   );
 }
+
+// 메모이제이션으로 불필요한 리렌더링 방지
+export default memo(ReplyItem, (prevProps, nextProps) => {
+  return (
+    prevProps.comment.id === nextProps.comment.id &&
+    prevProps.comment.content === nextProps.comment.content &&
+    prevProps.comment.like_count === nextProps.comment.like_count &&
+    prevProps.likedCommentIds === nextProps.likedCommentIds &&
+    prevProps.myCommentIds === nextProps.myCommentIds &&
+    prevProps.restaurantId === nextProps.restaurantId
+  );
+});
 
