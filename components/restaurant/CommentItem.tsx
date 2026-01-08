@@ -111,7 +111,7 @@ function CommentItem({
               </Text>
             </Pressable>
             <View className="relative">
-              <Pressable onPress={handleMenuPress}>
+              <Pressable onPress={handleMenuPress} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
                 <Icon name="meatball" size={16} color="#6B7280" />
               </Pressable>
               
@@ -133,7 +133,11 @@ function CommentItem({
         {showReplyButton && (
           <Pressable className="flex-row gap-1 items-center" onPress={handleReplyPress}>
             <Text className="text-blue-500">
-              {comment.replies && Array.isArray(comment.replies) && comment.replies.length > 0 ? `답글 ${comment.replies.length}개` : '답글쓰기'}
+              {(() => {
+                // ⚡ "보이기" 상태인 답글만 카운트
+                const visibleReplyCount = comment.replies?.filter((r) => r.status === "보이기").length || 0;
+                return visibleReplyCount > 0 ? `답글 ${visibleReplyCount}개` : '답글쓰기';
+              })()}
             </Text>
             <Icon name="rightAngle" size={8} color="black" />
           </Pressable>

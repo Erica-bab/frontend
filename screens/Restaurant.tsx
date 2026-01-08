@@ -39,12 +39,19 @@ import {
 import { getSafeErrorMessage } from "@/utils/errorHandler";
 import { formatCategory } from "@/utils/formatCategory";
 import { useRatingStats } from "@/api/restaurants/useRating";
+import { getOperatingStatus } from "@/utils/operatingStatus";
 
 const SORT_OPTIONS = ["위치순", "별점순", "가격순"];
 const STICKY_THRESHOLD = 30;
 
 // 검색 결과 아이템 컴포넌트
-function SearchResultCard({ item }: { item: SearchResultItem }) {
+function SearchResultCard({
+  item,
+  now,
+}: {
+  item: SearchResultItem;
+  now: Date;
+}) {
   const navigation = useNavigation<NativeStackNavigationProp<any>>();
 
   if (item.type === "restaurant" && item.restaurant) {
@@ -71,15 +78,11 @@ function SearchResultCard({ item }: { item: SearchResultItem }) {
     const currentRatingCount =
       ratingStats?.count ?? restaurant.rating_count ?? 0;
 
-    const statusLabels = {
-      open: "영업중",
-      break_time: "브레이크타임",
-      order_end: "주문마감",
-      closed: "영업종료",
-    };
-    const statusText = restaurant.operating_status
-      ? statusLabels[restaurant.operating_status.current.type]
+    // ⚡ 클라이언트 타이머 기반 영업 상태 계산
+    const operatingStatusResult = restaurant.business_hours
+      ? getOperatingStatus(restaurant.business_hours, now)
       : null;
+    const statusText = operatingStatusResult?.label || null;
 
     return (
       <Pressable
@@ -148,15 +151,11 @@ function SearchResultCard({ item }: { item: SearchResultItem }) {
     const currentRatingCount =
       ratingStats?.count ?? restaurant.rating_count ?? 0;
 
-    const statusLabels = {
-      open: "영업중",
-      break_time: "브레이크타임",
-      order_end: "주문마감",
-      closed: "영업종료",
-    };
-    const statusText = restaurant.operating_status
-      ? statusLabels[restaurant.operating_status.current.type]
+    // ⚡ 클라이언트 타이머 기반 영업 상태 계산
+    const operatingStatusResult = restaurant.business_hours
+      ? getOperatingStatus(restaurant.business_hours, now)
       : null;
+    const statusText = operatingStatusResult?.label || null;
 
     return (
       <Pressable
@@ -235,6 +234,18 @@ export default function RestaurantScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [isLocationRefreshing, setIsLocationRefreshing] = useState(false);
   const [showScrollToTop, setShowScrollToTop] = useState(false);
+
+  // ⚡ 전역 타이머: 1분마다 now 갱신 (모든 카드 자동 리렌더)
+  const [now, setNow] = useState(() => new Date());
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setNow(new Date());
+    }, 60 * 1000); // 1분
+
+    return () => clearInterval(timer);
+  }, []);
+
   const locationUpdateIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const lastGeocodedLocationRef = useRef<{
     latitude: number;
@@ -722,15 +733,21 @@ export default function RestaurantScreen() {
           thumbnailUrls={item.thumbnail_urls}
           comment={item.popular_comment?.content}
           distance={distance}
+          now={now}
         />
       );
     },
-    [userLocation]
+    [userLocation, now]
   );
 
-  const renderSearchItem = useCallback(({ item, index }: any) => {
-    return <SearchResultCard key={`${item.type}-${index}`} item={item} />;
-  }, []);
+  const renderSearchItem = useCallback(
+    ({ item, index }: any) => {
+      return (
+        <SearchResultCard key={`${item.type}-${index}`} item={item} now={now} />
+      );
+    },
+    [now]
+  );
 
   const renderListInfoRow = useCallback(() => {
     if (isSearchMode || sortedRestaurants.length === 0) return null;

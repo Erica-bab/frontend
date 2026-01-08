@@ -11,6 +11,7 @@ import { formatDistance } from '@/utils/formatDistance';
 import { formatCategory } from '@/utils/formatCategory';
 import { resolveImageUri, getRandomThumbnails } from '@/utils/image';
 import LazyImage from '@/components/ui/LazyImage';
+import { getOperatingStatus } from '@/utils/operatingStatus';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 const IMAGE_GAP = 8; // gap-2 = 8px
@@ -32,11 +33,15 @@ interface RestaurantCardProps {
   thumbnailUrls?: string[]; // 서버에서 받은 썸네일 URL (리스트 API에서 이미 포함)
   distance?: number | null;
   onStatusExpired?: () => void; // 상태가 만료되었을 때 호출되는 콜백
+  now?: Date; // ⚡ 실전용: 현재 시간
 }
 
-const RestaurantCard = memo(function RestaurantCard({ name, category, operatingStatus, businessHours, rating, comment, restaurantId, thumbnailUrls, distance, onStatusExpired }: RestaurantCardProps) {
+const RestaurantCard = memo(function RestaurantCard({ name, category, operatingStatus, businessHours, rating, comment, restaurantId, thumbnailUrls, distance, onStatusExpired, now }: RestaurantCardProps) {
   const navigation = useNavigation<NativeStackNavigationProp<any>>();
   const displayComment = comment || null;
+
+  // ⚡ 클라이언트 타이머 기반 영업 상태 계산
+  const clientOperatingStatus = now && businessHours ? getOperatingStatus(businessHours, now) : null;
   
   const formattedCategory = category ? formatCategory(category) : '';
   
@@ -128,10 +133,10 @@ const RestaurantCard = memo(function RestaurantCard({ name, category, operatingS
       
       {/* 상태 태그 영역 - 상태 태그는 홈 탭으로, 별점은 댓글 탭으로 이동 */}
       <View className="pb-2">
-        <RestaurantStatusTag 
-          operatingStatus={operatingStatus}
+        <RestaurantStatusTag
+          operatingStatus={clientOperatingStatus || operatingStatus}
           businessHours={businessHours}
-          rating={currentRating} 
+          rating={currentRating}
           onRatingPress={handleRatingPress}
           onStatusPress={handleStatusPress}
           onStatusExpired={onStatusExpired}

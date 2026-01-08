@@ -1,13 +1,115 @@
 /**
- * 식당 운영 상태 계산 유틸리티
- * 
- * 요청사항:
- * - 현재 상태(영업중/브레이크타임/주문마감/종료 등)와 다음 예정 상태를 함께 제공
- * - 브레이크타임, 라스트오더, 영업 종료, 다음날 오픈 등 모든 이벤트 고려
- * - 새벽까지 영업(마감 시간이 다음날 새벽)하는 경우도 처리
+ * ⚡ 실전용 식당 운영 상태 계산 (간단 버전)
+ *
+ * - 클라이언트 타이머 기반
+ * - 서버 부하 없음
+ * - "영업중 / 곧 종료 / 브레이크타임 / 종료" 계산
  */
 
-import { BusinessHours, BusinessHoursDay, RestaurantOperatingStatus } from '../api/restaurants/types';
+import { BusinessHours } from '../api/restaurants/types';
+
+export type OperatingStatusType =
+  | "open"
+  | "closing_soon"
+  | "break_time"
+  | "order_end"
+  | "closed";
+
+export interface OperatingStatusResult {
+  type: OperatingStatusType;
+  label: string;
+  minutesLeft?: number;
+}
+
+/**
+ * ⚡ 핵심: 식당 운영 상태 계산 (실전용)
+ *
+ * @param businessHours 운영시간 정보 (API 형식 그대로)
+ * @param now 현재 시간
+ * @returns 영업 상태
+ */
+export function getOperatingStatus(
+  businessHours: BusinessHours | null | undefined,
+  now: Date
+): OperatingStatusResult {
+  if (!businessHours) {
+    return { type: "closed", label: "영업정보 없음" };
+  }
+
+  // 현재 요일 계산 (일=0 → 일=6으로 변환)
+  const dayIndex = now.getDay(); // 0(일) ~ 6(토)
+  const DAY_MAP = ["일", "월", "화", "수", "목", "금", "토"];
+  const dayOfWeek = DAY_MAP[dayIndex];
+
+  const today = businessHours[dayOfWeek as keyof BusinessHours];
+  if (!today || today.is_closed) {
+    return { type: "closed", label: "영업종료" };
+  }
+
+  const currentMinutes = now.getHours() * 60 + now.getMinutes();
+
+  // 시간 파싱
+  const openTime = parseTime(today.open_time);
+  const closeTime = parseTime(today.close_time);
+  const breakStart = today.break_start ? parseTime(today.break_start) : null;
+  const breakEnd = today.break_end ? parseTime(today.break_end) : null;
+  const lastOrder = today.last_order ? parseTime(today.last_order) : null;
+
+  if (openTime == null || closeTime == null) {
+    return { type: "closed", label: "영업종료" };
+  }
+
+  // 영업 전
+  if (currentMinutes < openTime) {
+    return { type: "closed", label: "영업전" };
+  }
+
+  // 브레이크타임 확인
+  if (breakStart != null && breakEnd != null) {
+    if (currentMinutes >= breakStart && currentMinutes < breakEnd) {
+      return { type: "break_time", label: "브레이크타임" };
+    }
+  }
+
+  // 라스트오더 확인
+  if (lastOrder != null) {
+    if (currentMinutes >= lastOrder) {
+      return { type: "order_end", label: "주문마감" };
+    }
+  }
+
+  // 영업 종료
+  if (currentMinutes >= closeTime) {
+    return { type: "closed", label: "영업종료" };
+  }
+
+  // 영업중 - 곧 종료 확인 (10분 기준)
+  const minutesLeft = closeTime - currentMinutes;
+  if (minutesLeft <= 10) {
+    return {
+      type: "closing_soon",
+      label: `곧 종료 (${minutesLeft}분 남음)`,
+      minutesLeft,
+    };
+  }
+
+  return { type: "open", label: "영업중" };
+}
+
+/**
+ * HH:MM 형식을 분 단위로 변환
+ */
+function parseTime(time: string | null | undefined): number | null {
+  if (!time) return null;
+  const [hours, minutes] = time.split(':').map(Number);
+  if (isNaN(hours) || isNaN(minutes)) return null;
+  return hours * 60 + minutes;
+}
+
+/**
+ * ===== 기존 복잡한 로직 (필요시 유지) =====
+ */
+import { BusinessHoursDay, RestaurantOperatingStatus } from '../api/restaurants/types';
 
 const DAY_ORDER = ["월", "화", "수", "목", "금", "토", "일"];
 
@@ -22,19 +124,13 @@ const STATUS_AFTER_EVENT: Record<string, 'open' | 'break_time' | 'order_end' | '
 type EventType = 'open' | 'break_start' | 'break_end' | 'order_end' | 'closed';
 type Event = [Date, EventType];
 
-/**
- * 시간 문자열(HH:MM)을 Date 객체로 변환
- */
-function parseTime(timeStr: string | null | undefined): Date | null {
+function parseTimeOld(timeStr: string | null | undefined): Date | null {
   if (!timeStr) return null;
   const [hours, minutes] = timeStr.split(':').map(Number);
   if (isNaN(hours) || isNaN(minutes)) return null;
   return new Date(0, 0, 0, hours, minutes);
 }
 
-/**
- * 날짜와 시간을 합쳐서 Date 객체 생성 (KST 기준)
- */
 function combineDateTime(date: Date, time: Date | null): Date | null {
   if (!time) return null;
   const result = new Date(date);
@@ -42,9 +138,6 @@ function combineDateTime(date: Date, time: Date | null): Date | null {
   return result;
 }
 
-/**
- * 요일 문자열을 '월'~'일' 형식으로 통일
- */
 function normalizeDay(day: string | null | undefined): string | null {
   if (!day) return null;
   if (DAY_ORDER.includes(day)) return day;
@@ -55,9 +148,6 @@ function normalizeDay(day: string | null | undefined): string | null {
   return day;
 }
 
-/**
- * 운영시간 한 건을 이벤트(시작 시각, 이벤트 타입) 목록으로 변환
- */
 function buildEventsForEntry(
   entry: BusinessHoursDay,
   baseDate: Date,
@@ -67,22 +157,21 @@ function buildEventsForEntry(
   if (!entry.open_time || !entry.close_time) return [];
 
   const events: Event[] = [];
-  let lastDt = combineDateTime(baseDate, parseTime(entry.open_time));
+  let lastDt = combineDateTime(baseDate, parseTimeOld(entry.open_time));
   if (!lastDt) return [];
 
   events.push([lastDt, "open"]);
 
   function resolveDateTime(timeStr: string | null | undefined): Date | null {
     if (!timeStr) return null;
-    const time = parseTime(timeStr);
+    const time = parseTimeOld(timeStr);
     if (!time) return null;
-    
+
     let dt = combineDateTime(baseDate, time);
     if (!dt) return null;
 
-    // 새벽까지 영업 처리
     if (entry.closes_next_day && entry.open_time) {
-      const openTime = parseTime(entry.open_time);
+      const openTime = parseTimeOld(entry.open_time);
       if (openTime && time <= openTime) {
         dt = new Date(dt);
         dt.setDate(dt.getDate() + 1);
@@ -93,9 +182,8 @@ function buildEventsForEntry(
 
   function addEvent(timeStr: string | null | undefined, label: EventType): void {
     let dt = resolveDateTime(timeStr);
-    if (!dt) return;
+    if (!dt) return null;
 
-    // 이전 이벤트보다 이전이면 다음날로 이동
     while (dt <= lastDt!) {
       dt = new Date(dt);
       dt.setDate(dt.getDate() + 1);
@@ -107,7 +195,6 @@ function buildEventsForEntry(
   addEvent(entry.break_start, "break_start");
   addEvent(entry.break_end, "break_end");
 
-  // 라스트오더와 마감 시간이 같으면 라스트오더 이벤트를 추가하지 않음
   if (entry.last_order && entry.close_time) {
     if (entry.last_order !== entry.close_time) {
       addEvent(entry.last_order, "order_end");
@@ -128,21 +215,11 @@ function buildEventsForEntry(
   return events;
 }
 
-/**
- * 이벤트 타입으로부터 상태 반환
- */
 function statusFromEvent(eventType: EventType | null): 'open' | 'break_time' | 'order_end' | 'closed' {
   if (!eventType) return "closed";
   return STATUS_AFTER_EVENT[eventType] || "closed";
 }
 
-/**
- * 식당 운영 상태 계산
- * 
- * @param businessHours 운영시간 정보
- * @param now 현재 시간 (기본값: 현재 시간)
- * @returns 운영 상태 정보
- */
 export function calculateOperatingStatus(
   businessHours: BusinessHours | null | undefined,
   now?: Date
@@ -156,7 +233,6 @@ export function calculateOperatingStatus(
     };
   }
 
-  // 요일별로 운영시간 그룹화
   const hoursByDay: Record<string, Array<{ day: string; hours: BusinessHoursDay }>> = {};
   for (const day of DAY_ORDER) {
     const dayHours = businessHours[day as keyof BusinessHours];
@@ -169,9 +245,8 @@ export function calculateOperatingStatus(
     }
   }
 
-  const todayIdx = currentTime.getDay() === 0 ? 6 : currentTime.getDay() - 1; // 월=0, 일=6
+  const todayIdx = currentTime.getDay() === 0 ? 6 : currentTime.getDay() - 1;
 
-  // 어제부터 1주일 뒤까지의 이벤트 생성
   const events: Event[] = [];
   for (let offset = -1; offset < 8; offset++) {
     const targetIdx = (todayIdx + offset + 7) % 7;
@@ -186,7 +261,6 @@ export function calculateOperatingStatus(
     }
   }
 
-  // 이벤트를 시간순으로 정렬
   events.sort((a, b) => a[0].getTime() - b[0].getTime());
 
   if (events.length === 0) {
@@ -200,7 +274,6 @@ export function calculateOperatingStatus(
   let currentUntil: Date | null = null;
   let nextEvent: Event | null = null;
 
-  // 현재 시간 이후의 첫 번째 이벤트 찾기
   for (let idx = 0; idx < events.length; idx++) {
     const [eventTime, eventType] = events[idx];
     if (currentTime < eventTime) {
@@ -212,14 +285,12 @@ export function calculateOperatingStatus(
     }
   }
 
-  // 현재 시간이 모든 이벤트 이후인 경우
   if (nextEvent === null) {
     const lastEvent = events[events.length - 1];
     const lastType = lastEvent[1];
     currentType = statusFromEvent(lastType);
     currentUntil = null;
 
-    // 다음 이벤트 찾기 (다음 주)
     for (const [eventTime, eventType] of events) {
       if (eventTime > currentTime) {
         nextEvent = [eventTime, eventType];
@@ -246,36 +317,19 @@ export function calculateOperatingStatus(
   };
 }
 
-/**
- * 특정 요일에 운영시간이 있는지 확인 (요일만 선택한 경우)
- * 
- * @param businessHours 운영시간 정보
- * @param dayOfWeek 요일 ('월', '화', '수', '목', '금', '토', '일')
- * @returns 해당 요일에 운영시간이 있으면 true, 없으면 false
- */
 export function hasOperatingHoursOnDay(
   businessHours: BusinessHours | null | undefined,
   dayOfWeek: string
 ): boolean {
   if (!businessHours) return false;
 
-  // 요일을 정규화
   const normalizedDay = normalizeDay(dayOfWeek);
   if (!normalizedDay) return false;
 
   const dayHours = businessHours[normalizedDay as keyof BusinessHours];
-  // 해당 요일에 운영시간이 있고, 휴무일이 아니면 true
   return !!(dayHours && !dayHours.is_closed && dayHours.open_time && dayHours.close_time);
 }
 
-/**
- * 특정 요일과 시간에 식당이 운영중인지 확인
- * 
- * @param businessHours 운영시간 정보
- * @param dayOfWeek 요일 ('월', '화', '수', '목', '금', '토', '일')
- * @param time 시간 ('HH:MM' 형식, 선택사항)
- * @returns 운영중이면 true, 아니면 false
- */
 export function isRestaurantOpenAt(
   businessHours: BusinessHours | null | undefined,
   dayOfWeek: string,
@@ -283,14 +337,12 @@ export function isRestaurantOpenAt(
 ): boolean {
   if (!businessHours) return false;
 
-  // 요일을 정규화
   const normalizedDay = normalizeDay(dayOfWeek);
   if (!normalizedDay) return false;
 
   const dayHours = businessHours[normalizedDay as keyof BusinessHours];
   if (!dayHours || dayHours.is_closed) return false;
 
-  // 시간이 없으면 해당 요일에 운영시간이 있는지만 확인
   if (!time) {
     return !!(dayHours.open_time && dayHours.close_time);
   }
@@ -298,22 +350,18 @@ export function isRestaurantOpenAt(
   const [hours, minutes] = time.split(':').map(Number);
   if (isNaN(hours) || isNaN(minutes)) return false;
 
-  // 해당 요일의 Date 객체 생성
   const dayIndex = DAY_ORDER.indexOf(normalizedDay);
   if (dayIndex === -1) return false;
 
   const today = new Date();
-  const todayIndex = today.getDay() === 0 ? 6 : today.getDay() - 1; // 월=0, 일=6
+  const todayIndex = today.getDay() === 0 ? 6 : today.getDay() - 1;
   const daysDiff = dayIndex - todayIndex;
-  
+
   const targetDate = new Date(today);
   targetDate.setDate(targetDate.getDate() + daysDiff);
   targetDate.setHours(hours, minutes, 0, 0);
 
-  // 해당 시간의 운영 상태 계산
   const status = calculateOperatingStatus(businessHours, targetDate);
-  
-  // 영업중이거나 브레이크타임이면 true (주문마감이나 영업종료는 false)
+
   return status.current.type === 'open' || status.current.type === 'break_time';
 }
-

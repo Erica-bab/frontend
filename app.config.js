@@ -50,7 +50,7 @@ export default {
     android: {
       splash: {
         image: "./assets/app/splash.png",
-        resizeMode: "contain",
+        resizeMode: "cover",
         backgroundColor: "#2563EB",
       },
       adaptiveIcon: {
@@ -59,7 +59,7 @@ export default {
       },
       softInputMode: "adjustPan",
       label: "에푸",
-      versionCode: 7,
+      versionCode: 9,
       edgeToEdgeEnabled: true,
       predictiveBackGestureEnabled: false,
       permissions: [
