@@ -49,7 +49,7 @@ export default {
     },
     android: {
       splash: {
-        image: "./assets/app/splash.png",
+        image: "./assets/app/splash-image.png",
         resizeMode: "cover",
         backgroundColor: "#2563EB",
       },
@@ -59,7 +59,7 @@ export default {
       },
       softInputMode: "adjustPan",
       label: "에푸",
-      versionCode: 9,
+      versionCode: 10,
       edgeToEdgeEnabled: true,
       predictiveBackGestureEnabled: false,
       permissions: [
@@ -79,6 +79,34 @@ export default {
         },
       },
       package: "com.efoo.app",
+      intentFilters: [
+        {
+          action: "VIEW",
+          autoVerify: true,
+          data: [
+            {
+              scheme: "https",
+              host: "에리카밥.com",
+              pathPrefix: "/share",
+            },
+            {
+              scheme: "https",
+              host: "xn--oy2b88bd4n32i.com", // 에리카밥.com (punycode)
+              pathPrefix: "/share",
+            },
+          ],
+          category: ["BROWSABLE", "DEFAULT"],
+        },
+        {
+          action: "VIEW",
+          data: [
+            {
+              scheme: "com.efoo.app",
+            },
+          ],
+          category: ["BROWSABLE", "DEFAULT"],
+        },
+      ],
     },
     web: {
       favicon: "./assets/app/ios-icon.png",

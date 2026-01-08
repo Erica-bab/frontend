@@ -13,7 +13,7 @@ import {
   Animated,
   Modal,
 } from "react-native";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import * as Location from "expo-location";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -503,6 +503,25 @@ export default function RestaurantScreen() {
       subscription.remove();
     };
   }, [updateLocation]);
+
+  // 화면에 focus될 때 (다른 화면에서 돌아올 때) 데이터 새로고침
+  useFocusEffect(
+    useCallback(() => {
+      let isActive = true;
+
+      // 약간의 지연 후 refetch (안정성 향상)
+      const timer = setTimeout(() => {
+        if (isActive) {
+          refetch();
+        }
+      }, 100);
+
+      return () => {
+        isActive = false;
+        clearTimeout(timer);
+      };
+    }, [refetch])
+  );
 
   const handleRefresh = useCallback(async () => {
     setRefreshing(true);

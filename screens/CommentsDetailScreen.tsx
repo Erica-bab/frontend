@@ -80,7 +80,7 @@ export default function CommentDetailScreen() {
   // 백엔드는 원댓글의 replies 배열에 대댓글을 포함시켜 반환함
   // 대댓글을 오래된 순(오름차순)으로 정렬
   const replies = (comment?.replies || [])
-    .filter((reply) => reply && reply.user && reply.status === "보이기") // ⚡ soft delete 필터링
+    .filter((reply) => reply && reply.user)
     .sort(
       (a, b) =>
         new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
@@ -146,11 +146,6 @@ export default function CommentDetailScreen() {
         } else {
           Alert.alert("완료", "댓글이 삭제되었습니다.");
           refetchComments();
-          // ⚡ 핵심 수정: 내 댓글 ID 캐시 갱신 (soft delete 대응)
-          if (isAuthenticated) {
-            refetchMyComments();
-            refetchMyReplies();
-          }
         }
       },
       onError: (error: any) => {
@@ -236,12 +231,7 @@ export default function CommentDetailScreen() {
               {/* 답글 목록 */}
               {replies
                 .filter(
-                  (reply) =>
-                    reply &&
-                    reply.id &&
-                    reply.user &&
-                    reply.content &&
-                    reply.status === "보이기" // ⚡ soft delete 렌더링 필터
+                  (reply) => reply && reply.id && reply.user && reply.content
                 )
                 .map((reply) => (
                   <ReplyItem
