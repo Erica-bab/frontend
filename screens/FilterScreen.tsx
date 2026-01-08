@@ -1,48 +1,90 @@
-import { useState, useCallback, useMemo, useEffect } from 'react';
-import { View, Text, Pressable, StyleSheet, Alert } from 'react-native';
-import { useSafeAreaInsets, SafeAreaView } from 'react-native-safe-area-context';
-import { useNavigation, useRoute } from '@react-navigation/native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import BottomSheet, { BottomSheetScrollView } from '@gorhom/bottom-sheet';
-import { Dropdown } from '@/components/filter/Dropdown';
-import { OptionBtn } from '@/components/filter/OptionButton';
-import Button from '@/components/ui/Button';
-import Icon from '@/components/Icon';
-import { filterToParams } from '@/api/restaurants/useRestaurant';
-import { RestaurantListParams } from '@/api/restaurants/types';
+import { useState, useCallback, useMemo, useEffect } from "react";
+import { View, Text, Pressable, StyleSheet, Alert } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useNavigation, useRoute } from "@react-navigation/native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import BottomSheet, { BottomSheetScrollView } from "@gorhom/bottom-sheet";
+import { Dropdown } from "@/components/filter/Dropdown";
+import { OptionBtn } from "@/components/filter/OptionButton";
+import Button from "@/components/ui/Button";
+import Icon from "@/components/Icon";
+import { filterToParams } from "@/api/restaurants/useRestaurant";
+import { RestaurantListParams } from "@/api/restaurants/types";
 
-const DAYS = ['월요일', '화요일', '수요일', '목요일', '금요일', '토요일', '일요일'];
-const FOOD_TYPES = ['전체','한식','중식','일식','양식','아시안','분식','패스트푸드','고기']
-const HOUR = Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, '0'));
-const MIN = ['00','30'];
-const AFFILIATE =['공학대학','소프트웨어융합대학','약학대학','첨단융합대학','글로벌문화통상대학','커뮤니케이션&컬쳐대학','경상대학','디자인대학','예체능대학','LIONS칼리지'];
-const RESTAURANT_TYPE = ['개인식당','프랜차이즈']
+const DAYS = [
+  "월요일",
+  "화요일",
+  "수요일",
+  "목요일",
+  "금요일",
+  "토요일",
+  "일요일",
+];
+const FOOD_TYPES = [
+  "전체",
+  "한식",
+  "중식",
+  "일식",
+  "양식",
+  "아시안",
+  "분식",
+  "패스트푸드",
+  "고기",
+];
+const HOUR = Array.from({ length: 24 }, (_, i) =>
+  i.toString().padStart(2, "0")
+);
+const MIN = ["00", "30"];
+const AFFILIATE = [
+  "공학대학",
+  "소프트웨어융합대학",
+  "약학대학",
+  "첨단융합대학",
+  "글로벌문화통상대학",
+  "커뮤니케이션&컬쳐대학",
+  "경상대학",
+  "디자인대학",
+  "예체능대학",
+  "LIONS칼리지",
+];
+const RESTAURANT_TYPE = ["개인식당", "프랜차이즈"];
 
 export default function FilterScreen() {
   const navigation = useNavigation<any>();
   const route = useRoute();
   const insets = useSafeAreaInsets();
-  const { currentFilter, onApply } = route.params as {
-    currentFilter?: {
-      filterParams?: any;
-      operatingTimeFilter?: { dayOfWeek?: string; hour?: string; minute?: string } | null;
-    };
-    onApply?: (params: RestaurantListParams) => void;
-  } || {};
+  const { currentFilter, onApply } =
+    (route.params as {
+      currentFilter?: {
+        filterParams?: any;
+        operatingTimeFilter?: {
+          dayOfWeek?: string;
+          hour?: string;
+          minute?: string;
+        } | null;
+      };
+      onApply?: (params: RestaurantListParams) => void;
+    }) || {};
 
-  const snapPoints = useMemo(() => ['90%'], []);
-  const [operatingTimeMode, setOperatingTimeMode] = useState<'none' | 'operating' | 'manual'>('none');
+  const snapPoints = useMemo(() => ["90%"], []);
+  const [operatingTimeMode, setOperatingTimeMode] = useState<
+    "none" | "operating" | "manual"
+  >("none");
   const [selectedDay, setSelectedDay] = useState<string>();
   const [selectedHour, setSelectedHour] = useState<string>();
   const [selectedMin, setSelectedMin] = useState<string>();
-  const [activeDropdown, setActiveDropdown] = useState<'day' | 'hour' | 'min' | null>(null);
+  const [activeDropdown, setActiveDropdown] = useState<
+    "day" | "hour" | "min" | null
+  >(null);
   const [selectedFoodTypes, setSelectedFoodTypes] = useState<string[]>([]);
   const [selectedAffiliates, setSelectedAffiliates] = useState<string[]>([]);
-  const [selectedRestaurantTypes, setSelectedRestaurantTypes] = useState<string[]>([]);
+  const [selectedRestaurantTypes, setSelectedRestaurantTypes] = useState<
+    string[]
+  >([]);
 
   // 초기 필터 상태 저장 (비교용)
   const [initialFilterState, setInitialFilterState] = useState<{
-    operatingTimeMode: 'none' | 'operating' | 'manual';
+    operatingTimeMode: "none" | "operating" | "manual";
     selectedDay?: string;
     selectedHour?: string;
     selectedMin?: string;
@@ -55,10 +97,10 @@ export default function FilterScreen() {
   const getCurrentTime = useCallback(() => {
     const now = new Date();
     const dayIndex = now.getDay(); // 0(일요일) ~ 6(토요일)
-    const hour = now.getHours().toString().padStart(2, '0');
+    const hour = now.getHours().toString().padStart(2, "0");
     const minute = now.getMinutes();
     // 30분 단위로 반올림 (0-29분 -> 00, 30-59분 -> 30)
-    const roundedMinute = minute < 30 ? '00' : '30';
+    const roundedMinute = minute < 30 ? "00" : "30";
 
     // dayIndex를 DAYS 배열 인덱스로 변환 (일요일=0 -> 일요일=6, 월요일=1 -> 월요일=0)
     const dayName = DAYS[dayIndex === 0 ? 6 : dayIndex - 1];
@@ -74,22 +116,23 @@ export default function FilterScreen() {
   useEffect(() => {
     const loadSavedFilter = async () => {
       try {
-        const savedFilter = await AsyncStorage.getItem('restaurantFilter');
+        const savedFilter = await AsyncStorage.getItem("restaurantFilter");
         if (savedFilter) {
           const filter = JSON.parse(savedFilter);
 
           // 현재 적용된 필터 상태 확인
-          const hasCurrentFilter = currentFilter && (
-            (currentFilter.filterParams && Object.keys(currentFilter.filterParams).length > 0) ||
-            currentFilter.operatingTimeFilter !== null
-          );
+          const hasCurrentFilter =
+            currentFilter &&
+            ((currentFilter.filterParams &&
+              Object.keys(currentFilter.filterParams).length > 0) ||
+              currentFilter.operatingTimeFilter !== null);
 
           // 실제로 필터가 적용되지 않았는데 스토리지에 필터가 있으면 스토리지 초기화
           if (!hasCurrentFilter) {
             // 스토리지 초기화
-            await AsyncStorage.removeItem('restaurantFilter');
+            await AsyncStorage.removeItem("restaurantFilter");
             // UI도 초기화
-            setOperatingTimeMode('none');
+            setOperatingTimeMode("none");
             setSelectedDay(undefined);
             setSelectedHour(undefined);
             setSelectedMin(undefined);
@@ -99,11 +142,14 @@ export default function FilterScreen() {
             return;
           }
 
-          const savedMode = filter.operatingTimeMode || 'none';
+          const savedMode = filter.operatingTimeMode || "none";
 
           // operatingTimeMode가 'operating'인데 시간 정보가 없으면 'none'으로 초기화
-          if (savedMode === 'operating' && (!filter.selectedDay || !filter.selectedHour || !filter.selectedMin)) {
-            setOperatingTimeMode('none');
+          if (
+            savedMode === "operating" &&
+            (!filter.selectedDay || !filter.selectedHour || !filter.selectedMin)
+          ) {
+            setOperatingTimeMode("none");
             setSelectedDay(undefined);
             setSelectedHour(undefined);
             setSelectedMin(undefined);
@@ -120,7 +166,13 @@ export default function FilterScreen() {
 
           // 초기 필터 상태 저장
           setInitialFilterState({
-            operatingTimeMode: savedMode === 'operating' && (!filter.selectedDay || !filter.selectedHour || !filter.selectedMin) ? 'none' : savedMode,
+            operatingTimeMode:
+              savedMode === "operating" &&
+              (!filter.selectedDay ||
+                !filter.selectedHour ||
+                !filter.selectedMin)
+                ? "none"
+                : savedMode,
             selectedDay: filter.selectedDay || undefined,
             selectedHour: filter.selectedHour || undefined,
             selectedMin: filter.selectedMin || undefined,
@@ -131,7 +183,7 @@ export default function FilterScreen() {
         } else {
           // 필터가 없을 때 초기 상태 저장
           setInitialFilterState({
-            operatingTimeMode: 'none',
+            operatingTimeMode: "none",
             selectedDay: undefined,
             selectedHour: undefined,
             selectedMin: undefined,
@@ -141,10 +193,10 @@ export default function FilterScreen() {
           });
         }
       } catch (error) {
-        console.error('Failed to load filter:', error);
+        console.error("Failed to load filter:", error);
         // 에러 발생 시에도 초기 상태 저장
         setInitialFilterState({
-          operatingTimeMode: 'none',
+          operatingTimeMode: "none",
           selectedDay: undefined,
           selectedHour: undefined,
           selectedMin: undefined,
@@ -159,9 +211,9 @@ export default function FilterScreen() {
 
   // 시간 선택 시 분 드롭다운 활성화
   useEffect(() => {
-    if (selectedHour && operatingTimeMode === 'manual') {
+    if (selectedHour && operatingTimeMode === "manual") {
       // 시간이 선택되면 분도 초기화하지 않고 유지
-    } else if (!selectedHour && operatingTimeMode === 'manual') {
+    } else if (!selectedHour && operatingTimeMode === "manual") {
       // 시간이 없으면 분도 초기화
       setSelectedMin(undefined);
     }
@@ -173,7 +225,7 @@ export default function FilterScreen() {
 
   const handleReset = async () => {
     // 필터 초기화
-    setOperatingTimeMode('none');
+    setOperatingTimeMode("none");
     setSelectedDay(undefined);
     setSelectedHour(undefined);
     setSelectedMin(undefined);
@@ -183,7 +235,7 @@ export default function FilterScreen() {
 
     // 초기 상태 업데이트
     setInitialFilterState({
-      operatingTimeMode: 'none',
+      operatingTimeMode: "none",
       selectedDay: undefined,
       selectedHour: undefined,
       selectedMin: undefined,
@@ -194,11 +246,11 @@ export default function FilterScreen() {
 
     // 저장된 필터도 삭제
     try {
-      await AsyncStorage.removeItem('restaurantFilter');
+      await AsyncStorage.removeItem("restaurantFilter");
       // 필터 적용 이벤트 저장
-      await AsyncStorage.setItem('filterApplied', JSON.stringify({}));
+      await AsyncStorage.setItem("filterApplied", JSON.stringify({}));
     } catch (error) {
-      console.error('Failed to remove filter:', error);
+      console.error("Failed to remove filter:", error);
     }
 
     // onApply 콜백 호출 제거 - 메모리 크래시 방지
@@ -216,16 +268,16 @@ export default function FilterScreen() {
 
   // 운영중 버튼 클릭 시 현재 시간으로 설정 (토글)
   const handleOperatingNow = () => {
-    if (operatingTimeMode === 'operating') {
+    if (operatingTimeMode === "operating") {
       // 이미 선택되어 있으면 취소
-      setOperatingTimeMode('none');
+      setOperatingTimeMode("none");
       setSelectedDay(undefined);
       setSelectedHour(undefined);
       setSelectedMin(undefined);
     } else {
       // 선택되지 않았으면 현재 시간으로 설정
       const currentTime = getCurrentTime();
-      setOperatingTimeMode('operating');
+      setOperatingTimeMode("operating");
       setSelectedDay(currentTime.day);
       setSelectedHour(currentTime.hour);
       setSelectedMin(currentTime.minute);
@@ -234,15 +286,15 @@ export default function FilterScreen() {
 
   // 운영시간 수동선택 버튼 클릭 시 (토글)
   const handleManualSelect = () => {
-    if (operatingTimeMode === 'manual') {
+    if (operatingTimeMode === "manual") {
       // 이미 선택되어 있으면 취소
-      setOperatingTimeMode('none');
+      setOperatingTimeMode("none");
       setSelectedDay(undefined);
       setSelectedHour(undefined);
       setSelectedMin(undefined);
     } else {
       // 선택되지 않았으면 수동선택 모드로
-      setOperatingTimeMode('manual');
+      setOperatingTimeMode("manual");
       setSelectedDay(undefined);
       setSelectedHour(undefined);
       setSelectedMin(undefined);
@@ -252,18 +304,25 @@ export default function FilterScreen() {
   // 필터가 선택되었는지 확인
   const hasSelectedFilter = useMemo(() => {
     return (
-      operatingTimeMode !== 'none' ||
+      operatingTimeMode !== "none" ||
       selectedFoodTypes.length > 0 ||
       selectedAffiliates.length > 0 ||
       selectedRestaurantTypes.length > 0
     );
-  }, [operatingTimeMode, selectedFoodTypes, selectedAffiliates, selectedRestaurantTypes]);
+  }, [
+    operatingTimeMode,
+    selectedFoodTypes,
+    selectedAffiliates,
+    selectedRestaurantTypes,
+  ]);
 
   // 적용된 필터가 있는지 확인
   const hasAppliedFilter = useMemo(() => {
-    return currentFilter && (
-      (currentFilter.filterParams && Object.keys(currentFilter.filterParams).length > 0) ||
-      currentFilter.operatingTimeFilter !== null
+    return (
+      currentFilter &&
+      ((currentFilter.filterParams &&
+        Object.keys(currentFilter.filterParams).length > 0) ||
+        currentFilter.operatingTimeFilter !== null)
     );
   }, [currentFilter]);
 
@@ -279,30 +338,64 @@ export default function FilterScreen() {
 
     // 운영시간 모드가 'operating'이면 현재 시간으로 자동 설정되므로 비교 불필요
     // 'manual'일 때만 비교
-    if (operatingTimeMode === 'manual') {
+    if (operatingTimeMode === "manual") {
       if (selectedDay !== initialFilterState.selectedDay) return true;
       if (selectedHour !== initialFilterState.selectedHour) return true;
       if (selectedMin !== initialFilterState.selectedMin) return true;
-    } else if (operatingTimeMode === 'operating') {
+    } else if (operatingTimeMode === "operating") {
       // operating 모드는 항상 현재 시간이므로 초기 상태와 다를 수 있음
       // 하지만 사용자가 변경한 것이 아니므로 비교에서 제외
       // 대신 다른 필터와 비교
     }
 
     // 음식 종류 비교
-    if (selectedFoodTypes.length !== initialFilterState.selectedFoodTypes.length) return true;
-    if (!selectedFoodTypes.every(type => initialFilterState.selectedFoodTypes.includes(type))) return true;
+    if (
+      selectedFoodTypes.length !== initialFilterState.selectedFoodTypes.length
+    )
+      return true;
+    if (
+      !selectedFoodTypes.every((type) =>
+        initialFilterState.selectedFoodTypes.includes(type)
+      )
+    )
+      return true;
 
     // 제휴 비교
-    if (selectedAffiliates.length !== initialFilterState.selectedAffiliates.length) return true;
-    if (!selectedAffiliates.every(aff => initialFilterState.selectedAffiliates.includes(aff))) return true;
+    if (
+      selectedAffiliates.length !== initialFilterState.selectedAffiliates.length
+    )
+      return true;
+    if (
+      !selectedAffiliates.every((aff) =>
+        initialFilterState.selectedAffiliates.includes(aff)
+      )
+    )
+      return true;
 
     // 식당 종류 비교
-    if (selectedRestaurantTypes.length !== initialFilterState.selectedRestaurantTypes.length) return true;
-    if (!selectedRestaurantTypes.every(type => initialFilterState.selectedRestaurantTypes.includes(type))) return true;
+    if (
+      selectedRestaurantTypes.length !==
+      initialFilterState.selectedRestaurantTypes.length
+    )
+      return true;
+    if (
+      !selectedRestaurantTypes.every((type) =>
+        initialFilterState.selectedRestaurantTypes.includes(type)
+      )
+    )
+      return true;
 
     return false;
-  }, [initialFilterState, operatingTimeMode, selectedDay, selectedHour, selectedMin, selectedFoodTypes, selectedAffiliates, selectedRestaurantTypes]);
+  }, [
+    initialFilterState,
+    operatingTimeMode,
+    selectedDay,
+    selectedHour,
+    selectedMin,
+    selectedFoodTypes,
+    selectedAffiliates,
+    selectedRestaurantTypes,
+  ]);
 
   const handleApply = async () => {
     // 적용 시점의 필터 상태 계산 (운영중 모드인 경우 현재 시간으로 업데이트)
@@ -310,46 +403,45 @@ export default function FilterScreen() {
     let finalHour = selectedHour;
     let finalMin = selectedMin;
 
-    if (operatingTimeMode === 'operating') {
+    if (operatingTimeMode === "operating") {
       // 운영중 모드: 적용 시점의 현재 시간 사용
       const currentTime = getCurrentTime();
       finalDay = currentTime.day;
       finalHour = currentTime.hour;
       finalMin = currentTime.minute;
-    } else if (operatingTimeMode === 'none') {
+    } else if (operatingTimeMode === "none") {
       // 초기화 상태일 때는 시간 파라미터를 undefined로 설정
       finalDay = undefined;
       finalHour = undefined;
       finalMin = undefined;
-    } else if (operatingTimeMode === 'manual') {
+    } else if (operatingTimeMode === "manual") {
       // 수동 선택 모드에서 시간만 선택하고 요일이 없으면 경고
       if (finalHour && !finalDay) {
-        Alert.alert('요일 선택 필요', '시간을 선택하려면 요일도 선택해주세요.');
+        Alert.alert("요일 선택 필요", "시간을 선택하려면 요일도 선택해주세요.");
         return;
       }
 
       // 분이 선택되지 않았으면 00분을 기본값으로 사용
       if (finalDay && finalHour && !finalMin) {
-        finalMin = '00';
+        finalMin = "00";
       }
     }
 
     // 적용 시점의 필터 상태 확인 (finalDay, finalHour, finalMin 사용)
-    const hasFilterAtApply = (
-      (finalDay !== undefined) ||
+    const hasFilterAtApply =
+      finalDay !== undefined ||
       selectedFoodTypes.length > 0 ||
       selectedAffiliates.length > 0 ||
-      selectedRestaurantTypes.length > 0
-    );
+      selectedRestaurantTypes.length > 0;
 
     // 필터가 선택되지 않았을 때는 스토리지 삭제
     if (!hasFilterAtApply) {
       try {
-        await AsyncStorage.removeItem('restaurantFilter');
+        await AsyncStorage.removeItem("restaurantFilter");
         // 필터 적용 이벤트 저장
-        await AsyncStorage.setItem('filterApplied', JSON.stringify({}));
+        await AsyncStorage.setItem("filterApplied", JSON.stringify({}));
       } catch (error) {
-        console.error('Failed to remove filter:', error);
+        console.error("Failed to remove filter:", error);
       }
 
       // onApply 콜백 호출 지연 - 메모리 크래시 방지
@@ -375,9 +467,12 @@ export default function FilterScreen() {
         selectedAffiliates,
         selectedRestaurantTypes,
       };
-      await AsyncStorage.setItem('restaurantFilter', JSON.stringify(filterData));
+      await AsyncStorage.setItem(
+        "restaurantFilter",
+        JSON.stringify(filterData)
+      );
     } catch (error) {
-      console.error('Failed to save filter:', error);
+      console.error("Failed to save filter:", error);
     }
 
     // 적용 시점의 필터 상태로 params 생성
@@ -401,9 +496,9 @@ export default function FilterScreen() {
 
     // 필터 적용 이벤트 저장
     try {
-      await AsyncStorage.setItem('filterApplied', JSON.stringify(params));
+      await AsyncStorage.setItem("filterApplied", JSON.stringify(params));
     } catch (error) {
-      console.error('Failed to save filter applied event:', error);
+      console.error("Failed to save filter applied event:", error);
     }
 
     // onApply 콜백 호출 지연 - 메모리 크래시 방지
@@ -420,106 +515,117 @@ export default function FilterScreen() {
 
   return (
     <>
-    <BottomSheet
-      snapPoints={snapPoints}
-      enablePanDownToClose={true}
-      onClose={goBack}
-      backgroundStyle={styles.container}
-      handleIndicatorStyle={styles.handleIndicator}
-      enableDynamicSizing={false}
-      index={0}
-      enableContentPanningGesture={false}
-      android_keyboardInputMode="adjustResize"
-    >
-      {/* ⬆️ 고정 Header */}
-      <View style={styles.header}>
-        <Text style={styles.title}>필터</Text>
-        <Pressable onPress={goBack}>
-          <Icon name="cancel" />
-        </Pressable>
-      </View>
-
-      {/* ⬇️ 스크롤 되는 영역 */}
-      <BottomSheetScrollView
-        contentContainerStyle={{
-          paddingBottom: insets.bottom + 200,
-          paddingHorizontal: 16,
-        }}
-        showsVerticalScrollIndicator={true}
-        nestedScrollEnabled={false}
-        keyboardShouldPersistTaps="handled"
+      <BottomSheet
+        snapPoints={snapPoints}
+        enablePanDownToClose={true}
+        onClose={goBack}
+        backgroundStyle={styles.container}
+        handleIndicatorStyle={styles.handleIndicator}
+        enableDynamicSizing={false}
+        index={0}
+        enableContentPanningGesture={false}
       >
+        {/* ⬆️ 고정 Header */}
+        <View style={styles.header}>
+          <Text style={styles.title}>필터</Text>
+          <Pressable onPress={goBack}>
+            <Icon name="cancel" />
+          </Pressable>
+        </View>
+
+        {/* ⬇️ 스크롤 되는 영역 */}
+        <BottomSheetScrollView
+          contentContainerStyle={{
+            paddingBottom: 100, // footer 높이만큼만 (paddingTop 16 + 버튼 56 + paddingBottom 16 + 여유 12)
+            paddingHorizontal: 16,
+          }}
+          showsVerticalScrollIndicator={true}
+          nestedScrollEnabled={false}
+          keyboardShouldPersistTaps="handled"
+        >
           <Text className="pt-4 text-xl font-bold mb-4">운영시간</Text>
 
           {/* 운영시간 모드 선택 버튼 */}
-          <View className='flex-row gap-2 mb-4'>
+          <View className="flex-row gap-2 mb-4">
             <OptionBtn
               text="운영중"
-              isSelected={operatingTimeMode === 'operating'}
+              isSelected={operatingTimeMode === "operating"}
               onPress={handleOperatingNow}
             />
             <OptionBtn
               text="운영시간 수동선택"
-              isSelected={operatingTimeMode === 'manual'}
+              isSelected={operatingTimeMode === "manual"}
               onPress={handleManualSelect}
             />
           </View>
 
           {/* 운영중 모드일 때 선택된 시간 표시 */}
-          {operatingTimeMode === 'operating' && selectedDay && selectedHour && selectedMin && (
-            <View className='mb-4 p-3 bg-blue-50 rounded-lg'>
-              <Text className='text-sm text-blue-700'>
-                현재 운영중인 식당만 표시됩니다 ({selectedDay} {selectedHour}시 {selectedMin}분 기준)
-              </Text>
-            </View>
-          )}
+          {operatingTimeMode === "operating" &&
+            selectedDay &&
+            selectedHour &&
+            selectedMin && (
+              <View className="mb-4 p-3 bg-blue-50 rounded-lg">
+                <Text className="text-sm text-blue-700">
+                  현재 운영중인 식당만 표시됩니다 ({selectedDay} {selectedHour}
+                  시 {selectedMin}분 기준)
+                </Text>
+              </View>
+            )}
 
           {/* 수동선택 모드일 때만 요일/시간/분 선택 UI 표시 */}
-          {operatingTimeMode === 'manual' && (
-            <View className='flex-row gap-2 flex-wrap mb-4'>
-            <Dropdown
-              label="요일"
-              options={DAYS}
-              selectedValue={selectedDay}
-              onSelect={setSelectedDay}
-              placeholder="요일"
-              isOpen={activeDropdown === 'day'}
-              onToggle={() => setActiveDropdown(activeDropdown === 'day' ? null : 'day')}
-            />
-            <Dropdown
-              label="시간"
-              options={HOUR}
-                selectedValue={selectedHour ? selectedHour + "시" : selectedHour}
-              onSelect={setSelectedHour}
-              placeholder="시간"
-              isOpen={activeDropdown === 'hour'}
-              onToggle={() => setActiveDropdown(activeDropdown === 'hour' ? null : 'hour')}
-            />
+          {operatingTimeMode === "manual" && (
+            <View className="flex-row gap-2 flex-wrap mb-4">
+              <Dropdown
+                label="요일"
+                options={DAYS}
+                selectedValue={selectedDay}
+                onSelect={setSelectedDay}
+                placeholder="요일"
+                isOpen={activeDropdown === "day"}
+                onToggle={() =>
+                  setActiveDropdown(activeDropdown === "day" ? null : "day")
+                }
+              />
+              <Dropdown
+                label="시간"
+                options={HOUR}
+                selectedValue={
+                  selectedHour ? selectedHour + "시" : selectedHour
+                }
+                onSelect={setSelectedHour}
+                placeholder="시간"
+                isOpen={activeDropdown === "hour"}
+                onToggle={() =>
+                  setActiveDropdown(activeDropdown === "hour" ? null : "hour")
+                }
+              />
               {/* 시간이 선택되었을 때만 분 드롭다운 표시 */}
               {selectedHour && (
-            <Dropdown
-              label="분"
-              options={MIN}
+                <Dropdown
+                  label="분"
+                  options={MIN}
                   selectedValue={selectedMin ? selectedMin + "분" : selectedMin}
-              onSelect={setSelectedMin}
-              placeholder="분"
-              isOpen={activeDropdown === 'min'}
-              onToggle={() => setActiveDropdown(activeDropdown === 'min' ? null : 'min')}
-            />
+                  onSelect={setSelectedMin}
+                  placeholder="분"
+                  isOpen={activeDropdown === "min"}
+                  onToggle={() =>
+                    setActiveDropdown(activeDropdown === "min" ? null : "min")
+                  }
+                />
               )}
-          </View>
+            </View>
           )}
 
           <View className="h-px w-full bg-gray-100 my-4" />
           <Text className="text-xl font-bold mb-4">음식 종류</Text>
-          <View className='flex-row gap-2 flex-wrap'>
-            {FOOD_TYPES.map((name,idx)=>(
+          <View className="flex-row gap-2 flex-wrap">
+            {FOOD_TYPES.map((name, idx) => (
               <OptionBtn
                 key={idx}
                 text={name}
                 isSelected={selectedFoodTypes.includes(name)}
                 onPress={() => {
-                  if (name === '전체') {
+                  if (name === "전체") {
                     // 전체를 누르면 모든 항목 선택/해제
                     if (selectedFoodTypes.length === FOOD_TYPES.length) {
                       setSelectedFoodTypes([]);
@@ -527,12 +633,12 @@ export default function FilterScreen() {
                       setSelectedFoodTypes(FOOD_TYPES);
                     }
                   } else {
-                    setSelectedFoodTypes(prev => {
+                    setSelectedFoodTypes((prev) => {
                       const newSelection = prev.includes(name)
-                        ? prev.filter(item => item !== name)
+                        ? prev.filter((item) => item !== name)
                         : [...prev, name];
                       // '전체'를 제거
-                      return newSelection.filter(item => item !== '전체');
+                      return newSelection.filter((item) => item !== "전체");
                     });
                   }
                 }}
@@ -541,16 +647,16 @@ export default function FilterScreen() {
           </View>
           <View className="h-px w-full bg-gray-100 my-4" />
           <Text className="text-xl font-bold mb-4">제휴</Text>
-          <View className='flex-row gap-2 flex-wrap'>
-            {AFFILIATE.map((name,idx)=>(
+          <View className="flex-row gap-2 flex-wrap">
+            {AFFILIATE.map((name, idx) => (
               <OptionBtn
                 key={idx}
                 text={name}
                 isSelected={selectedAffiliates.includes(name)}
                 onPress={() => {
-                  setSelectedAffiliates(prev =>
+                  setSelectedAffiliates((prev) =>
                     prev.includes(name)
-                      ? prev.filter(item => item !== name)
+                      ? prev.filter((item) => item !== name)
                       : [...prev, name]
                   );
                 }}
@@ -559,61 +665,63 @@ export default function FilterScreen() {
           </View>
           <View className="h-px w-full bg-gray-100 my-4" />
           <Text className="text-xl font-bold mb-4">식당종류</Text>
-          <View className='flex-row gap-2 flex-wrap'>
-            {RESTAURANT_TYPE.map((name,idx)=>(
+          <View className="flex-row gap-2 flex-wrap">
+            {RESTAURANT_TYPE.map((name, idx) => (
               <OptionBtn
                 key={idx}
                 text={name}
                 isSelected={selectedRestaurantTypes.includes(name)}
                 onPress={() => {
-                  setSelectedRestaurantTypes(prev =>
+                  setSelectedRestaurantTypes((prev) =>
                     prev.includes(name)
-                      ? prev.filter(item => item !== name)
+                      ? prev.filter((item) => item !== name)
                       : [...prev, name]
                   );
                 }}
               />
             ))}
           </View>
+        </BottomSheetScrollView>
 
-      </BottomSheetScrollView>
-
-      {/* ⬇️ 고정 Footer */}
-      <SafeAreaView
-        edges={['bottom']}
-        style={[
-          styles.footerAbsolute,
-          {
-            paddingBottom: insets.bottom + 16, // ★ Android에서도 safe area 확보
-            flexDirection: showResetButton ? 'row' : 'column',
-            gap: showResetButton ? 8 : 0,
-          }
-        ]}
-      >
-        {showResetButton && (
-          <Button variant="secondary" onPress={handleReset} className="flex-1">
-            초기화
-          </Button>
-        )}
-        <Button
-          onPress={handleApply}
-          className={showResetButton ? "flex-1" : "w-full"}
-          disabled={!hasFilterChanged}
+        {/* ⬇️ 고정 Footer - static layout (gorhom 공식 권장 구조) */}
+        <View
+          style={[
+            styles.footer,
+            {
+              paddingBottom: Math.max(insets.bottom, 20), // Android safe area 확보 + 여유
+              flexDirection: showResetButton ? "row" : "column",
+              gap: showResetButton ? 8 : 0,
+            },
+          ]}
         >
-          적용
-        </Button>
-      </SafeAreaView>
-    </BottomSheet>
-  </>
+          {showResetButton && (
+            <Button
+              variant="secondary"
+              onPress={handleReset}
+              className="flex-1"
+            >
+              초기화
+            </Button>
+          )}
+          <Button
+            onPress={handleApply}
+            className={showResetButton ? "flex-1" : "w-full"}
+            disabled={!hasFilterChanged}
+          >
+            적용
+          </Button>
+        </View>
+      </BottomSheet>
+    </>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: 'white',
+    backgroundColor: "white",
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: {
       width: 0,
       height: -3,
@@ -623,7 +731,7 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   handleIndicator: {
-    backgroundColor: '#d1d5db',
+    backgroundColor: "#d1d5db",
     width: 40,
     height: 4,
   },
@@ -631,26 +739,21 @@ const styles = StyleSheet.create({
     paddingTop: 16,
     paddingBottom: 12,
     paddingHorizontal: 20,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    backgroundColor: 'white',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    backgroundColor: "white",
     zIndex: 10,
   },
   title: {
     fontSize: 24,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
-  footerAbsolute: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    paddingHorizontal: 16,
+  footer: {
     paddingTop: 16,
-    backgroundColor: 'white',
+    paddingHorizontal: 16,
+    backgroundColor: "white",
     borderTopWidth: 1,
-    borderTopColor: '#e5e7eb',
-    zIndex: 1000,
+    borderTopColor: "#e5e7eb",
   },
 });
