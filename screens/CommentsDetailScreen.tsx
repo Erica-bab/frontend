@@ -257,14 +257,7 @@ export default function CommentDetailScreen() {
         {/* 답글 입력 */}
         <CommentInput
           commentText={replyText}
-          onChangeText={(text) => {
-            // 인증 상태 로딩 중이면 팝업 표시하지 않음
-            if (!isAuthLoading && !isAuthenticated && text.length > 0) {
-              handleShowLogin();
-              return;
-            }
-            setReplyText(text);
-          }}
+          onChangeText={setReplyText}
           onSubmit={handleSubmitReply}
           isLoading={isCreatingReply}
           placeholder="답글을 입력하세요"

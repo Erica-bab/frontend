@@ -14,7 +14,7 @@ export default {
     userInterfaceStyle: "light",
     newArchEnabled: true,
     splash: {
-      image: "./assets/app/splash.png",
+      image: "./assets/app/splash-image.png",
       resizeMode: "cover",
       backgroundColor: "#2563EB",
     },
@@ -57,7 +57,7 @@ export default {
         foregroundImage: "./assets/app/android-icon.png",
         backgroundColor: "#FFFFFF",
       },
-      softInputMode: "adjustPan",
+      softInputMode: "adjustResize",
       label: "에푸",
       versionCode: 10,
       edgeToEdgeEnabled: true,
@@ -114,7 +114,7 @@ export default {
       [
         "expo-splash-screen",
         {
-          image: "./assets/app/splash.png",
+          image: "./assets/app/splash-image.png",
           resizeMode: "cover",
           backgroundColor: "#2563EB",
         },
